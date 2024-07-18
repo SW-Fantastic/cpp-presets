@@ -36,3 +36,6 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+platforms/Live2d/dll
+platforms/Live2d/lib
