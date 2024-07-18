@@ -1,0 +1,12 @@
+# Cpp Presets
+
+my java-cpp preset projects，will not publish on maven center，
+Please clone and build it yourself if you want to have a try。
+
+基于JavaCPP技术的Presets，各类本地类库通过JavaCPP使得我们可以在Java语言中使用
+它们，本项目不定期维护和更新，不会上传到公共仓库，想要使用的话请自行clone。
+
+## 子项目列表（sub-project list）
+
+1. Live2D Core & Live2D Java SDK（YES，**JAVA SDK，NOT ANDROID**）
+2. coming soon...
