@@ -4,17 +4,10 @@ import com.jogamp.nativewindow.WindowClosingProtocol;
 import com.jogamp.newt.awt.NewtCanvasAWT;
 import com.jogamp.newt.opengl.GLWindow;
 import com.jogamp.opengl.*;
-import com.jogamp.opengl.awt.GLCanvas;
-import com.jogamp.opengl.awt.GLJPanel;
-import com.jogamp.opengl.util.Animator;
 import com.jogamp.opengl.util.FPSAnimator;
 import org.bytedeco.javacpp.Loader;
 import org.swdc.live2d.core.Live2dCore;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class LApplication {
 
