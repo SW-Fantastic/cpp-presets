@@ -124,7 +124,6 @@ public class CubismParameters {
 
         int count = getCount();
 
-        // PointerPointer pp = Live2dCore.csmGetParameterIds(model);
         FloatPointer valueParam = Live2dCore.csmGetParameterValues(model);
         FloatPointer defaultValue = Live2dCore.csmGetParameterDefaultValues(model);
         FloatPointer maximumValue = Live2dCore.csmGetParameterMaximumValues(model);
@@ -135,25 +134,17 @@ public class CubismParameters {
 
         for (int idx = 0; idx < count; idx ++) {
 
-            // ids[idx] = pp.getString(idx);
             valueParam.put(idx,values[idx]);
             defaultValue.put(idx,defaultValues[idx]);
             maximumValue.put(idx,maximumValues[idx]);
             minimumValue.put(idx,minimumValues[idx]);
             typeParam.put(idx,types[idx].getNumber());
 
-            // types[idx] = ParameterType.toType(typeParam.get(idx));
-
-            //keyCounts[idx] = keyCount.get(idx);
-            //keyValues[idx] = new float[keyCounts[idx]];
             keyCount.put(idx,keyCounts[idx]);
             FloatPointer kv = new FloatPointer(kvs.get(idx));
-            kv.put(keyValues[idx]);
-
-            /*for (int kvi = 0; kvi < keyCounts[idx]; kvi ++) {
+            for (int kvi = 0; kvi < keyCounts[idx]; kvi ++) {
                 kv.put(kvi,keyValues[idx][kvi]);
-                //keyValues[idx][kvi] = kv.get(kvi);
-            }*/
+            }
 
         }
 
@@ -185,10 +176,9 @@ public class CubismParameters {
             keyValues[idx] = new float[keyCounts[idx]];
 
             FloatPointer kv = new FloatPointer(kvs.get(idx));
-            kv.get(keyValues[idx]);
-            /*for (int kvi = 0; kvi < keyCounts[idx]; kvi ++) {
+            for (int kvi = 0; kvi < keyCounts[idx]; kvi ++) {
                 keyValues[idx][kvi] = kv.get(kvi);
-            }*/
+            }
 
         }
 

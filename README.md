@@ -9,4 +9,5 @@ Please clone and build it yourself if you want to have a try。
 ## 子项目列表（sub-project list）
 
 1. Live2D Core & Live2D Java SDK（YES，**JAVA SDK，NOT ANDROID**）
-2. coming soon...
+2. Pdfium Core & Pdfium4J（new library）
+3. coming soon...

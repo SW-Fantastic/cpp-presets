@@ -19,7 +19,7 @@ public class CubismMoc implements Closeable {
 
     public static CubismMoc instantiate(byte[] mocBinary) throws ParseException {
 
-        /*Pointer pointer = Live2dCore.csmAllocateAligned(mocBinary.length,Live2dCore.csmAlignofMoc);
+        Pointer pointer = Live2dCore.csmAllocateAligned(mocBinary.length,Live2dCore.csmAlignofMoc);
         BytePointer buffer = new BytePointer(pointer);
         buffer.put(mocBinary);
 
@@ -33,16 +33,16 @@ public class CubismMoc implements Closeable {
         Live2dCore.csmMoc nativeMoc = Live2dCore.csmReviveMocInPlace(buffer,mocBinary.length);
         if (nativeMoc == null || nativeMoc.isNull()) {
             throw new ParseException("moc data is Invalid.", 0);
-        }*/
+        }
 
-        Live2dCore.csmMoc nativeMoc = Live2dCore.csmAllocMoc(
+        /*Live2dCore.csmMoc nativeMoc = Live2dCore.csmAllocMoc(
                 mocBinary,
                 mocBinary.length,
                 false
-        );
+        );*/
 
         CubismMoc moc = new CubismMoc();
-        //moc.buffer = buffer;
+        moc.buffer = buffer;
         moc.nativeMocHandle = nativeMoc;
         return moc;
     }
