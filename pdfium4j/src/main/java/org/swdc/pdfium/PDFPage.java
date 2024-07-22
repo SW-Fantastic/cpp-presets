@@ -4,50 +4,67 @@ import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Pointer;
 import org.swdc.pdfium.core.PdfiumDocument;
 import org.swdc.pdfium.core.PdfiumEdit;
+import org.swdc.pdfium.core.PdfiumText;
 import org.swdc.pdfium.core.PdfiumView;
-import org.swdc.pdfium.core.view.fpdf_document_t__;
+import org.swdc.pdfium.core.view.fpdf_font_t__;
 import org.swdc.pdfium.core.view.fpdf_page_t__;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.Map;
 
 /**
  * Pdfium的Pdf页面。
  */
 public class PDFPage implements Closeable {
 
-    private fpdf_document_t__ document;
+    private PDFDocument document;
 
     private fpdf_page_t__ page;
 
     private int index;
 
-    PDFPage(fpdf_document_t__ document, int index) {
+    /**
+     * 读取现有的Pdf页面
+     * @param document 所属的PDF文档
+     * @param index 页面序号
+     */
+    PDFPage(PDFDocument document, int index) {
 
         if (!Pdfium.isInitialized()) {
             Pdfium.doInitialize();
         }
 
-        if (document == null || document.isNull()) {
+        if (document.getDocument() == null || document.getDocument().isNull()) {
             throw new RuntimeException("failed to load pdf page caused by document has closed.");
         }
 
         this.document = document;
         this.index = index;
-        this.page = PdfiumView.FPDF_LoadPage(document,index);
+        this.page = PdfiumView.FPDF_LoadPage(document.getDocument(),index);
         if (page == null || page.isNull()) {
             throw new RuntimeException("failed to load pdf page.");
         }
     }
 
-    PDFPage(fpdf_document_t__ document,int index, int width, int height) {
+    /**
+     * 创建新的PDF页面。
+     *
+     * @param document 所属的PDF文档
+     * @param index 页面序号
+     * @param width 宽度
+     * @param height 高度
+     */
+    PDFPage(PDFDocument document,int index, int width, int height) {
 
         if (!Pdfium.isInitialized()) {
             Pdfium.doInitialize();
         }
 
-        if (document == null || document.isNull()) {
+        if (document == null || document.getDocument() == null || document.getDocument().isNull()) {
             throw new RuntimeException("failed to create pdf page caused by document has closed");
         }
 
@@ -55,7 +72,7 @@ public class PDFPage implements Closeable {
         this.index = index;
 
         this.page = PdfiumEdit.FPDFPage_New(
-                document,
+                document.getDocument(),
                 index,
                 width,
                 height
@@ -71,17 +88,35 @@ public class PDFPage implements Closeable {
         return index;
     }
 
-    public void setIndex(int index) {
+    /**
+     * 仅供内部使用，调整页面的index，不会实际改变页面在PDF的位置，
+     *
+     * @param index 新的index
+     */
+    void setIndexRef(int index) {
+        this.index = index;
+    }
+
+    /**
+     * 修改页面的序号，将会移动页面。
+     * @param newIndex 新的序号
+     * @return 是否成功。
+     */
+    public boolean setIndex(int newIndex) {
         int state = PdfiumEdit.FPDF_MovePages(
-                document,
+                document.getDocument(),
                 new int[] { this.index },
                 1,
-                index
+                newIndex
         );
         if (state == 1) {
-            this.index = index;
+            document.movePageReference(this.index,newIndex);
+            return true;
         }
+        return false;
     }
+
+
 
     public double getHeight() {
         valid();
@@ -120,7 +155,12 @@ public class PDFPage implements Closeable {
     public String getLabel() {
         valid();
 
-        long size = PdfiumDocument.FPDF_GetPageLabel(document,index,null,0);
+        long size = PdfiumDocument.FPDF_GetPageLabel(
+                document.getDocument(),
+                index,
+                null,
+                0
+        );
         if (size == 2) {
             return "";
         }
@@ -128,7 +168,7 @@ public class PDFPage implements Closeable {
         byte[] data = new byte[(int)size - 16];
         BytePointer buf = new BytePointer(Pointer.malloc(size));
         PdfiumDocument.FPDF_GetPageLabel(
-                document,
+                document.getDocument(),
                 index,
                 buf,
                 size * 2
@@ -140,6 +180,12 @@ public class PDFPage implements Closeable {
         return new String(data, StandardCharsets.UTF_16LE);
     }
 
+    /**
+     * 渲染PDF为图像
+     * @param scale 缩放，影响页面渲染的质量
+     * @param rotate 旋转
+     * @return 渲染后的图片对象。
+     */
     public PDFBitmap renderPage(int scale, PDFPageRotate rotate) {
 
         valid();
@@ -178,6 +224,7 @@ public class PDFPage implements Closeable {
     public void close() {
         if (page != null && !page.isNull()) {
             PdfiumView.FPDF_ClosePage(page);
+            document.removePage(this.index);
             page = null;
         }
     }

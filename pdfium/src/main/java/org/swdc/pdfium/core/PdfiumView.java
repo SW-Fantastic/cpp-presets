@@ -332,7 +332,7 @@ public static final int FPDF_POLICY_MACHINETIME_ACCESS = 0;
 //                 via ExtEscape() in PASSTHROUGH mode.
 // Return value:
 //          True if successful, false if unsuccessful (typically invalid input).
- public static native @Cast("FPDF_BOOL") int FPDF_SetPrintMode(int mode);
+ 
 // #endif  // defined(_WIN32)
 
 // Function: FPDF_LoadDocument

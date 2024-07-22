@@ -14,6 +14,14 @@ import org.bytedeco.javacpp.tools.InfoMapper;
                 linkpath = "platforms/Pdfium/dll/windows/x86_64",
                 link = "pdfium.dll",
                 preload = "pdfium"
+        ),
+        @Platform(
+                value = "macosx-x86_64",
+                includepath = { "platforms/Pdfium/include" },
+                include = "fpdfview.h",
+                linkpath = "platforms/Pdfium/dll/macosx",
+                link = "pdfium",
+                preload = "pdfium"
         )
 },
         target = "org.swdc.pdfium.core.view",
@@ -68,6 +76,7 @@ public class PdfiumViewConfigure implements InfoMapper {
                         "FPDF_BStr_Init",
                         "FPDF_GetRecommendedV8Flags",
                         "FPDF_RenderPageSkia",
+                        "FPDF_SetPrintMode",
                         "FPDF_GetArrayBufferAllocatorSharedInstance"
                 ).skip());
 
