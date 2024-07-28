@@ -4,17 +4,16 @@ import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Pointer;
 import org.swdc.pdfium.core.PdfiumDocument;
 import org.swdc.pdfium.core.PdfiumEdit;
-import org.swdc.pdfium.core.PdfiumText;
 import org.swdc.pdfium.core.PdfiumView;
-import org.swdc.pdfium.core.view.fpdf_font_t__;
 import org.swdc.pdfium.core.view.fpdf_page_t__;
+import org.swdc.pdfium.core.view.fpdf_pageobject_t__;
+import org.swdc.pdfium.page.PDFImageObject;
+import org.swdc.pdfium.page.PDFTextObject;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.Map;
 
 /**
  * Pdfium的Pdf页面。
@@ -84,6 +83,10 @@ public class PDFPage implements Closeable {
 
     }
 
+    /**
+     * 获取Page的序号
+     * @return Page序号（从0开始）
+     */
     public int getIndex() {
         return index;
     }
@@ -115,7 +118,6 @@ public class PDFPage implements Closeable {
         }
         return false;
     }
-
 
 
     public double getHeight() {
@@ -180,6 +182,7 @@ public class PDFPage implements Closeable {
         return new String(data, StandardCharsets.UTF_16LE);
     }
 
+
     /**
      * 渲染PDF为图像
      * @param scale 缩放，影响页面渲染的质量
@@ -212,6 +215,108 @@ public class PDFPage implements Closeable {
         );
 
         return bitmapImage;
+    }
+
+
+    public PDFFont loadFont(File font) throws IOException {
+        return document.loadFont(font);
+    }
+
+    public int getObjectCount() {
+        valid();
+        return PdfiumEdit.FPDFPage_CountObjects(page);
+    }
+
+    public <T extends PDFPageObject> T getObject(int index) {
+
+        if (index < 0 || index > getObjectCount()) {
+            return null;
+        }
+
+        fpdf_pageobject_t__ obj = PdfiumEdit.FPDFPage_GetObject(page,index);
+        if (obj == null || obj.isNull()) {
+            return null;
+        }
+
+        int type = PdfiumEdit.FPDFPageObj_GetType(obj);
+        PDFPageObjectType objType = PDFPageObjectType.of(type);
+
+        switch (objType) {
+            case Text : {
+                return (T) new PDFTextObject(obj,this);
+            }
+            default: {
+                return (T)new PDFPageObject(obj,this);
+            }
+        }
+
+    }
+
+    public PDFTextObject createText(PDFFont font, float fontSize) {
+
+        valid();
+        fpdf_pageobject_t__ obj = PdfiumEdit.FPDFPageObj_CreateTextObj(
+                document.getDocument(),
+                font.getFont(),
+                fontSize
+        );
+        if (obj == null || obj.isNull()) {
+            return null;
+        }
+
+        return new PDFTextObject(obj,null);
+    }
+
+    public boolean generateContent() {
+
+        valid();
+        return PdfiumEdit.FPDFPage_GenerateContent(page) == 1;
+
+    }
+
+    public PDFImageObject createImage() {
+
+        valid();
+        fpdf_pageobject_t__ obj = PdfiumEdit.FPDFPageObj_NewImageObj(
+                document.getDocument()
+        );
+
+        if (obj == null || obj.isNull()) {
+            return null;
+        }
+
+        return new PDFImageObject(obj,null);
+    }
+
+    public void addObject(PDFPageObject object) {
+
+        valid();
+        PdfiumEdit.FPDFPage_InsertObject(page,object.getObj());
+        object.setOwner(this);
+
+    }
+
+
+    public boolean removeObject(PDFPageObject object) {
+
+        valid();
+        boolean result = PdfiumEdit.FPDFPage_RemoveObject(
+                page,
+                object.getObj()
+        ) == 1;
+
+        if (result) {
+            object.close();
+        }
+
+        return result;
+
+    }
+
+
+    fpdf_page_t__ getPage() {
+        valid();
+        return page;
     }
 
     private void valid () {

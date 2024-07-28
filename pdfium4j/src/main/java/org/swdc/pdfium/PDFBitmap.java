@@ -3,14 +3,15 @@ package org.swdc.pdfium;
 
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Pointer;
+import org.swdc.pdfium.core.PdfiumEdit;
 import org.swdc.pdfium.core.PdfiumView;
 import org.swdc.pdfium.core.view.fpdf_bitmap_t__;
 
 import java.awt.*;
 import java.awt.color.ColorSpace;
 import java.awt.image.*;
-import java.io.Closeable;
-import java.io.IOException;
+import java.io.*;
+import java.nio.ByteBuffer;
 
 public class PDFBitmap implements Closeable {
 
@@ -56,8 +57,10 @@ public class PDFBitmap implements Closeable {
         return PdfiumView.FPDFBitmap_GetStride(bitmap);
     }
 
+
     public byte[] getBuffer() {
 
+        valid();
         Pointer buffer = PdfiumView.FPDFBitmap_GetBuffer(bitmap);
 
         if (buffer != null) {
@@ -70,7 +73,6 @@ public class PDFBitmap implements Closeable {
             BytePointer bufPointer = new BytePointer(buffer);
             bufPointer.get(data);
             bufPointer.close();
-
             return data;
         }
         return null;
@@ -88,14 +90,21 @@ public class PDFBitmap implements Closeable {
                 new int[] {8,8,8,8}, true, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
 
         WritableRaster raster = Raster.createInterleavedRaster(
-                dataBuffer, width, height, width * 4, 4, new int[] {0, 1, 2, 3}, null);
+                dataBuffer,
+                width,
+                height,
+                width * 4,
+                4,
+                new int[] {2, 1, 0, 3},  // 这个指的是颜色通道的顺序。
+                null
+        );
 
         return new BufferedImage(colorModel, raster, false, null);
     }
 
     private void valid() {
         if (bitmap == null || bitmap.isNull()) {
-            throw new RuntimeException("document is closed!");
+            throw new RuntimeException("bitmap is closed!");
         }
     }
 

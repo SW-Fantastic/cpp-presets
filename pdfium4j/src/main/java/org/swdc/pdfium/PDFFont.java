@@ -58,6 +58,10 @@ public class PDFFont implements Closeable {
         }
     }
 
+    fpdf_font_t__ getFont() {
+        return font;
+    }
+
     public String getKey() {
         return key;
     }

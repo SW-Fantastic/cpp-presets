@@ -45,7 +45,7 @@
                         <configuration>
                             <skip>${build.skip}</skip>
                             <outputDirectory>${project.build.sourceDirectory}</outputDirectory>
-                            <classOrPackageName>org.swdc.pdfium.core.*</classOrPackageName>
+                            <classOrPackageName>org.swdc.pdfium.core.**</classOrPackageName>
                         </configuration>
                     </execution>
                     <execution>
@@ -57,7 +57,7 @@
                         <configuration>
                             <skip>${build.skip}</skip>
                             <outputDirectory>${project.build.sourceDirectory}</outputDirectory>
-                            <classOrPackageName>org.swdc.pdfium.core.*</classOrPackageName>
+                            <classOrPackageName>org.swdc.pdfium.core.**</classOrPackageName>
                             <copyLibs>false</copyLibs>
                         </configuration>
                     </execution>

@@ -5,6 +5,7 @@ import org.bytedeco.javacpp.Pointer;
 import org.swdc.pdfium.core.PdfiumDocument;
 import org.swdc.pdfium.core.PdfiumEdit;
 import org.swdc.pdfium.core.PdfiumView;
+import org.swdc.pdfium.core.edit.FPDF_FILEWRITE;
 import org.swdc.pdfium.core.view.fpdf_bookmark_t__;
 import org.swdc.pdfium.core.view.fpdf_document_t__;
 import org.swdc.pdfium.core.view.fpdf_font_t__;
@@ -12,9 +13,11 @@ import org.swdc.pdfium.core.view.fpdf_font_t__;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class PDFDocument implements Closeable {
 
@@ -199,6 +202,51 @@ public class PDFDocument implements Closeable {
         return result;
     }
 
+    public void removePage(PDFPage page) {
+
+        valid();
+        PdfiumEdit.FPDFPage_Delete(
+                document,
+                page.getIndex()
+        );
+        removePage(page.getIndex());
+        page.close();
+
+    }
+
+    public boolean write(OutputStream outputStream) {
+
+        valid();
+
+        FPDF_FILEWRITE write = new FPDF_FILEWRITE();
+        write.WriteBlock(new FPDF_FILEWRITE.WriteBlock_FPDF_FILEWRITE_Pointer_long() {
+
+            private byte[] buffer = null;
+
+            @Override
+            public int call(FPDF_FILEWRITE pThis, Pointer pData, long size) {
+
+                if (buffer == null || buffer.length < size) {
+                    buffer = new byte[(int)size];
+                }
+                BytePointer pointer = new BytePointer(pData);
+                pointer.get(buffer, 0, (int) size);
+                try {
+                    outputStream.write(buffer);
+                    return 1;
+                } catch (Exception e) {
+                    return 0;
+                }
+            }
+        });
+        return PdfiumEdit.FPDF_SaveAsCopy(
+                document,
+                write,
+                PdfiumEdit.FPDF_NO_INCREMENTAL
+        ) == 1;
+
+    }
+
     fpdf_document_t__ getDocument() {
         return document;
     }
@@ -216,12 +264,12 @@ public class PDFDocument implements Closeable {
         List<PDFPage> between = loadedPages.values()
                 .stream()
                 .filter(p -> p.getIndex() > src && p.getIndex() < dst)
-                .toList();
+                .collect(Collectors.toList());
 
         List<PDFPage> after = loadedPages.values()
                 .stream()
                 .filter(p -> p.getIndex() >= dst)
-                .toList();
+                .collect(Collectors.toList());
 
         for (PDFPage betweenItem : between) {
             betweenItem.setIndexRef(betweenItem.getIndex() - 1);
@@ -249,6 +297,11 @@ public class PDFDocument implements Closeable {
             page.close();
         }
         loadedPages.clear();
+
+        for (PDFFont font : loadedFonts.values()) {
+            font.close();
+        }
+        loadedFonts.clear();
 
         if (document != null && !document.isNull()) {
             PdfiumView.FPDF_CloseDocument(document);
