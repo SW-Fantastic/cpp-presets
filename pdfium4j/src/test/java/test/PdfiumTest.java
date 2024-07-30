@@ -24,7 +24,7 @@ public class PdfiumTest {
         System.err.println("page w: " + pdfPage.getWidth());
         System.err.println("page h: " + pdfPage.getHeight());
 
-       PDFFont font = document.loadFont(new File("./pdfium4j/font.ttf").getAbsoluteFile());
+        PDFFont font = document.loadFont(new File("./pdfium4j/font.ttf").getAbsoluteFile());
         PDFTextObject txt = pdfPage.createText(font,12);
         txt.setText("测试文本 HelloWorld");
         txt.setBounds(2.4f,2,0,0);
@@ -37,26 +37,21 @@ public class PdfiumTest {
         img.setBounds(120, 160, 80, 80);
         pdfPage.addObject(img);
         pdfPage.generateContent();
-        pdfPage.close();
+        // TODO 未知原因的崩溃，generateContent和ImageIO冲突了。
 
-        pdfPage = document.getPage(1);
+        //document.write(new File("testout.pdf"));
 
         OutputStream os = Files.newOutputStream(Paths.get("./pdfium4j/test.png"));
         PDFBitmap image = pdfPage.renderPage(4, PDFPageRotate.NO_ROTATE);
         BufferedImage image1 = image.createBufferedImage();
+        ImageIO.write(image1,"png" ,os );
+        document.write(new File("testout.pdf"));
+
+        // ImageIO的write和Pdfium的write存在未知冲突，一旦调用ImageIO的write后，
+        // 则不能调用Pdfium的Write，否则将会导致崩溃。
+        // 如果非要这样做，首先需要关闭Pdfium的Document，再次打开后就能正常Write。
         //ImageIO.write(image1,"png" ,os );
-
-        //pdfPage.close();
-
-        OutputStream bos = new FileOutputStream("testout.pdf");
-        document.write(bos);
-        document.close();
-        //os.close();
-        //image.close();
-
-
-
-
+        os.close();
 
     }
 

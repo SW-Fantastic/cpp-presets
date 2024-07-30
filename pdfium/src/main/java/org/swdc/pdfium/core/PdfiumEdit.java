@@ -1679,4 +1679,36 @@ public static final int FPDF_REMOVE_SECURITY = 3;
 // #endif  // PUBLIC_FPDF_SAVE_H_
 
 
+// Parsed from ext_fpdf_save.h
+
+// #ifndef _H_PDFIUM_SAVE_EXT_
+// #define _H_PDFIUM_SAVE_EXT_
+
+// #include "fpdfview.h"
+// #include "fpdf_save.h"
+// #include <stdio.h>
+
+
+
+public static native @Cast("bool") boolean FPDF_EXT_SaveAsCopy(fpdf_document_t__ doc, @Cast("const char*") BytePointer filePath);
+public static native @Cast("bool") boolean FPDF_EXT_SaveAsCopy(fpdf_document_t__ doc, String filePath);
+
+// #endif
+
+// Parsed from ext_fpdf_edit.h
+
+// #ifndef _H_PDFIUM_EDIT_EXT_
+// #define _H_PDFIUM_EDIT_EXT_
+
+// #include "fpdfview.h"
+// #include "fpdf_edit.h"
+// #include <stdio.h>
+// #include <string.h>
+
+
+
+public static native @Cast("bool") boolean FPDFObj_EXT_LoadJpegData(Pointer data, int length, fpdf_page_t__ page,fpdf_pageobject_t__ obj);
+
+// #endif
+
 }

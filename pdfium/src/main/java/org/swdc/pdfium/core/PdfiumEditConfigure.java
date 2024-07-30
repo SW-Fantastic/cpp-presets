@@ -9,15 +9,25 @@ import org.bytedeco.javacpp.tools.InfoMapper;
 @Properties(value = {
         @Platform(
                 value = "windows-x86_64",
-                includepath = { "platforms/Pdfium/include" },
-                include = { "fpdf_edit.h", "fpdf_save.h" },
+                includepath = { "platforms/Pdfium/include","platforms/Pdfium/ext" },
+                include = {
+                        "fpdf_edit.h",
+                        "fpdf_save.h",
+                        "ext_fpdf_save.h",
+                        "ext_fpdf_edit.h"
+                },
                 linkpath = "platforms/Pdfium/dll/windows/x86_64",
                 link = "pdfium.dll"
         ),
         @Platform(
                 value = "macosx-x86_64",
-                includepath = { "platforms/Pdfium/include" },
-                include = { "fpdf_edit.h", "fpdf_save.h" },
+                includepath = { "platforms/Pdfium/include","platforms/Pdfium/ext" },
+                include = {
+                        "fpdf_edit.h",
+                        "fpdf_save.h",
+                        "ext_fpdf_save.h",
+                        "ext_fpdf_edit.h"
+                },
                 linkpath = "platforms/Pdfium/dll/macosx",
                 link = "pdfium"
         )
@@ -31,6 +41,13 @@ public class PdfiumEditConfigure implements InfoMapper {
     public void map(InfoMap infoMap) {
 
         infoMap.put(new Info("FPDF_FILEWRITE_").cppTypes("FPDF_FILEWRITE").translate());
+        // do not add ext private methods.
+        infoMap.put(new Info(
+                "priv_fpdf_write_data",
+                "priv_fpdf_readJpegBytes",
+                "FWriter_",
+                "PDFWriter"
+        ).skip());
 
     }
 }

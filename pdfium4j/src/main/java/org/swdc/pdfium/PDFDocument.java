@@ -214,36 +214,22 @@ public class PDFDocument implements Closeable {
 
     }
 
-    public boolean write(OutputStream outputStream) {
+    /**
+     * 存储为新的PDF文件。
+     *
+     * 如果遇到了JVM崩溃，请确认你没有在编辑期间使用ImageIO的write，这会导致
+     * 未知的冲突从而引发Java的崩溃。
+     *
+     * @param targetFile 目标文件
+     * @return
+     */
+    public boolean write(File targetFile) {
 
         valid();
-
-        FPDF_FILEWRITE write = new FPDF_FILEWRITE();
-        write.WriteBlock(new FPDF_FILEWRITE.WriteBlock_FPDF_FILEWRITE_Pointer_long() {
-
-            private byte[] buffer = null;
-
-            @Override
-            public int call(FPDF_FILEWRITE pThis, Pointer pData, long size) {
-
-                if (buffer == null || buffer.length < size) {
-                    buffer = new byte[(int)size];
-                }
-                BytePointer pointer = new BytePointer(pData);
-                pointer.get(buffer, 0, (int) size);
-                try {
-                    outputStream.write(buffer);
-                    return 1;
-                } catch (Exception e) {
-                    return 0;
-                }
-            }
-        });
-        return PdfiumEdit.FPDF_SaveAsCopy(
+        return PdfiumEdit.FPDF_EXT_SaveAsCopy(
                 document,
-                write,
-                PdfiumEdit.FPDF_NO_INCREMENTAL
-        ) == 1;
+                targetFile.getAbsolutePath()
+        );
 
     }
 
