@@ -2,9 +2,11 @@ package org.swdc.pdfium.page;
 
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Pointer;
+import org.swdc.pdfium.PDFBitmap;
 import org.swdc.pdfium.PDFPage;
 import org.swdc.pdfium.PDFPageObject;
 import org.swdc.pdfium.core.PdfiumEdit;
+import org.swdc.pdfium.core.view.fpdf_bitmap_t__;
 import org.swdc.pdfium.core.view.fpdf_pageobject_t__;
 
 import javax.imageio.ImageIO;
@@ -23,6 +25,17 @@ public class PDFImageObject extends PDFPageObject {
 
     public PDFImageObject(fpdf_pageobject_t__ obj, PDFPage page) {
         super(obj, page);
+    }
+
+    public PDFBitmap getBitmap() {
+
+        valid();
+        fpdf_bitmap_t__ bitmap = PdfiumEdit.FPDFImageObj_GetBitmap(obj);
+        if (bitmap != null && !bitmap.isNull()) {
+            return new PDFBitmap(bitmap);
+        }
+        return null;
+
     }
 
     public boolean loadImage(File file) throws IOException {

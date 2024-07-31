@@ -8,6 +8,7 @@ import org.swdc.pdfium.core.PdfiumView;
 import org.swdc.pdfium.core.view.fpdf_page_t__;
 import org.swdc.pdfium.core.view.fpdf_pageobject_t__;
 import org.swdc.pdfium.page.PDFImageObject;
+import org.swdc.pdfium.page.PDFPathObject;
 import org.swdc.pdfium.page.PDFTextObject;
 
 import java.io.Closeable;
@@ -244,6 +245,12 @@ public class PDFPage implements Closeable {
         switch (objType) {
             case Text : {
                 return (T) new PDFTextObject(obj,this);
+            }
+            case Image: {
+                return (T)new PDFImageObject(obj, this);
+            }
+            case Path: {
+                return (T) new PDFPathObject(obj, this);
             }
             default: {
                 return (T)new PDFPageObject(obj,this);

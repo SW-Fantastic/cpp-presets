@@ -67,4 +67,46 @@ public class PDFTextObject extends PDFPageObject {
         return rst == 1;
     }
 
+    public boolean setTextColor(PDFColor color) {
+        return setTextColor(
+                color.getR(),
+                color.getG(),
+                color.getB(),
+                color.getA()
+        );
+    }
+
+    public boolean setTextColor(int r, int g, int b, int a) {
+
+        valid();
+        return PdfiumEdit.FPDFPageObj_SetFillColor(obj,r,g,b,a) == 1;
+
+    }
+
+    public PDFColor getTextColor() {
+
+        int[] color = getTextColorRGBA();
+        if (color == null) {
+            return null;
+        }
+        return new PDFColor(color);
+
+    }
+
+    public int[] getTextColorRGBA() {
+
+        valid();
+        int[] r = new int[1];
+        int[] g = new int[1];
+        int[] b = new int[1];
+        int[] a = new int[1];
+        int rst = PdfiumEdit.FPDFPageObj_GetFillColor(obj,r,g,b,a);
+        if (rst == 1) {
+            return new int[] {
+                    r[0],g[0],b[0],a[0]
+            };
+        }
+        return null;
+    }
+
 }

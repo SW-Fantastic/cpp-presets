@@ -37,20 +37,14 @@ public class PdfiumTest {
         img.setBounds(120, 160, 80, 80);
         pdfPage.addObject(img);
         pdfPage.generateContent();
-        // TODO 未知原因的崩溃，generateContent和ImageIO冲突了。
-
-        //document.write(new File("testout.pdf"));
 
         OutputStream os = Files.newOutputStream(Paths.get("./pdfium4j/test.png"));
         PDFBitmap image = pdfPage.renderPage(4, PDFPageRotate.NO_ROTATE);
         BufferedImage image1 = image.createBufferedImage();
         ImageIO.write(image1,"png" ,os );
+
         document.write(new File("testout.pdf"));
 
-        // ImageIO的write和Pdfium的write存在未知冲突，一旦调用ImageIO的write后，
-        // 则不能调用Pdfium的Write，否则将会导致崩溃。
-        // 如果非要这样做，首先需要关闭Pdfium的Document，再次打开后就能正常Write。
-        //ImageIO.write(image1,"png" ,os );
         os.close();
 
     }

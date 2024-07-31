@@ -30,6 +30,10 @@ public class PDFBitmap implements Closeable {
 
     }
 
+    public PDFBitmap(fpdf_bitmap_t__ bitmap) {
+        this.bitmap = bitmap;
+    }
+
     public int getWidth() {
         valid();
         return PdfiumView.FPDFBitmap_GetWidth(bitmap);
