@@ -6,5 +6,4 @@ module swdc.presets.pdfium {
     exports org.swdc.pdfium.core.edit;
     exports org.swdc.pdfium.core;
 
-    opens org.swdc.pdfium.core to org.bytedeco.javacpp;
 }

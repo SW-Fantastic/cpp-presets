@@ -13,6 +13,8 @@
         <module>live2d-framework</module>
         <module>pdfium</module>
         <module>pdfium4j</module>
+        <module>mariadb</module>
+        <module>mariadb-embedded</module>
     </modules>
 
     <properties>

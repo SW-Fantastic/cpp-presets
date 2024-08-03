@@ -45,7 +45,7 @@
                         <configuration>
                             <skip>${build.skip}</skip>
                             <outputDirectory>${project.build.sourceDirectory}</outputDirectory>
-                            <classOrPackageName>org.swdc.live2d.core.**</classOrPackageName>
+                            <classOrPackageName>org.swdc.live2d.**</classOrPackageName>
                         </configuration>
                     </execution>
                     <execution>
@@ -57,7 +57,7 @@
                         <configuration>
                             <skip>${build.skip}</skip>
                             <outputDirectory>${project.build.sourceDirectory}</outputDirectory>
-                            <classOrPackageName>org.swdc.live2d.core.**</classOrPackageName>
+                            <classOrPackageName>org.swdc.live2d.**</classOrPackageName>
                             <copyLibs>true</copyLibs>
                         </configuration>
                     </execution>

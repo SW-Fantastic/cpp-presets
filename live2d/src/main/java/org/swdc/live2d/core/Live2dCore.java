@@ -5,8 +5,9 @@ package org.swdc.live2d.core;
 import java.nio.*;
 import org.bytedeco.javacpp.*;
 import org.bytedeco.javacpp.annotation.*;
+import org.swdc.live2d.conf.Live2dCoreConfigure;
 
-public class Live2dCore extends org.swdc.live2d.core.Live2dCoreConfigure {
+public class Live2dCore extends Live2dCoreConfigure {
     static { Loader.load(); }
 
 // Parsed from Live2DCubismCore.h
