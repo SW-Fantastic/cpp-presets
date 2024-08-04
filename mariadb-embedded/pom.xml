@@ -20,6 +20,11 @@
     <dependencies>
         <dependency>
             <groupId>org.swdc</groupId>
+            <artifactId>our-commons</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.swdc</groupId>
             <artifactId>mariadb</artifactId>
             <version>1.0</version>
         </dependency>

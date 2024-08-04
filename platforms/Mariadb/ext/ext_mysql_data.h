@@ -55,10 +55,4 @@ void ext_char_list_free(char** buf) {
 
 }
 
-void ext_error_print(char* str) {
-
-    fprintf(stderr, "%s", str);
-
-}
-
 #endif

@@ -16,8 +16,10 @@ Mariadb的仓库地址是这个：https://github.com/MariaDB/server
 当然也可以通过git客户端或者Github相关客户端完成下载或者clone。
 
 本项目依赖的其他项目：
-libmariadb
-extra/wolfssl/wolfssl
+
+ - libmariadb
+ - extra/wolfssl/wolfssl
+
 点进去下载并且解压到它们应该在的位置即可。
 
 构建需要CMake和Visual Studio，请自行下载安装。
