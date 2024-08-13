@@ -38,9 +38,19 @@ public class EmbeddedMariaDB {
      */
     private File baseDir;
 
+    private String timeZoneId = "+0:00";
+
     private EmbeddedMariaDB(File dataDir, File baseDir) {
         this.baseDir = baseDir;
         this.dataDir = dataDir;
+    }
+
+    public String getTimeZoneId() {
+        return timeZoneId;
+    }
+
+    public void setTimeZoneId(String timeZoneId) {
+        this.timeZoneId = timeZoneId;
     }
 
     public File getBaseDir() {
@@ -77,6 +87,7 @@ public class EmbeddedMariaDB {
                             "mysql",    // 该参数会被忽略
                             "--console",  // 输出到控制台而不是文件，否则system.err会被重定向
                             "--skip-grant-tables",
+                            "--default-time-zone=" + getTimeZoneId(),
                             "--datadir=" + dataDir.toPath().toAbsolutePath(),
                             "--basedir=" + baseDir.toPath().toAbsolutePath()
                     };
