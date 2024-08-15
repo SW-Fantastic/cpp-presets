@@ -114,6 +114,17 @@ public class MySQLDBConnection implements Closeable {
         return rs;
     }
 
+    public void commit() {
+        valid();
+        MariaDB.mysql_commit(mariaDB);
+    }
+
+    public MySQLStatement createStatement() {
+        valid();
+        return new MySQLStatement(this,mariaDB);
+    }
+
+
     public int getJDBCTransactionIsolation() throws SQLException {
 
         valid();

@@ -1303,6 +1303,10 @@ public static native void ext_char_list_free(@Cast("char**") @ByPtrPtr BytePoint
 public static native void ext_char_list_free(@Cast("char**") @ByPtrPtr ByteBuffer buf);
 public static native void ext_char_list_free(@Cast("char**") @ByPtrPtr byte[] buf);
 
+public static native @Cast("char*") BytePointer ext_get_decimal(Pointer data);
+
+public static native void ext_str_free(Pointer buf);
+
 // #endif
 
 

@@ -4,6 +4,7 @@ import org.swdc.mariadb.core.MariaDB;
 import org.swdc.mariadb.core.MyCom;
 import org.swdc.mariadb.core.mysql.MYSQL;
 import org.swdc.mariadb.embed.MySQLDBConnection;
+import org.swdc.mariadb.embed.MySQLStatement;
 
 import java.sql.*;
 import java.util.Collections;
@@ -24,7 +25,16 @@ public class MyConnection implements Connection {
 
     @Override
     public Statement createStatement() throws SQLException {
-        return null;
+        MySQLStatement statement = connection.createStatement();
+        if (statement != null) {
+            return new MyStatement(
+                    this,
+                    connection.createStatement(),
+                    ResultSet.TYPE_FORWARD_ONLY,
+                    ResultSet.CONCUR_READ_ONLY
+            );
+        }
+        throw new SQLException("failed to create statement.");
     }
 
     @Override
@@ -44,7 +54,7 @@ public class MyConnection implements Connection {
 
     @Override
     public void setAutoCommit(boolean autoCommit) throws SQLException {
-
+        connection.setAutoCommit(autoCommit);
     }
 
     @Override
@@ -54,7 +64,7 @@ public class MyConnection implements Connection {
 
     @Override
     public void commit() throws SQLException {
-
+        connection.commit();
     }
 
     @Override
@@ -201,7 +211,16 @@ public class MyConnection implements Connection {
 
     @Override
     public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-        return null;
+        MySQLStatement statement = connection.createStatement();
+        if (statement != null) {
+            return new MyStatement(
+                    this,
+                    connection.createStatement(),
+                    resultSetType,
+                    resultSetConcurrency
+            );
+        }
+        throw new SQLException("failed to create statement.");
     }
 
     @Override

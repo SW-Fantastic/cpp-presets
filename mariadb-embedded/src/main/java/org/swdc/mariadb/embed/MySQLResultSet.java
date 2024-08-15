@@ -3,11 +3,13 @@ package org.swdc.mariadb.embed;
 import org.bytedeco.javacpp.*;
 import org.swdc.mariadb.core.MariaDB;
 import org.swdc.mariadb.core.MyCom;
+import org.swdc.mariadb.core.MyGlobal;
 import org.swdc.mariadb.core.global.MYSQL_TIME;
 import org.swdc.mariadb.core.mysql.MYSQL_FIELD;
 import org.swdc.mariadb.core.mysql.MYSQL_RES;
 
 import java.io.Closeable;
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Time;
@@ -27,10 +29,6 @@ public class MySQLResultSet implements Closeable {
      */
     private MYSQL_RES res;
 
-    /**
-     * 字段数量
-     */
-    private int fields;
 
     /**
      * 当前行
@@ -45,17 +43,13 @@ public class MySQLResultSet implements Closeable {
     /**
      * 当前行号
      */
-    private int currentRowNum = -1;
+    private long currentRowNum = -1;
 
-    private boolean first = true;
-
-    private boolean last = false;
 
     private MySQLResultMetadata metadata;
 
-    private MySQLDBConnection connection;
 
-    public MySQLResultSet(MySQLDBConnection connection, MYSQL_RES res) {
+    public MySQLResultSet( MYSQL_RES res) {
 
         this.res = res;
         this.metadata = new MySQLResultMetadata(res);
@@ -63,39 +57,91 @@ public class MySQLResultSet implements Closeable {
     }
 
     public boolean next() {
-        if (currentRow != null) {
-            currentRow.close();
-        }
-        currentRow = MariaDB.mysql_fetch_row(res);
-        if (currentRow == null || currentRow.isNull()) {
-            last = true;
-            first = false;
+        return seek(currentRowNum + 1);
+    }
+
+    public boolean previous() {
+        if (currentRowNum <= 0) {
             return false;
         }
-        currentRowNum ++;
+        return seek(currentRowNum - 1);
+    }
+
+    public boolean seek(long rowNum) {
+        if (rowNum > MariaDB.mysql_num_rows(res) + 1) {
+            // seek to after last
+            currentRow = null;
+            currentRowLength = null;
+            currentRowNum =  MariaDB.mysql_num_rows(res) + 1;
+            return true;
+
+        } else if (rowNum <= -1) {
+            // seek to before first
+            currentRow = null;
+            currentRowLength = null;
+            currentRowNum = -1;
+            return true;
+
+        }
+        // seek to normal position
+        MariaDB.mysql_data_seek(res,rowNum);
+        currentRowNum = rowNum;
+        currentRow = MariaDB.mysql_fetch_row(res);
         currentRowLength = MariaDB.mysql_fetch_lengths(res);
+        if (currentRow == null || currentRow.isNull()) {
+            return false;
+        }
+        if (currentRowLength == null || currentRowLength.isNull()) {
+            return false;
+        }
         return true;
     }
 
+    public boolean beforeFirst() {
+        currentRowNum = -1;
+        this.currentRow = null;
+        this.currentRowLength = null;
+        return true;
+    }
+
+    public boolean afterLast() {
+        currentRowNum = MariaDB.mysql_num_rows(res) + 1;
+        this.currentRow = null;
+        this.currentRowLength = null;
+        return true;
+    }
+
+    public boolean isBeforeFirst() {
+        return currentRowNum == -1;
+    }
+
+    public boolean isAfterLast() {
+        return currentRowNum > MariaDB.mysql_num_rows(res);
+    }
+
+    public void firstRow() {
+        seek(0);
+    }
+
+    public void lastRow() {
+        seek(MariaDB.mysql_num_rows(res) - 1);
+    }
 
     public boolean isFirst() {
-        return first;
+        return currentRowNum == 0;
     }
 
     public boolean isLast() {
-        return last;
+        return currentRowNum == MariaDB.mysql_num_rows(res);
     }
 
     public int findColumn(String label) throws SQLException {
-        return metadata.findField(label);
-    }
-
-    public int getFieldsCount() {
-        return fields;
+        // jdbc的column从1开始，这里额外加一。
+        return metadata.findField(label) + 1;
     }
 
     public Date getDate(String column) throws SQLException {
-        return getDate(findColumn(column));
+        return getDate(metadata.findField(column));
     }
 
     public Date getDate(int column) throws SQLException {
@@ -297,6 +343,32 @@ public class MySQLResultSet implements Closeable {
         return null;
     }
 
+    public BigDecimal getDecimal(String column) throws SQLException {
+        return getDecimal(metadata.findField(column));
+    }
+
+    public BigDecimal getDecimal(int column) throws SQLException {
+        if (currentRow == null || currentRow.isNull()) {
+            return null;
+        }
+        MYSQL_FIELD field = metadata.getField(column);
+        if (accept(
+                field.type(),
+                MyCom.enum_field_types.MYSQL_TYPE_DECIMAL
+        )) {
+            Pointer pData = currentRow.get(column);
+            if (pData == null || pData.isNull()) {
+                return null;
+            }
+            BytePointer pStr = MyGlobal.ext_get_decimal(pData);
+            BigDecimal decimal = new BigDecimal(pStr.getString());
+            MyGlobal.ext_str_free(pStr);
+            return decimal;
+        }
+
+        return null;
+    }
+
     public String getString(String column) throws SQLException {
         return getString(metadata.findField(column));
     }
@@ -415,20 +487,15 @@ public class MySQLResultSet implements Closeable {
     }
 
     public int getCurrentRowNum() {
-        return currentRowNum;
+        return (int) currentRowNum;
     }
 
     @Override
     public void close() {
 
-        if (currentRow != null && !currentRow.isNull()) {
-            currentRow.close();
-            currentRow = null;
-        }
-
         MariaDB.mysql_free_result(res);
+        currentRow = null;
         res = null;
-        connection.resolveSteamingResult(this);
 
     }
 }

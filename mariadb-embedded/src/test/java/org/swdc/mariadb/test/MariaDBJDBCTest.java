@@ -13,7 +13,6 @@ public class MariaDBJDBCTest {
         Connection connection = DriverManager.getConnection(
                 "jdbc:mysql://testDB?basedir=./mysqlData/base&datadir=./mysqlData/data"
         );
-        connection.createBlob();
     }
 
 }

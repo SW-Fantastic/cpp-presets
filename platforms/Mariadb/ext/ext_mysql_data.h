@@ -55,4 +55,22 @@ void ext_char_list_free(char** buf) {
 
 }
 
+char* ext_get_decimal(void *data) {
+
+    long double * decimal = reinterpret_cast<long double*>(data);
+    char* buf = (char*)malloc(64);
+    sprintf(buf, "%Lf", *decimal);
+    return buf;
+
+}
+
+void ext_str_free(void* buf) {
+
+    if(buf == NULL) {
+        return;
+    }
+
+    free(buf);
+}
+
 #endif
