@@ -17,8 +17,6 @@ public class MySQLDBConnection implements Closeable {
 
     private MYSQL mariaDB;
 
-    private MySQLResultSet steamingResult;
-
     protected MySQLDBConnection(MYSQL db) {
         this.mariaDB = db;
     }
@@ -53,9 +51,7 @@ public class MySQLDBConnection implements Closeable {
     public synchronized List<TableField> listFields(String tableName) {
 
         valid();
-        if (steamingResult != null) {
-            throw new RuntimeException("you can not send command while a result is reading.");
-        }
+
         String query = "SHOW COLUMNS FROM " + tableName;
         int rst = MariaDB.mysql_real_query(mariaDB,query,query.length());
         if (rst != 0) {
@@ -90,9 +86,7 @@ public class MySQLDBConnection implements Closeable {
 
     public boolean isAutoCommit() throws SQLException {
         valid();
-        if (steamingResult != null) {
-            throw new SQLException("you can not send command while a result is reading.");
-        }
+
         MySQLStatement statement = new MySQLStatement(this,mariaDB);
         MySQLResultSet rs = statement.executeQuery("SELECT @@autocommit");
         if (rs != null && rs.next()) {
@@ -129,9 +123,6 @@ public class MySQLDBConnection implements Closeable {
 
         valid();
 
-        if (steamingResult != null) {
-            throw new SQLException("you can not send command while a result is reading.");
-        }
 
         MySQLStatement statement = new MySQLStatement(this,mariaDB);
         MySQLResultSet rs = statement.executeQuery("SELECT @@tx_isolation");
@@ -180,30 +171,16 @@ public class MySQLDBConnection implements Closeable {
         }
     }
 
+    public boolean rollback() {
+        valid();
+        return MariaDB.mysql_rollback(mariaDB) == 0;
+    }
+
     public boolean selectDB(String db) {
         valid();
-        if (steamingResult != null) {
-            return false;
-        }
         return MariaDB.mysql_select_db(mariaDB,db) == 0;
     }
 
-    public void setSteamingResult(MySQLResultSet steamingResult) {
-        if (this.steamingResult != null) {
-            throw new RuntimeException("can not init steaming result, there is already a result is reading");
-        }
-        this.steamingResult = steamingResult;
-    }
-
-    public void resolveSteamingResult(MySQLResultSet resultSet) {
-        if (this.steamingResult == resultSet) {
-            steamingResult = null;
-        }
-    }
-
-    public MySQLResultSet getSteamingResult() {
-        return steamingResult;
-    }
 
     @Override
     public void close() {

@@ -18,9 +18,6 @@ public class MySQLStatement {
     }
 
     public MySQLResultSet executeQuery(String sql) throws SQLException {
-        if (conn.getSteamingResult() != null) {
-            throw new SQLException("can not execute query while a result set is reading.");
-        }
         int state = MariaDB.mysql_real_query(connection,sql,sql.length());
         if (state != 0) {
             throw new SQLException("can not execute query, errno : " + MariaDB.mysql_errno(connection));

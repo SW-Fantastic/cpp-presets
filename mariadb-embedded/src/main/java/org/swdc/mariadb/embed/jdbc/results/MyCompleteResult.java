@@ -1,10 +1,9 @@
 package org.swdc.mariadb.embed.jdbc.results;
 
+import org.swdc.mariadb.embed.jdbc.MyStatement;
+
 import java.math.BigDecimal;
-import java.sql.Date;
-import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,21 +11,21 @@ import java.util.Map;
 
 public class MyCompleteResult extends MyResult {
 
-    private Map<Integer, String> indexLabels = new HashMap<>();
-
-    private Map<Integer, Class> types = new HashMap<>();
 
     private List<Object[]> data = new ArrayList<>();
 
     private int curRow = -1;
 
-    public MyCompleteResult() {
+    private MyStatement statement;
 
+    private MyCompleteResultMetadata metadata = new MyCompleteResultMetadata();
+
+    public MyCompleteResult(MyStatement statement) {
+        this.statement = statement;
     }
 
     public MyCompleteResult field(int index, String field, Class type) {
-        indexLabels.put(index,field);
-        types.put(index,type);
+        metadata.putColumn(index,field,type);
         return this;
     }
 
@@ -74,7 +73,7 @@ public class MyCompleteResult extends MyResult {
             throw new SQLException("no such data");
         }
         for (Class item: type) {
-            if (item == types.get(columnIndex - 1)) {
+            if (item == metadata.getJavaType(columnIndex - 1)) {
                 return (T)data[columnIndex - 1];
             }
         }
@@ -143,12 +142,7 @@ public class MyCompleteResult extends MyResult {
 
     @Override
     public int findColumn(String columnLabel) throws SQLException {
-        for (int idx = 0; idx < indexLabels.size(); idx ++) {
-            if (columnLabel.equals(indexLabels.get(idx))) {
-                return idx;
-            }
-        }
-        throw new SQLException("no such field");
+        return metadata.findColumn(columnLabel);
     }
 
     @Override
@@ -225,5 +219,15 @@ public class MyCompleteResult extends MyResult {
     @Override
     public int getConcurrency() throws SQLException {
         return CONCUR_READ_ONLY;
+    }
+
+    @Override
+    public Statement getStatement() throws SQLException {
+        return statement;
+    }
+
+    @Override
+    public ResultSetMetaData getMetaData() throws SQLException {
+        return metadata;
     }
 }

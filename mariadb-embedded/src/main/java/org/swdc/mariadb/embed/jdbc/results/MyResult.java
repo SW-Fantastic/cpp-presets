@@ -1,22 +1,23 @@
 package org.swdc.mariadb.embed.jdbc.results;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Reader;
+import java.io.StringReader;
 import java.math.BigDecimal;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.sql.*;
 import java.util.Calendar;
 import java.util.Map;
+import java.util.TimeZone;
 
-/**
- * Not implement yet
- */
 public abstract class MyResult implements ResultSet {
 
 
     public MyResult() {
     }
-
 
 
     @Override
@@ -27,17 +28,29 @@ public abstract class MyResult implements ResultSet {
 
     @Override
     public InputStream getAsciiStream(int columnIndex) throws SQLException {
+        String str = getString(columnIndex);
+        if (str != null) {
+            return new ByteArrayInputStream(str.getBytes());
+        }
         return null;
     }
 
     @Override
     public InputStream getUnicodeStream(int columnIndex) throws SQLException {
+        String str = getString(columnIndex);
+        if (str != null) {
+            return new ByteArrayInputStream(str.getBytes());
+        }
         return null;
     }
 
     @Override
     public InputStream getBinaryStream(int columnIndex) throws SQLException {
-        return null;
+        byte[] data = getBytes(columnIndex);
+        if (data == null) {
+            return null;
+        }
+        return new ByteArrayInputStream(data);
     }
 
     @Override
@@ -106,24 +119,76 @@ public abstract class MyResult implements ResultSet {
     }
 
     @Override
+    public Date getDate(int columnIndex, Calendar cal) throws SQLException {
+        Date date = getDate(columnIndex);
+        if (date != null) {
+            return Date.valueOf(
+                    date.toInstant()
+                            .atZone(cal.getTimeZone().toZoneId())
+                            .toLocalDate()
+            );
+        }
+        return null;
+    }
+
+    @Override
+    public Date getDate(String columnLabel, Calendar cal) throws SQLException {
+        return getDate(findColumn(columnLabel),cal);
+    }
+
+    @Override
+    public Time getTime(int columnIndex, Calendar cal) throws SQLException {
+        Time time = getTime(columnIndex);
+        if (time != null) {
+            return Time.valueOf(
+                    time.toInstant()
+                            .atZone(cal.getTimeZone().toZoneId())
+                            .toLocalTime()
+            );
+        }
+        return null;
+    }
+
+    @Override
+    public Time getTime(String columnLabel, Calendar cal) throws SQLException {
+        return getTime(findColumn(columnLabel),cal);
+    }
+
+    @Override
+    public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
+        Timestamp timestampZonedDefault = getTimestamp(columnIndex);
+        TimeZone zone = cal.getTimeZone();
+        return new Timestamp(timestampZonedDefault
+                .toInstant()
+                .atZone(zone.toZoneId())
+                .toEpochSecond()
+        );
+    }
+
+    @Override
+    public Timestamp getTimestamp(String columnLabel, Calendar cal) throws SQLException {
+        return getTimestamp(findColumn(columnLabel),cal);
+    }
+
+
+    @Override
     public BigDecimal getBigDecimal(String columnLabel) throws SQLException {
         return getBigDecimal(findColumn(columnLabel));
     }
 
-
     @Override
     public InputStream getAsciiStream(String columnLabel) throws SQLException {
-        return null;
+        return getAsciiStream(findColumn(columnLabel));
     }
 
     @Override
     public InputStream getUnicodeStream(String columnLabel) throws SQLException {
-        return null;
+        return getUnicodeStream(findColumn(columnLabel));
     }
 
     @Override
     public InputStream getBinaryStream(String columnLabel) throws SQLException {
-        return null;
+        return getBinaryStream(findColumn(columnLabel));
     }
 
     @Override
@@ -428,11 +493,6 @@ public abstract class MyResult implements ResultSet {
     }
 
     @Override
-    public Statement getStatement() throws SQLException {
-        return null;
-    }
-
-    @Override
     public Object getObject(int columnIndex, Map<String, Class<?>> map) throws SQLException {
         if (map == null || map.isEmpty()) {
             return getObject(columnIndex);
@@ -488,44 +548,23 @@ public abstract class MyResult implements ResultSet {
         throw new SQLException("Method ResultSet.getArray not supported");
     }
 
-    @Override
-    public Date getDate(int columnIndex, Calendar cal) throws SQLException {
-        return null;
-    }
-
-    @Override
-    public Date getDate(String columnLabel, Calendar cal) throws SQLException {
-        return null;
-    }
-
-    @Override
-    public Time getTime(int columnIndex, Calendar cal) throws SQLException {
-        return null;
-    }
-
-    @Override
-    public Time getTime(String columnLabel, Calendar cal) throws SQLException {
-        return null;
-    }
-
-    @Override
-    public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
-        return null;
-    }
-
-    @Override
-    public Timestamp getTimestamp(String columnLabel, Calendar cal) throws SQLException {
-        return null;
-    }
 
     @Override
     public URL getURL(int columnIndex) throws SQLException {
-        return null;
+        String str = getString(columnIndex);
+        if (str == null) {
+            return null;
+        }
+        try {
+            return URI.create(str).toURL();
+        } catch (MalformedURLException e) {
+            throw new SQLException("invalid url format ", e);
+        }
     }
 
     @Override
     public URL getURL(String columnLabel) throws SQLException {
-        return null;
+        return getURL(findColumn(columnLabel));
     }
 
     @Override
@@ -600,7 +639,7 @@ public abstract class MyResult implements ResultSet {
 
     @Override
     public void updateNString(int columnIndex, String nString) throws SQLException {
-
+        throw notSupport();
     }
 
     @Override
@@ -650,22 +689,26 @@ public abstract class MyResult implements ResultSet {
 
     @Override
     public String getNString(int columnIndex) throws SQLException {
-        return null;
+        return getString(columnIndex);
     }
 
     @Override
     public String getNString(String columnLabel) throws SQLException {
-        return null;
+        return getNString(findColumn(columnLabel));
     }
 
     @Override
     public Reader getNCharacterStream(int columnIndex) throws SQLException {
-        return null;
+        String str = getNString(columnIndex);
+        if (str == null) {
+            return null;
+        }
+        return new StringReader(str);
     }
 
     @Override
     public Reader getNCharacterStream(String columnLabel) throws SQLException {
-        return null;
+        return getNCharacterStream(findColumn(columnLabel));
     }
 
     @Override

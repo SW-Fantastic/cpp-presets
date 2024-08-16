@@ -25,13 +25,18 @@ public class MyConnection implements Connection {
 
     @Override
     public Statement createStatement() throws SQLException {
+        return createStatement(ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_READ_ONLY);
+    }
+
+    @Override
+    public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
         MySQLStatement statement = connection.createStatement();
         if (statement != null) {
             return new MyStatement(
                     this,
                     connection.createStatement(),
-                    ResultSet.TYPE_FORWARD_ONLY,
-                    ResultSet.CONCUR_READ_ONLY
+                    resultSetType,
+                    resultSetConcurrency
             );
         }
         throw new SQLException("failed to create statement.");
@@ -49,7 +54,7 @@ public class MyConnection implements Connection {
 
     @Override
     public String nativeSQL(String sql) throws SQLException {
-        return null;
+        return NativeSQL.parse(sql);
     }
 
     @Override
@@ -69,7 +74,7 @@ public class MyConnection implements Connection {
 
     @Override
     public void rollback() throws SQLException {
-
+        connection.rollback();
     }
 
     @Override
@@ -154,10 +159,7 @@ public class MyConnection implements Connection {
 
     }
 
-    @Override
-    public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
-        return null;
-    }
+
 
     @Override
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {

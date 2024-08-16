@@ -1,26 +1,29 @@
 package org.swdc.mariadb.embed.jdbc.results;
 
 import org.swdc.mariadb.embed.MySQLResultSet;
+import org.swdc.mariadb.embed.jdbc.MyStatement;
 
 import java.math.BigDecimal;
-import java.sql.Date;
-import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
+import java.sql.*;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 public class MyQueryResult extends MyResult {
 
-    private MySQLResultSet resultSet;
+    protected MySQLResultSet resultSet;
 
-    private int type;
+    protected MyStatement statement;
 
-    public MyQueryResult(MySQLResultSet rs) {
-        this(rs,TYPE_FORWARD_ONLY);
+    protected int type;
+
+    public MyQueryResult(MyStatement connection, MySQLResultSet rs) {
+        this(connection,rs,TYPE_FORWARD_ONLY);
     }
 
-    public MyQueryResult(MySQLResultSet rs, int type) {
+    public MyQueryResult(MyStatement statement,MySQLResultSet rs, int type) {
         this.resultSet = rs;
         this.type = type;
+        this.statement = statement;
     }
 
     @Override
@@ -95,8 +98,14 @@ public class MyQueryResult extends MyResult {
 
     @Override
     public Timestamp getTimestamp(int columnIndex) throws SQLException {
-        Integer val = resultSet.getTimestamp(columnIndex - 1);
-        return val != null ? new Timestamp(val) : null;
+        Long val = resultSet.getTimestamp(columnIndex - 1);
+        if (val == null) {
+            return null;
+        }
+        LocalDateTime dateTime = LocalDateTime.ofEpochSecond(
+                val,0, ZoneOffset.UTC
+        );
+        return Timestamp.valueOf(dateTime);
     }
 
     @Override
@@ -180,4 +189,15 @@ public class MyQueryResult extends MyResult {
     public int getType() throws SQLException {
         return type;
     }
+
+    @Override
+    public MyStatement getStatement() {
+        return statement;
+    }
+
+    @Override
+    public ResultSetMetaData getMetaData() throws SQLException {
+        return new MyResultMetadata(resultSet.getMetadata());
+    }
+
 }

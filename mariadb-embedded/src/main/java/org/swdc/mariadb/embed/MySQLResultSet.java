@@ -13,8 +13,8 @@ import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Time;
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.sql.Timestamp;
+import java.time.*;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -247,13 +247,13 @@ public class MySQLResultSet implements Closeable {
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
-                MyCom.enum_field_types.MYSQL_TYPE_LONG,
                 MyCom.enum_field_types.MYSQL_TYPE_LONGLONG
         )) {
             return new LongPointer(currentRow.get(column)).get();
         } else if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_INT24,
+                MyCom.enum_field_types.MYSQL_TYPE_LONG,
                 MyCom.enum_field_types.MYSQL_TYPE_SHORT,
                 MyCom.enum_field_types.MYSQL_TYPE_TINY
         )) {
@@ -274,7 +274,11 @@ public class MySQLResultSet implements Closeable {
             return null;
         }
         MYSQL_FIELD field = metadata.getField(column);
-        if (accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_INT24)) {
+        if (accept(
+                field.type(),
+                MyCom.enum_field_types.MYSQL_TYPE_INT24,
+                MyCom.enum_field_types.MYSQL_TYPE_LONG
+        )) {
             return new IntPointer(currentRow.get(column)).get();
         } else if (accept(
                 field.type(),
@@ -421,11 +425,11 @@ public class MySQLResultSet implements Closeable {
         return null;
     }
 
-    public Integer getTimestamp(String column) throws SQLException {
+    public Long getTimestamp(String column) throws SQLException {
         return getTimestamp(metadata.findField(column));
     }
 
-    public Integer getTimestamp(int column) throws SQLException {
+    public Long getTimestamp(int column) throws SQLException {
         if (currentRow == null || currentRow.isNull()) {
             return null;
         }
@@ -436,8 +440,21 @@ public class MySQLResultSet implements Closeable {
                 MyCom.enum_field_types.MYSQL_TYPE_TIMESTAMP2
         )) {
 
-            return new IntPointer(currentRow.get(column)).get();
+            return new LongPointer(currentRow.get(column)).get();
 
+        } else if (accept(
+                field.type(),
+                MyCom.enum_field_types.MYSQL_TYPE_DATETIME,
+                MyCom.enum_field_types.MYSQL_TYPE_DATETIME2
+        )) {
+
+            MYSQL_TIME time = new MYSQL_TIME(currentRow.get(column));
+            LocalDateTime dateTime = LocalDateTime.of(
+                    time.year(),time.month(),time.day(),time.hour(),time.minute(),time.second()
+            );
+            ZoneOffset offset = ZoneOffset.UTC;
+
+            return dateTime.atOffset(offset).toEpochSecond();
         }
         return null;
     }
@@ -455,10 +472,7 @@ public class MySQLResultSet implements Closeable {
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_BIT,
-                MyCom.enum_field_types.MYSQL_TYPE_INT24,
-                MyCom.enum_field_types.MYSQL_TYPE_TINY,
-                MyCom.enum_field_types.MYSQL_TYPE_SHORT,
-                MyCom.enum_field_types.MYSQL_TYPE_VARCHAR
+                MyCom.enum_field_types.MYSQL_TYPE_TINY
         )) {
             return new BooleanPointer(
                     currentRow.get(column)
@@ -473,7 +487,7 @@ public class MySQLResultSet implements Closeable {
      * @param types filed类型列表
      * @return 在列表中时返回true
      */
-    private boolean accept(MyCom.enum_field_types type, MyCom.enum_field_types... types) {
+    public static boolean accept(MyCom.enum_field_types type, MyCom.enum_field_types... types) {
         for (MyCom.enum_field_types item : types) {
             if (item.value == type.value) {
                 return true;

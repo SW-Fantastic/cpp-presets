@@ -4,6 +4,7 @@ import org.swdc.mariadb.embed.MySQLResultSet;
 import org.swdc.mariadb.embed.MySQLStatement;
 import org.swdc.mariadb.embed.jdbc.results.MyCompleteResult;
 import org.swdc.mariadb.embed.jdbc.results.MyQueryResult;
+import org.swdc.mariadb.embed.jdbc.results.MyQueryUpdatableResult;
 import org.swdc.mariadb.embed.jdbc.results.MyResult;
 
 import java.sql.*;
@@ -88,7 +89,11 @@ public class MyStatement implements Statement {
         if (rs == null) {
             return null;
         }
-        curResultSet = new MyQueryResult(rs);
+        if (resultConcurrency == ResultSet.CONCUR_UPDATABLE) {
+            curResultSet = new MyQueryUpdatableResult(this,rs,resultType);
+        } else {
+            curResultSet = new MyQueryResult(this,rs,resultType);
+        }
         return curResultSet;
     }
 
@@ -280,7 +285,7 @@ public class MyStatement implements Statement {
 
     @Override
     public ResultSet getGeneratedKeys() throws SQLException {
-        MyCompleteResult result = new MyCompleteResult()
+        MyCompleteResult result = new MyCompleteResult(this)
                 .field(0,"LAST_INSERT_ID", Long.class);
         for (Long generateId : generateKeys) {
             result.pushData(new Object[] { generateId });
