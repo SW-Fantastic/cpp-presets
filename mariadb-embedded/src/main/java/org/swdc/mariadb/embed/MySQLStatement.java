@@ -10,11 +10,9 @@ public class MySQLStatement {
 
     private MYSQL connection;
 
-    private MySQLDBConnection conn;
 
-    protected MySQLStatement(MySQLDBConnection conn, MYSQL mysqlConnection) {
+    protected MySQLStatement( MYSQL mysqlConnection) {
         this.connection = mysqlConnection;
-        this.conn = conn;
     }
 
     public MySQLResultSet executeQuery(String sql) throws SQLException {

@@ -358,16 +358,14 @@ public class MySQLResultSet implements Closeable {
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
-                MyCom.enum_field_types.MYSQL_TYPE_DECIMAL
+                MyCom.enum_field_types.MYSQL_TYPE_DECIMAL,
+                MyCom.enum_field_types.MYSQL_TYPE_NEWDECIMAL
         )) {
-            Pointer pData = currentRow.get(column);
-            if (pData == null || pData.isNull()) {
+            BytePointer pData = new BytePointer(currentRow.get(column));
+            if (pData.isNull()) {
                 return null;
             }
-            BytePointer pStr = MyGlobal.ext_get_decimal(pData);
-            BigDecimal decimal = new BigDecimal(pStr.getString());
-            MyGlobal.ext_str_free(pStr);
-            return decimal;
+            return new BigDecimal(pData.getString());
         }
 
         return null;

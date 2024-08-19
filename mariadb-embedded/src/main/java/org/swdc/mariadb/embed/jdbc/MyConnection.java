@@ -19,6 +19,8 @@ public class MyConnection implements Connection {
 
     public MySQLDBConnection connection;
 
+    private int lowercaseTableNames;
+
     public MyConnection(MySQLDBConnection conn) {
         this.connection = conn;
     }
@@ -98,7 +100,7 @@ public class MyConnection implements Connection {
 
     @Override
     public DatabaseMetaData getMetaData() throws SQLException {
-        return null;
+        return new MyDBMetadata(this);
     }
 
     @Override
@@ -158,8 +160,6 @@ public class MyConnection implements Connection {
     public void clearWarnings() throws SQLException {
 
     }
-
-
 
     @Override
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
@@ -250,19 +250,41 @@ public class MyConnection implements Connection {
         return null;
     }
 
+    /**
+     * Are table case-sensitive or not . Default Value: 0 (Unix), 1 (Windows), 2 (Mac OS X). If set to
+     * 0 (the default on Unix-based systems), table names and aliases and database names are compared
+     * in a case-sensitive manner. If set to 1 (the default on Windows), names are stored in lowercase
+     * and not compared in a case-sensitive manner. If set to 2 (the default on Mac OS X), names are
+     * stored as declared, but compared in lowercase.
+     *
+     * @return int value.
+     * @throws SQLException if a connection error occur
+     */
+    public int getLowercaseTableNames() throws SQLException {
+        if (lowercaseTableNames == -1) {
+            try (java.sql.Statement st = createStatement()) {
+                try (ResultSet rs = st.executeQuery("select @@lower_case_table_names")) {
+                    rs.next();
+                    lowercaseTableNames = rs.getInt(1);
+                }
+            }
+        }
+        return lowercaseTableNames;
+    }
+
     @Override
     public Clob createClob() throws SQLException {
-        return null;
+        return new MyClob();
     }
 
     @Override
     public Blob createBlob() throws SQLException {
-        return null;
+        return new MyBlob();
     }
 
     @Override
     public NClob createNClob() throws SQLException {
-        return null;
+        return new MyClob();
     }
 
     @Override

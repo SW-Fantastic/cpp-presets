@@ -14,9 +14,9 @@ import java.util.List;
 
 public class MyStatement implements Statement {
 
-    private MySQLStatement statement;
+    protected MySQLStatement statement;
 
-    private MyConnection connection;
+    protected MyConnection connection;
 
     private MyResult curResultSet;
 

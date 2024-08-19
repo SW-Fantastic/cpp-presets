@@ -8,6 +8,7 @@ import org.swdc.mariadb.core.mysql.MYSQL_RES;
 
 import java.io.Closeable;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -74,6 +75,23 @@ public class MySQLDBConnection implements Closeable {
 
     }
 
+    public long getMajorVersion() {
+        valid();
+        long ver = MariaDB.mysql_get_server_version(mariaDB);
+        return ver / 10000;
+    }
+
+    public long getMinerVersion() {
+        long ver = MariaDB.mysql_get_server_version(mariaDB);
+        return (ver % 10000) / 100;
+    }
+
+    public long getSubVersion() {
+        valid();
+        long ver = MariaDB.mysql_get_server_version(mariaDB);
+        return ver % 100;
+    }
+
     public int getServerStatus() {
         valid();
         return mariaDB.server_status();
@@ -87,7 +105,7 @@ public class MySQLDBConnection implements Closeable {
     public boolean isAutoCommit() throws SQLException {
         valid();
 
-        MySQLStatement statement = new MySQLStatement(this,mariaDB);
+        MySQLStatement statement = new MySQLStatement(mariaDB);
         MySQLResultSet rs = statement.executeQuery("SELECT @@autocommit");
         if (rs != null && rs.next()) {
             boolean result = rs.getLong(0) == '1';
@@ -115,7 +133,7 @@ public class MySQLDBConnection implements Closeable {
 
     public MySQLStatement createStatement() {
         valid();
-        return new MySQLStatement(this,mariaDB);
+        return new MySQLStatement(mariaDB);
     }
 
 
@@ -124,7 +142,7 @@ public class MySQLDBConnection implements Closeable {
         valid();
 
 
-        MySQLStatement statement = new MySQLStatement(this,mariaDB);
+        MySQLStatement statement = new MySQLStatement(mariaDB);
         MySQLResultSet rs = statement.executeQuery("SELECT @@tx_isolation");
         if (rs != null && rs.next()) {
             String txType = rs.getString(0);
@@ -165,10 +183,15 @@ public class MySQLDBConnection implements Closeable {
             default:
                 throw new SQLException("Unsupported transaction isolation level");
         }
-        MySQLStatement statement = new MySQLStatement(this,mariaDB);
+        MySQLStatement statement = new MySQLStatement(mariaDB);
         if(!statement.execute(query)) {
             throw new SQLException("Failed to change transaction isolation level.");
         }
+    }
+
+    public MySQLPreparedStatement preparedStatement(String sql) {
+        valid();
+        return new MySQLPreparedStatement(mariaDB,sql);
     }
 
     public boolean rollback() {

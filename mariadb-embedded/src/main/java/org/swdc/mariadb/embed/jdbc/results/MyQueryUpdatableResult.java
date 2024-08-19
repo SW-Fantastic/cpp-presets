@@ -5,6 +5,9 @@ import org.swdc.mariadb.embed.jdbc.MyStatement;
 
 import java.sql.SQLException;
 
+/**
+ * not impl yet
+ */
 public class MyQueryUpdatableResult extends MyQueryResult {
 
     public MyQueryUpdatableResult(MyStatement connection, MySQLResultSet rs, int type) {

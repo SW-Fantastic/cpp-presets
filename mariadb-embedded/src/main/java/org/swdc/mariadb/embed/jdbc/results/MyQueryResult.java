@@ -195,6 +195,10 @@ public class MyQueryResult extends MyResult {
         return statement;
     }
 
+    public void setStatement(MyStatement statement) {
+        this.statement = statement;
+    }
+
     @Override
     public ResultSetMetaData getMetaData() throws SQLException {
         return new MyResultMetadata(resultSet.getMetadata());

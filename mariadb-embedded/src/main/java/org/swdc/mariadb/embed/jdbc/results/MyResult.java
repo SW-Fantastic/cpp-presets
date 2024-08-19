@@ -1,5 +1,8 @@
 package org.swdc.mariadb.embed.jdbc.results;
 
+import org.swdc.mariadb.embed.jdbc.MyBlob;
+import org.swdc.mariadb.embed.jdbc.MyClob;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Reader;
@@ -9,6 +12,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.sql.*;
+import java.time.ZoneOffset;
 import java.util.Calendar;
 import java.util.Map;
 import java.util.TimeZone;
@@ -123,8 +127,8 @@ public abstract class MyResult implements ResultSet {
         Date date = getDate(columnIndex);
         if (date != null) {
             return Date.valueOf(
-                    date.toInstant()
-                            .atZone(cal.getTimeZone().toZoneId())
+                    date.toLocalDate()
+                            .atStartOfDay(cal.getTimeZone().toZoneId())
                             .toLocalDate()
             );
         }
@@ -140,9 +144,11 @@ public abstract class MyResult implements ResultSet {
     public Time getTime(int columnIndex, Calendar cal) throws SQLException {
         Time time = getTime(columnIndex);
         if (time != null) {
+            TimeZone zone = cal.getTimeZone();
+            ZoneOffset theOffset = ZoneOffset.ofTotalSeconds(zone.getRawOffset() / 1000);
             return Time.valueOf(
-                    time.toInstant()
-                            .atZone(cal.getTimeZone().toZoneId())
+                    time.toLocalTime()
+                            .atOffset(theOffset)
                             .toLocalTime()
             );
         }
@@ -507,12 +513,20 @@ public abstract class MyResult implements ResultSet {
 
     @Override
     public Blob getBlob(int columnIndex) throws SQLException {
-        return null;
+        byte[] data = getBytes(columnIndex);
+        if (data == null) {
+            return null;
+        }
+        return new MyBlob(data);
     }
 
     @Override
     public Clob getClob(int columnIndex) throws SQLException {
-        return null;
+        byte[] data = getBytes(columnIndex);
+        if (data == null) {
+            return null;
+        }
+        return new MyClob(data);
     }
 
     @Override
@@ -535,12 +549,12 @@ public abstract class MyResult implements ResultSet {
 
     @Override
     public Blob getBlob(String columnLabel) throws SQLException {
-        return null;
+        return getBlob(findColumn(columnLabel));
     }
 
     @Override
     public Clob getClob(String columnLabel) throws SQLException {
-        return null;
+        return getClob(findColumn(columnLabel));
     }
 
     @Override
@@ -659,12 +673,12 @@ public abstract class MyResult implements ResultSet {
 
     @Override
     public NClob getNClob(int columnIndex) throws SQLException {
-        return null;
+        return (NClob) getClob(columnIndex);
     }
 
     @Override
     public NClob getNClob(String columnLabel) throws SQLException {
-        return null;
+        return (NClob) getClob(columnLabel);
     }
 
     @Override

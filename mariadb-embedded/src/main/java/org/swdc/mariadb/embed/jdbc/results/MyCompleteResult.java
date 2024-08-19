@@ -1,6 +1,8 @@
 package org.swdc.mariadb.embed.jdbc.results;
 
 import org.swdc.mariadb.embed.jdbc.MyStatement;
+import org.swdc.ours.common.type.Converter;
+import org.swdc.ours.common.type.Converters;
 
 import java.math.BigDecimal;
 import java.sql.*;
@@ -20,17 +22,50 @@ public class MyCompleteResult extends MyResult {
 
     private MyCompleteResultMetadata metadata = new MyCompleteResultMetadata();
 
+    private static Converters converter = new Converters();
+
     public MyCompleteResult(MyStatement statement) {
         this.statement = statement;
     }
 
     public MyCompleteResult field(int index, String field, Class type) {
+        if (converter.getConverter(Integer.class,Boolean.class) == null) {
+            converter.addConverter(Integer.class, Boolean.class, i -> i > 0);
+            converter.addConverter(int.class, boolean.class, i-> i > 0);
+            converter.addConverter(Integer.class, boolean.class, i-> i > 0);
+            converter.addConverter(int.class, Boolean.class, i -> i > 0);
+        }
         metadata.putColumn(index,field,type);
         return this;
     }
 
     public MyCompleteResult pushData(Object[] row) {
-        data.add(row);
+
+        Object[] data = new Object[row.length];
+
+        for (int idx = 0 ; idx < row.length; idx ++) {
+
+            Object field = row[idx];
+            if (field == null) {
+                data[idx] = null;
+                continue;
+            }
+
+            Class type = metadata.getJavaType(idx);
+            Class sourceType = field.getClass();
+            if (type == sourceType) {
+                data[idx] = field;
+            } else {
+                Converter conv = converter.getConverter(sourceType,type);
+                if (conv != null) {
+                    data[idx] = conv.convert(field);
+                } else {
+                    data[idx] = null;
+                }
+            }
+        }
+
+        this.data.add(data);
         return this;
     }
 
@@ -72,9 +107,17 @@ public class MyCompleteResult extends MyResult {
         if (data == null || data.length <= columnIndex - 1) {
             throw new SQLException("no such data");
         }
+        if (data[columnIndex] == null) {
+            return null;
+        }
         for (Class item: type) {
-            if (item == metadata.getJavaType(columnIndex - 1)) {
-                return (T)data[columnIndex - 1];
+            if (item == metadata.getJavaType(columnIndex)) {
+                return (T)data[columnIndex];
+            } else {
+                Converter conv = converter.getConverter(data[columnIndex].getClass(),item);
+                if (conv != null) {
+                    return (T)conv.convert(data[columnIndex]);
+                }
             }
         }
         throw new SQLException("can not converter value");

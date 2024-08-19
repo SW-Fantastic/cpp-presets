@@ -1,16 +1,13 @@
 package org.swdc.mariadb.embed.jdbc;
 
-import org.swdc.mariadb.core.MariaDB;
 import org.swdc.mariadb.embed.EmbeddedMariaDB;
+import org.swdc.mariadb.embed.MySQLDBConnection;
 
 import java.io.File;
 import java.sql.*;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-/**
- * Not implement yet
- */
 public class EmbedMariaDBDriver implements Driver {
 
     private static String PREFIX = "jdbc:mysql://";
@@ -50,7 +47,11 @@ public class EmbedMariaDBDriver implements Driver {
             throw new SQLException("failed to initialize this mariaDB library");
         }
 
-        return new MyConnection(mariaDB.connect(databaseName));
+        MySQLDBConnection connection = mariaDB.connect(databaseName);
+        if (connection != null) {
+            return new MyConnection(connection);
+        }
+        return null;
     }
 
     @Override
