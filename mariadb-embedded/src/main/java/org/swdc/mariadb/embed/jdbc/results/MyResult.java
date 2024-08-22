@@ -213,18 +213,8 @@ public abstract class MyResult implements ResultSet {
     }
 
     @Override
-    public ResultSetMetaData getMetaData() throws SQLException {
-        return null;
-    }
-
-    @Override
-    public Object getObject(int columnIndex) throws SQLException {
-        return null;
-    }
-
-    @Override
     public Object getObject(String columnLabel) throws SQLException {
-        return null;
+        return getObject(findColumn(columnLabel));
     }
 
     @Override

@@ -5,9 +5,8 @@ import org.swdc.mariadb.core.MariaDB;
 import org.swdc.mariadb.core.MyCom;
 import org.swdc.mariadb.core.MyGlobal;
 import org.swdc.mariadb.core.global.MYSQL_TIME;
-import org.swdc.mariadb.core.mysql.MYSQL;
-import org.swdc.mariadb.core.mysql.MYSQL_BIND;
-import org.swdc.mariadb.core.mysql.MYSQL_STMT;
+import org.swdc.mariadb.core.mysql.*;
+import org.swdc.mariadb.embed.jdbc.results.MyQueryResult;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -84,6 +83,22 @@ public class MySQLPreparedStatement extends MySQLStatement {
         bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_LONG);
         bind.buffer_length(Pointer.sizeof(IntPointer.class));
         bind.buffer(p);
+
+    }
+
+    public void setNull(int index) throws SQLException {
+
+        validate();
+        if (index < 0 || index > buf.length) {
+            throw new SQLException("no such parameter : " + index);
+        }
+
+        buf[index] = null;
+
+        MYSQL_BIND bind = new MYSQL_BIND(binds.getPointer(index));
+        bind.buffer_length(0);
+        bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_NULL);
+
 
     }
 
@@ -442,6 +457,57 @@ public class MySQLPreparedStatement extends MySQLStatement {
         }
 
     }
+
+
+    public MySQLPreparedResult execute() throws SQLException {
+
+        validate();
+        int state = MariaDB.mysql_stmt_execute(stmt);
+        if (state != 0) {
+            throw new SQLException("failed to execute this query : " + sql + " with errno : " + MariaDB.mysql_stmt_errno(stmt));
+        }
+
+        MYSQL_RES res = MariaDB.mysql_stmt_result_metadata(stmt);
+        if (res == null || res.isNull()) {
+            return null;
+        }
+        state = MariaDB.mysql_stmt_store_result(stmt);
+        if (state != 0) {
+            MariaDB.mysql_free_result(res);
+            throw new SQLException("failed to store a result set , errno : " + MariaDB.mysql_stmt_errno(stmt));
+        }
+
+
+        int count = res.field_count();
+        MYSQL_BIND binds = new MYSQL_BIND(Pointer.malloc(
+                (long) Pointer.sizeof(MYSQL_BIND.class) * count
+        ));
+        CLongPointer lengths = new CLongPointer(Pointer.malloc(
+                (long) Pointer.sizeof(CLongPointer.class) * count
+        ));
+        for (int i = 0; i < count; i++) {
+            MYSQL_FIELD field = MariaDB.mysql_fetch_field_direct(res,i);
+            MYSQL_BIND bind = binds.getPointer(i);
+            bind.buffer_type(field.type());
+            bind.buffer_length(0);
+            bind.length(lengths.getPointer(i));
+        }
+
+        state = MariaDB.mysql_stmt_bind_result(stmt,binds);
+        if (state != 0) {
+            for (int i = 0; i < count; i++) {
+                MYSQL_BIND bind = binds.getPointer(i);
+                bind.buffer().close();
+                bind.close();
+            }
+            MariaDB.mysql_free_result(res);
+            throw new SQLException("failed to bind result , errno : " + MariaDB.mysql_stmt_errno(stmt));
+        }
+
+        return new MySQLPreparedResult(res,stmt,binds,lengths);
+
+    }
+
 
 
 }

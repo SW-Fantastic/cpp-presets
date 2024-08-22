@@ -3,58 +3,45 @@ package org.swdc.mariadb.embed;
 import org.bytedeco.javacpp.*;
 import org.swdc.mariadb.core.MariaDB;
 import org.swdc.mariadb.core.MyCom;
-import org.swdc.mariadb.core.MyGlobal;
 import org.swdc.mariadb.core.global.MYSQL_TIME;
+import org.swdc.mariadb.core.mysql.MYSQL_BIND;
 import org.swdc.mariadb.core.mysql.MYSQL_FIELD;
 import org.swdc.mariadb.core.mysql.MYSQL_RES;
+import org.swdc.mariadb.core.mysql.MYSQL_STMT;
 
-import java.io.Closeable;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Time;
-import java.time.*;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
 
 import static org.swdc.mariadb.embed.IMySQLResultSet.accept;
 
-/**
- * MySQL的结果集，用于从MySQL读取返回的数据。
- */
-public class MySQLResultSet implements IMySQLResultSet {
+public class MySQLPreparedResult  implements IMySQLResultSet {
 
-    /**
-     * MySQL的结果集的本地对象。
-     */
     private MYSQL_RES res;
 
+    private MYSQL_STMT stmt;
 
-    /**
-     * 当前行
-     */
-    private PointerPointer currentRow;
-
-    /**
-     * 当前行的各字段长度指针
-     */
-    private CLongPointer currentRowLength;
+    private MYSQL_BIND bindAndBuffer;
 
     /**
      * 当前行号
      */
     private long currentRowNum = -1;
 
-
     private MySQLResultMetadata metadata;
 
+    private CLongPointer lengths;
 
-    public MySQLResultSet( MYSQL_RES res) {
-
+    public MySQLPreparedResult(MYSQL_RES res, MYSQL_STMT stmt, MYSQL_BIND bindAndBuffer, CLongPointer lengths) {
         this.res = res;
+        this.bindAndBuffer = bindAndBuffer;
+        this.stmt = stmt;
         this.metadata = new MySQLResultMetadata(res);
-
     }
 
     @Override
@@ -72,48 +59,62 @@ public class MySQLResultSet implements IMySQLResultSet {
 
     @Override
     public boolean seek(long rowNum) {
-        if (rowNum > MariaDB.mysql_num_rows(res) + 1) {
+        if (rowNum > MariaDB.mysql_stmt_num_rows(stmt) + 1) {
             // seek to after last
-            currentRow = null;
-            currentRowLength = null;
-            currentRowNum =  MariaDB.mysql_num_rows(res) + 1;
+            currentRowNum =  MariaDB.mysql_stmt_num_rows(stmt) + 1;
             return true;
 
         } else if (rowNum <= -1) {
             // seek to before first
-            currentRow = null;
-            currentRowLength = null;
             currentRowNum = -1;
             return true;
 
         }
         // seek to normal position
-        MariaDB.mysql_data_seek(res,rowNum);
+        MariaDB.mysql_stmt_data_seek(stmt,rowNum);
         currentRowNum = rowNum;
-        currentRow = MariaDB.mysql_fetch_row(res);
-        currentRowLength = MariaDB.mysql_fetch_lengths(res);
-        if (currentRow == null || currentRow.isNull()) {
+
+        for (int i = 0; i < res.field_count(); i++) {
+            MYSQL_BIND bind = bindAndBuffer.getPointer(i);
+            if (bind.buffer() != null && !bind.buffer().isNull()) {
+                bind.buffer().close();
+            }
+            bind.buffer(new Pointer());
+            bind.buffer_length(0);
+        }
+
+        if(MariaDB.mysql_stmt_fetch(stmt) != 0) {
             return false;
         }
-        if (currentRowLength == null || currentRowLength.isNull()) {
-            return false;
+
+        for (int i = 0; i < res.field_count(); i++) {
+            MYSQL_BIND bind = bindAndBuffer.getPointer(i);
+            if (bind.buffer() != null && !bind.buffer().isNull()) {
+                bind.buffer().close();
+            }
+            if (lengths.get(i) > 0) {
+                bind.buffer(Pointer.malloc(lengths.get(i)));
+                bind.buffer_length(lengths.get(i));
+                MariaDB.mysql_stmt_fetch_column(stmt,bind.getPointer(i),i,0);
+            } else {
+                bind.buffer(new Pointer());
+                bind.buffer_length(0);
+            }
+
         }
+
         return true;
     }
 
     @Override
     public boolean beforeFirst() {
         currentRowNum = -1;
-        this.currentRow = null;
-        this.currentRowLength = null;
         return true;
     }
 
     @Override
     public boolean afterLast() {
         currentRowNum = MariaDB.mysql_num_rows(res) + 1;
-        this.currentRow = null;
-        this.currentRowLength = null;
         return true;
     }
 
@@ -149,17 +150,11 @@ public class MySQLResultSet implements IMySQLResultSet {
 
     @Override
     public int findColumn(String label) throws SQLException {
-        // jdbc的column从1开始，这里额外加一。
-        return metadata.findField(label) + 1;
+        return metadata.findField(label);
     }
-
 
     @Override
     public Date getDate(int column) throws SQLException {
-
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
 
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
@@ -168,7 +163,7 @@ public class MySQLResultSet implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_DATETIME,
                 MyCom.enum_field_types.MYSQL_TYPE_DATETIME2
         )) {
-            MYSQL_TIME time = new MYSQL_TIME(currentRow.get(column));
+            MYSQL_TIME time = new MYSQL_TIME(bindAndBuffer.getPointer(column).buffer());
             LocalDate localDate = LocalDate.of(time.year(),time.month(),time.day());
             return Date.valueOf(localDate);
         }
@@ -178,9 +173,6 @@ public class MySQLResultSet implements IMySQLResultSet {
 
     @Override
     public Time getTime(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
 
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
@@ -191,7 +183,11 @@ public class MySQLResultSet implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_TIME,
                 MyCom.enum_field_types.MYSQL_TYPE_TIME2
         )) {
-            MYSQL_TIME time = new MYSQL_TIME(currentRow.get(column));
+            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
+            if (bind.buffer_length() <= 0) {
+                return null;
+            }
+            MYSQL_TIME time = new MYSQL_TIME(bind.buffer());
             LocalTime localTime = LocalTime.of(time.hour(),time.minute(),time.second());
             return Time.valueOf(localTime);
         }
@@ -200,35 +196,33 @@ public class MySQLResultSet implements IMySQLResultSet {
 
     @Override
     public Byte getByte(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_TINY,
-                MyCom.enum_field_types.MYSQL_TYPE_BLOB,
-                MyCom.enum_field_types.MYSQL_TYPE_MEDIUM_BLOB,
-                MyCom.enum_field_types.MYSQL_TYPE_LONG_BLOB,
-                MyCom.enum_field_types.MYSQL_TYPE_TINY_BLOB
+                MyCom.enum_field_types.MYSQL_TYPE_BLOB
         )) {
-            return new BytePointer(currentRow.get(column)).get();
+            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
+            if (bind.buffer_length() <= 0) {
+                return null;
+            }
+            return new BytePointer(bind.buffer()).get();
         }
         return null;
     }
 
-
     @Override
     public Short getShort(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_SHORT
         )) {
-            return new ShortPointer(currentRow.get(column)).get();
+            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
+            if (bind.buffer_length() <= 0) {
+                return null;
+            }
+            return new ShortPointer(bind.buffer()).get();
         }
         if (accept(
                 field.type(),
@@ -240,21 +234,18 @@ public class MySQLResultSet implements IMySQLResultSet {
         return null;
     }
 
-
-
     @Override
     public Long getLong(int column) throws SQLException {
-
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
-
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_LONGLONG
         )) {
-            return new LongPointer(currentRow.get(column)).get();
+            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
+            if (bind.buffer_length() <= 0) {
+                return null;
+            }
+            return new LongPointer(bind.buffer()).get();
         } else if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_INT24,
@@ -270,20 +261,19 @@ public class MySQLResultSet implements IMySQLResultSet {
         return null;
     }
 
-
-
     @Override
     public Integer getInt(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_INT24,
                 MyCom.enum_field_types.MYSQL_TYPE_LONG
         )) {
-            return new IntPointer(currentRow.get(column)).get();
+            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
+            if (bind.buffer_length() <= 0) {
+                return null;
+            }
+            return new IntPointer(bind.buffer()).get();
         } else if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_TINY,
@@ -295,18 +285,18 @@ public class MySQLResultSet implements IMySQLResultSet {
         return null;
     }
 
-
     @Override
     public Float getFloat(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_FLOAT
         )) {
-            return new FloatPointer(currentRow).get(column);
+            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
+            if (bind.buffer_length() <= 0) {
+                return null;
+            }
+            return new FloatPointer(bind.buffer()).get(column);
         } else if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_INT24,
@@ -319,19 +309,20 @@ public class MySQLResultSet implements IMySQLResultSet {
         return null;
     }
 
-
     @Override
     public Double getDouble(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
         MYSQL_FIELD field = metadata.getField(column);
 
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_DOUBLE
         )) {
-            return new DoublePointer(currentRow.get(column)).get();
+            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
+            if (bind.buffer_length() <= 0) {
+                return null;
+            }
+
+            return new DoublePointer(bind.buffer()).get();
         } else if (accept(field.type(),MyCom.enum_field_types.MYSQL_TYPE_FLOAT)) {
             Float val = getFloat(column);
             return val != null ? Double.valueOf(val) : null;
@@ -347,19 +338,19 @@ public class MySQLResultSet implements IMySQLResultSet {
         return null;
     }
 
-
     @Override
     public BigDecimal getDecimal(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_DECIMAL,
                 MyCom.enum_field_types.MYSQL_TYPE_NEWDECIMAL
         )) {
-            BytePointer pData = new BytePointer(currentRow.get(column));
+            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
+            if (bind.buffer_length() <= 0) {
+                return null;
+            }
+            BytePointer pData = new BytePointer(bind.buffer());
             if (pData.isNull()) {
                 return null;
             }
@@ -371,13 +362,15 @@ public class MySQLResultSet implements IMySQLResultSet {
 
     @Override
     public String getString(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(field.type(),MyCom.enum_field_types.MYSQL_TYPE_VAR_STRING)) {
-            byte[] data = new byte[(int)currentRowLength.get(column)];
-            BytePointer pointer = new BytePointer(currentRow.get(column));
+            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
+            if (bind.buffer_length() <= 0) {
+                return null;
+            }
+
+            byte[] data = new byte[(int)lengths.get(column)];
+            BytePointer pointer = new BytePointer(bind.buffer());
             pointer.get(data);
             return new String(data);
         }
@@ -387,13 +380,14 @@ public class MySQLResultSet implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_VAR_STRING,
                 MyCom.enum_field_types.MYSQL_TYPE_VARCHAR
         )) {
-            return new BytePointer(currentRow).getString();
+            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
+            if (bind.buffer_length() <= 0) {
+                return null;
+            }
+            return new BytePointer(bind.buffer()).getString();
         } else if (accept(
                 field.type(),
-                MyCom.enum_field_types.MYSQL_TYPE_BLOB,
-                MyCom.enum_field_types.MYSQL_TYPE_MEDIUM_BLOB,
-                MyCom.enum_field_types.MYSQL_TYPE_LONG_BLOB,
-                MyCom.enum_field_types.MYSQL_TYPE_TINY_BLOB
+                MyCom.enum_field_types.MYSQL_TYPE_BLOB
         )) {
             byte[] data = getBlob(column);
             if (data != null) {
@@ -403,34 +397,24 @@ public class MySQLResultSet implements IMySQLResultSet {
         return null;
     }
 
-
     @Override
     public byte[] getBlob(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
         MYSQL_FIELD field = metadata.getField(column);
-        if (accept(
-                field.type(),
-                MyCom.enum_field_types.MYSQL_TYPE_BLOB,
-                MyCom.enum_field_types.MYSQL_TYPE_MEDIUM_BLOB,
-                MyCom.enum_field_types.MYSQL_TYPE_LONG_BLOB,
-                MyCom.enum_field_types.MYSQL_TYPE_TINY_BLOB
-        )) {
-            byte[] data = new byte[(int)currentRowLength.get(column)];
-            BytePointer pointer = new BytePointer(currentRow.get(column));
+        if (accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_BLOB)) {
+            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
+            if (bind.buffer_length() <= 0) {
+                return null;
+            }
+            byte[] data = new byte[(int)lengths.get(column)];
+            BytePointer pointer = new BytePointer(bind.buffer());
             pointer.get(data);
             return data;
         }
         return null;
     }
 
-
     @Override
     public Long getTimestamp(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
@@ -438,7 +422,11 @@ public class MySQLResultSet implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_TIMESTAMP2
         )) {
 
-            return new LongPointer(currentRow.get(column)).get();
+            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
+            if (bind.buffer_length() <= 0) {
+                return null;
+            }
+            return new LongPointer(bind.buffer()).get();
 
         } else if (accept(
                 field.type(),
@@ -446,7 +434,11 @@ public class MySQLResultSet implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_DATETIME2
         )) {
 
-            MYSQL_TIME time = new MYSQL_TIME(currentRow.get(column));
+            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
+            if (bind.buffer_length() <= 0) {
+                return null;
+            }
+            MYSQL_TIME time = new MYSQL_TIME(bind.buffer());
             LocalDateTime dateTime = LocalDateTime.of(
                     time.year(),time.month(),time.day(),time.hour(),time.minute(),time.second()
             );
@@ -457,12 +449,8 @@ public class MySQLResultSet implements IMySQLResultSet {
         return null;
     }
 
-
     @Override
     public Boolean getBoolean(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
         MYSQL_FIELD field = metadata.getField(column);
 
         if (accept(
@@ -470,8 +458,14 @@ public class MySQLResultSet implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_BIT,
                 MyCom.enum_field_types.MYSQL_TYPE_TINY
         )) {
+
+            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
+            if (bind.buffer_length() <= 0) {
+                return null;
+            }
+
             return new BooleanPointer(
-                    currentRow.get(column)
+                    bind.buffer()
             ).get();
         }
         return null;
@@ -480,9 +474,6 @@ public class MySQLResultSet implements IMySQLResultSet {
     @Override
     public Object getObject(int columnIndex) throws SQLException {
 
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
         MYSQL_FIELD field = metadata.getField(columnIndex);
         if (accept(
                 field.type(),
@@ -594,15 +585,29 @@ public class MySQLResultSet implements IMySQLResultSet {
 
     @Override
     public int getCurrentRowNum() {
-        return (int) currentRowNum;
+        return (int)currentRowNum;
     }
 
     @Override
     public void close() {
 
+        for (int i = 0; i < res.field_count(); i++) {
+            MYSQL_BIND bind = bindAndBuffer.getPointer(i);
+            if (bind.buffer() != null && !bind.buffer().isNull()) {
+                bind.buffer().close();
+            }
+        }
+
+        Pointer.free(bindAndBuffer);
+        Pointer.free(lengths);
+        bindAndBuffer = null;
+        lengths = null;
+
         MariaDB.mysql_free_result(res);
-        currentRow = null;
         res = null;
+
+        MariaDB.mysql_stmt_free_result(stmt);
+        stmt = null;
 
     }
 }

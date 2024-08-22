@@ -1,5 +1,6 @@
 package org.swdc.mariadb.embed.jdbc.results;
 
+import org.swdc.mariadb.embed.IMySQLResultSet;
 import org.swdc.mariadb.embed.MySQLResultSet;
 import org.swdc.mariadb.embed.jdbc.MyStatement;
 
@@ -10,17 +11,17 @@ import java.time.ZoneOffset;
 
 public class MyQueryResult extends MyResult {
 
-    protected MySQLResultSet resultSet;
+    protected IMySQLResultSet resultSet;
 
     protected MyStatement statement;
 
     protected int type;
 
-    public MyQueryResult(MyStatement connection, MySQLResultSet rs) {
+    public MyQueryResult(MyStatement connection, IMySQLResultSet rs) {
         this(connection,rs,TYPE_FORWARD_ONLY);
     }
 
-    public MyQueryResult(MyStatement statement,MySQLResultSet rs, int type) {
+    public MyQueryResult(MyStatement statement,IMySQLResultSet rs, int type) {
         this.resultSet = rs;
         this.type = type;
         this.statement = statement;
@@ -111,6 +112,11 @@ public class MyQueryResult extends MyResult {
     @Override
     public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
         return resultSet.getDecimal(columnIndex - 1);
+    }
+
+    @Override
+    public Object getObject(int columnIndex) throws SQLException {
+        return resultSet.getObject(columnIndex - 1);
     }
 
     @Override

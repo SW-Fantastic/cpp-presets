@@ -11,6 +11,8 @@ import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
 
+
+
 public class MySQLResultMetadata {
 
     private static final int BINARY_CHARSET = 63;
@@ -65,7 +67,7 @@ public class MySQLResultMetadata {
 
     public int getColumnDisplaySize(int index) throws SQLException {
         MYSQL_FIELD field = getField(index);
-        if (MySQLResultSet.accept(
+        if (IMySQLResultSet.accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_VARCHAR,
                 MyCom.enum_field_types.MYSQL_TYPE_STRING,
@@ -98,7 +100,7 @@ public class MySQLResultMetadata {
 
     public int getPrecision(int index) throws SQLException {
         MYSQL_FIELD field = getField(index);
-        if (MySQLResultSet.accept(
+        if (IMySQLResultSet.accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_TINY_BLOB,
                 MyCom.enum_field_types.MYSQL_TYPE_MEDIUM_BLOB,
@@ -113,7 +115,7 @@ public class MySQLResultMetadata {
                     return (int) (field.length() / len);
                 }
             }
-        } else if (MySQLResultSet.accept(
+        } else if (IMySQLResultSet.accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_DECIMAL,
                 MyCom.enum_field_types.MYSQL_TYPE_NEWDECIMAL)
@@ -153,11 +155,11 @@ public class MySQLResultMetadata {
     public int getJDBCColumnType(int col) throws SQLException {
         MYSQL_FIELD field = getField(col);
 
-        if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_DECIMAL)) {
+        if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_DECIMAL)) {
             return Types.DECIMAL;
         }
 
-        if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_BIT)) {
+        if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_BIT)) {
             if (field.length() == 1) {
                 return Types.BOOLEAN;
             } else {
@@ -165,7 +167,7 @@ public class MySQLResultMetadata {
             }
         }
 
-        if (MySQLResultSet.accept(
+        if (IMySQLResultSet.accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_TINY_BLOB,
                 MyCom.enum_field_types.MYSQL_TYPE_LONG_BLOB,
@@ -174,7 +176,7 @@ public class MySQLResultMetadata {
         )) {
             if (field.length() <= 0 || getColumnDisplaySize(col) > 16777215) {
                 return field.charsetnr() == BINARY_CHARSET ? Types.LONGVARBINARY : Types.LONGVARCHAR;
-            } else if (MySQLResultSet.accept(
+            } else if (IMySQLResultSet.accept(
                     field.type(),
                     MyCom.enum_field_types.MYSQL_TYPE_TINY_BLOB,
                     MyCom.enum_field_types.MYSQL_TYPE_BLOB
@@ -184,27 +186,27 @@ public class MySQLResultMetadata {
             return field.charsetnr() == BINARY_CHARSET ? Types.LONGVARBINARY : Types.LONGVARCHAR;
         }
 
-        if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_DATE)) {
+        if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_DATE)) {
             return Types.DATE;
         }
 
-        if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_DOUBLE)) {
+        if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_DOUBLE)) {
             return Types.DOUBLE;
         }
 
-        if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_FLOAT)) {
+        if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_FLOAT)) {
             return Types.REAL;
         }
 
-        if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_GEOMETRY)) {
+        if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_GEOMETRY)) {
             return Types.VARBINARY;
         }
 
-        if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_LONGLONG)) {
+        if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_LONGLONG)) {
             return Types.BIGINT;
         }
 
-        if (MySQLResultSet.accept(
+        if (IMySQLResultSet.accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_LONG,
                 MyCom.enum_field_types.MYSQL_TYPE_INT24
@@ -212,15 +214,15 @@ public class MySQLResultMetadata {
             return Types.INTEGER;
         }
 
-        if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_SHORT)) {
+        if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_SHORT)) {
             return Types.SMALLINT;
         }
 
-        if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_TINY)) {
+        if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_TINY)) {
             return (field.flags() & MyCom.UNSIGNED_FLAG) != 0 ? Types.SMALLINT : Types.TINYINT;
         }
 
-        if (MySQLResultSet.accept(
+        if (IMySQLResultSet.accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_STRING,
                 MyCom.enum_field_types.MYSQL_TYPE_VAR_STRING,
@@ -228,7 +230,7 @@ public class MySQLResultMetadata {
         )) {
 
             boolean binary = field.charsetnr() == BINARY_CHARSET;
-            if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_STRING)) {
+            if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_STRING)) {
                 return binary ? Types.VARBINARY : Types.CHAR;
             }
             if(field.length()  <= 0 || getColumnDisplaySize(col) > 16777215) {
@@ -237,7 +239,7 @@ public class MySQLResultMetadata {
             return binary ? Types.VARBINARY : Types.VARCHAR;
         }
 
-        if (MySQLResultSet.accept(
+        if (IMySQLResultSet.accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_TIME,
                 MyCom.enum_field_types.MYSQL_TYPE_TIME2
@@ -245,11 +247,11 @@ public class MySQLResultMetadata {
             return Types.TIME;
         }
 
-        if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_DATE)) {
+        if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_DATE)) {
             return Types.DATE;
         }
 
-        if (MySQLResultSet.accept(
+        if (IMySQLResultSet.accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_TIMESTAMP,
                 MyCom.enum_field_types.MYSQL_TYPE_TIMESTAMP2,
@@ -265,15 +267,15 @@ public class MySQLResultMetadata {
     public String getTypeName(int index) throws SQLException {
 
         MYSQL_FIELD field = getField(index);
-        if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_DECIMAL)) {
+        if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_DECIMAL)) {
             return "DECIMAL";
         }
 
-        if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_BIT)) {
+        if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_BIT)) {
             return "BIT";
         }
 
-        if (MySQLResultSet.accept(
+        if (IMySQLResultSet.accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_TINY_BLOB,
                 MyCom.enum_field_types.MYSQL_TYPE_LONG_BLOB,
@@ -313,41 +315,41 @@ public class MySQLResultMetadata {
 
         }
 
-        if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_DATE)) {
+        if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_DATE)) {
             return "DATE";
         }
 
-        if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_DOUBLE)) {
+        if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_DOUBLE)) {
             return "DOUBLE";
         }
 
-        if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_FLOAT)) {
+        if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_FLOAT)) {
             return "FLOAT";
         }
 
-        if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_GEOMETRY)) {
+        if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_GEOMETRY)) {
             return "GEOMETRY";
         }
 
-        if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_LONGLONG)) {
+        if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_LONGLONG)) {
             return "BIGINT";
         }
 
-        if (MySQLResultSet.accept(
+        if (IMySQLResultSet.accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_LONG
         )) {
             return "INTEGER";
         }
 
-        if (MySQLResultSet.accept(
+        if (IMySQLResultSet.accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_INT24
         )) {
             return "MEDIUMINT";
         }
 
-        if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_SHORT)) {
+        if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_SHORT)) {
             boolean unsigned = (field.flags() & MyCom.UNSIGNED_FLAG) != 0;
             if (unsigned) {
                 return "SMALLINT UNSIGNED";
@@ -355,11 +357,11 @@ public class MySQLResultMetadata {
             return "SMALLINT";
         }
 
-        if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_TINY)) {
+        if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_TINY)) {
             return (field.flags() & MyCom.UNSIGNED_FLAG) != 0 ? "TINYINT UNSIGNED" : "TINYINT";
         }
 
-        if (MySQLResultSet.accept(
+        if (IMySQLResultSet.accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_STRING,
                 MyCom.enum_field_types.MYSQL_TYPE_VAR_STRING,
@@ -367,10 +369,10 @@ public class MySQLResultMetadata {
         )) {
 
             boolean binary = field.charsetnr() == BINARY_CHARSET;
-            if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_STRING)) {
+            if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_STRING)) {
                 return binary ? "BINARY" : "CHAR";
             }
-            if (MySQLResultSet.accept(
+            if (IMySQLResultSet.accept(
                     field.type(),
                     MyCom.enum_field_types.MYSQL_TYPE_VAR_STRING,
                     MyCom.enum_field_types.MYSQL_TYPE_VARCHAR
@@ -391,7 +393,7 @@ public class MySQLResultMetadata {
 
         }
 
-        if (MySQLResultSet.accept(
+        if (IMySQLResultSet.accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_TIME,
                 MyCom.enum_field_types.MYSQL_TYPE_TIME2,
@@ -401,7 +403,7 @@ public class MySQLResultMetadata {
             return "TIME";
         }
 
-        if (MySQLResultSet.accept(
+        if (IMySQLResultSet.accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_DATETIME,
                 MyCom.enum_field_types.MYSQL_TYPE_DATETIME2
@@ -409,11 +411,11 @@ public class MySQLResultMetadata {
             return "DATETIME";
         }
 
-        if (MySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_DATE)) {
+        if (IMySQLResultSet.accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_DATE)) {
             return "DATE";
         }
 
-        if (MySQLResultSet.accept(
+        if (IMySQLResultSet.accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_TIMESTAMP,
                 MyCom.enum_field_types.MYSQL_TYPE_TIMESTAMP2
