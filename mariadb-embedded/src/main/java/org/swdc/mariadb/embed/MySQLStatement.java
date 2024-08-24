@@ -4,9 +4,12 @@ import org.swdc.mariadb.core.MariaDB;
 import org.swdc.mariadb.core.mysql.MYSQL;
 import org.swdc.mariadb.core.mysql.MYSQL_RES;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.sql.SQLException;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class MySQLStatement {
+public class MySQLStatement implements Closeable {
 
     private MYSQL connection;
 
@@ -18,7 +21,10 @@ public class MySQLStatement {
     public MySQLResultSet executeQuery(String sql) throws SQLException {
         int state = MariaDB.mysql_real_query(connection,sql,sql.length());
         if (state != 0) {
-            throw new SQLException("can not execute query, errno : " + MariaDB.mysql_errno(connection));
+            throw new SQLException(
+                    "can not execute query, errno : " + MariaDB.mysql_errno(connection) +
+                            "\n caused by " + MariaDB.mysql_error(connection).getString()
+            );
         }
         MYSQL_RES res = MariaDB.mysql_store_result(connection);;
         if (res == null || res.isNull()) {
@@ -30,7 +36,9 @@ public class MySQLStatement {
     public long executeUpdate(String sql) throws SQLException {
         int state = MariaDB.mysql_real_query(connection,sql,sql.length());
         if (state != 0) {
-            throw new SQLException("can not execute query, errno : " + MariaDB.mysql_errno(connection));
+            throw new SQLException("can not execute query, errno : " + MariaDB.mysql_errno(connection) +
+                    "\n caused by " + MariaDB.mysql_error(connection).getString()
+            );
         }
         return MariaDB.mysql_affected_rows(connection);
     }
@@ -49,7 +57,18 @@ public class MySQLStatement {
     }
 
     public boolean execute(String sql) throws SQLException {
-        return MariaDB.mysql_real_query(connection,sql,sql.length()) == 0;
+        boolean res = MariaDB.mysql_real_query(connection,sql,sql.length()) == 0;
+        if (!res) {
+            throw new SQLException(
+                    "failed to execute query , errno : " + MariaDB.mysql_errno(connection) +
+                    "\n caused by : " + MariaDB.mysql_error(connection).getString()
+            );
+        }
+        return true;
     }
-    
+
+    @Override
+    public void close() {
+
+    }
 }

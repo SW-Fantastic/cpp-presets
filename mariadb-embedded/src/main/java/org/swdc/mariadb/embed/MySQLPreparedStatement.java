@@ -8,17 +8,19 @@ import org.swdc.mariadb.core.global.MYSQL_TIME;
 import org.swdc.mariadb.core.mysql.*;
 import org.swdc.mariadb.embed.jdbc.results.MyQueryResult;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.Reader;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.sql.Date;
-import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 public class MySQLPreparedStatement extends MySQLStatement {
 
@@ -428,6 +430,63 @@ public class MySQLPreparedStatement extends MySQLStatement {
 
     }
 
+
+    public void setObject(int index, Object obj) throws SQLException {
+        if (obj.getClass() == int.class || obj.getClass() == Integer.class) {
+            setInt(index,(int)obj);
+        } else if (obj.getClass() == short.class || obj.getClass() == Short.class) {
+            setShort(index,(short)obj);
+        } else if (obj.getClass() == float.class || obj.getClass() == Float.class) {
+            setFloat(index,(float) obj);
+        } else if (obj.getClass() == long.class || obj.getClass() == Long.class) {
+            setLong(index,(long) obj);
+        } else if (obj.getClass() == Timestamp.class) {
+            setTimestamp(index,(Timestamp) obj);
+        } else if (obj.getClass() == Date.class) {
+            setDate(index,(Date) obj);
+        } else if (obj.getClass() == Time.class) {
+            setTime(index,(Time) obj);
+        } else if (obj.getClass() == LocalDateTime.class) {
+            setTimestamp(index,Timestamp.valueOf((LocalDateTime) obj));
+        } else if (obj.getClass() == BigDecimal.class) {
+            setDecimal(index,(BigDecimal) obj);
+        } else if (obj.getClass() == boolean.class || obj.getClass() == Boolean.class) {
+            setBoolean(index,(Boolean)obj);
+        } else if (obj.getClass() == byte[].class) {
+            setBytes(index,(byte[]) obj);
+        } else if (obj.getClass() == String.class) {
+            setString(index,(String) obj);
+        } else if (obj instanceof Blob) {
+            try {
+                Blob blob = (Blob) obj;
+                InputStream is = blob.getBinaryStream();
+                byte[] data = is.readAllBytes();
+                setBytes(index,data);
+                is.close();
+            } catch (Exception e) {
+                throw new SQLException(e);
+            }
+        } else if (obj instanceof Clob) {
+            Clob clob = (Clob) obj;
+            Reader reader = clob.getCharacterStream();
+            try {
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                char[] buf = new char[1024 * 1024];
+                int len = -1;
+                while ((len = reader.read(buf)) != -1) {
+                    byte[] bytes = String.valueOf(buf,0,len).getBytes();
+                    bos.write(bytes);
+                }
+                setString(index, bos.toString());
+                reader.close();
+            } catch (Exception e) {
+                throw new SQLException(e);
+            }
+        } else {
+            throw new SQLException("un support java type: "  + obj.getClass());
+        }
+    }
+
     public void addBatch() {
 
         validate();
@@ -459,12 +518,41 @@ public class MySQLPreparedStatement extends MySQLStatement {
     }
 
 
-    public MySQLPreparedResult execute() throws SQLException {
+    public long executeUpdate() throws SQLException {
 
         validate();
+
+        if(MariaDB.mysql_stmt_reset(stmt) != 0) {
+            throw new SQLException("failed to complete operation.");
+        }
+
         int state = MariaDB.mysql_stmt_execute(stmt);
         if (state != 0) {
             throw new SQLException("failed to execute this query : " + sql + " with errno : " + MariaDB.mysql_stmt_errno(stmt));
+        }
+
+
+        return MariaDB.mysql_stmt_affected_rows(stmt);
+
+    }
+
+    public MySQLPreparedResult execute() throws SQLException {
+
+        validate();
+
+        if(MariaDB.mysql_stmt_reset(stmt) != 0) {
+            throw new SQLException("failed to complete operation.");
+        }
+
+        int state = MariaDB.mysql_stmt_bind_param(stmt,binds);
+        if (state != 0) {
+            throw new SQLException("failed to bind parameter : " + sql + " with errno : " + MariaDB.mysql_stmt_errno(stmt));
+        }
+
+        state = MariaDB.mysql_stmt_execute(stmt);
+        if (state != 0) {
+            throw new SQLException("failed to execute this query : " + sql + " with errno : " + MariaDB.mysql_stmt_errno(stmt) +
+                    "\n caused by " + MariaDB.mysql_stmt_error(stmt).getString());
         }
 
         MYSQL_RES res = MariaDB.mysql_stmt_result_metadata(stmt);
@@ -505,6 +593,46 @@ public class MySQLPreparedStatement extends MySQLStatement {
         }
 
         return new MySQLPreparedResult(res,stmt,binds,lengths);
+
+    }
+
+    public synchronized long[] executeBatch() throws SQLException {
+
+        BatchItem saved = new BatchItem();
+        saved.binds = this.binds;
+        saved.buf = this.buf;
+
+        long[] effectRows = new long[batches.size()];
+
+        ListIterator<BatchItem> iter = batches.listIterator();
+        while (iter.hasNext()) {
+
+            int idx = iter.nextIndex();
+            BatchItem item = iter.next();
+            this.binds = item.binds;
+            this.buf = item.buf;
+
+            try {
+
+                effectRows[idx] = this.executeUpdate();
+                for (int colIdx = 0; colIdx < stmt.param_count(); colIdx ++) {
+                    this.binds.getPointer(colIdx).close();
+                    this.buf[colIdx].close();
+                }
+
+                iter.remove();
+
+            } finally {
+                this.binds = saved.binds;
+                this.buf = saved.buf;
+            }
+
+        }
+
+        this.binds = saved.binds;
+        this.buf = saved.buf;
+
+        return effectRows;
 
     }
 

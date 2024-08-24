@@ -16,77 +16,111 @@ import java.util.Calendar;
 
 public class MyPreparedStatement extends MyStatement implements PreparedStatement {
 
+    private String sql;
 
-    public MyPreparedStatement(MyConnection connection, MySQLPreparedStatement statement, int resultType, int resultConcurrency) {
-        super(connection, statement, resultType, resultConcurrency);
+    private MyQueryResult result;
+
+    public MyPreparedStatement(MyConnection connection,String sql, int resultType, int resultConcurrency) {
+        super(connection, null, resultType, resultConcurrency);
+        this.sql = sql;
+    }
+
+    protected MySQLPreparedStatement getStmt() throws SQLException {
+        if(connection.isClosed()) {
+            throw new SQLException("connection has closed");
+        }
+        if (statement == null) {
+            statement = connection.connection.preparedStatement(
+                    escapeTimeout(sql)
+            );
+        }
+        return (MySQLPreparedStatement) statement;
     }
 
     @Override
     public ResultSet executeQuery() throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        if (result != null) {
+            result.close();
+            result = null;
+        }
+        MySQLPreparedStatement stmt = getStmt();
         MySQLPreparedResult result = stmt.execute();
         if (result != null) {
-            return new MyQueryResult(this,result);
+            this.result = new MyQueryResult(this,result);
+            return this.result;
         }
         return null;
     }
 
     @Override
     public int executeUpdate() throws SQLException {
-        return 0;
+        if (result != null) {
+            result.close();
+            result = null;
+        }
+        return (int) getStmt().executeUpdate();
+    }
+
+    @Override
+    public long executeLargeUpdate() throws SQLException {
+        if (result != null) {
+            result.close();
+            result = null;
+        }
+        return (int)getStmt().executeUpdate();
     }
 
     @Override
     public void setNull(int parameterIndex, int sqlType) throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         stmt.setNull(parameterIndex);
     }
 
     @Override
     public void setBoolean(int parameterIndex, boolean x) throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         stmt.setBoolean(parameterIndex,x);
     }
 
     @Override
     public void setByte(int parameterIndex, byte x) throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         stmt.setByte(parameterIndex,x);
     }
 
     @Override
     public void setShort(int parameterIndex, short x) throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         stmt.setShort(parameterIndex,x);
     }
 
     @Override
     public void setInt(int parameterIndex, int x) throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         stmt.setInt(parameterIndex,x);
     }
 
     @Override
     public void setLong(int parameterIndex, long x) throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         stmt.setLong(parameterIndex,x);
     }
 
     @Override
     public void setFloat(int parameterIndex, float x) throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         stmt.setFloat(parameterIndex,x);
     }
 
     @Override
     public void setDouble(int parameterIndex, double x) throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         stmt.setDouble(parameterIndex,x);
     }
 
     @Override
     public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         if (x == null) {
             stmt.setNull(parameterIndex);
         } else {
@@ -96,7 +130,7 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
 
     @Override
     public void setString(int parameterIndex, String x) throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         if (x == null) {
             stmt.setNull(parameterIndex);
         } else {
@@ -106,7 +140,7 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
 
     @Override
     public void setBytes(int parameterIndex, byte[] x) throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         if (x != null) {
             stmt.setBytes(parameterIndex,x);
         } else {
@@ -116,7 +150,7 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
 
     @Override
     public void setDate(int parameterIndex, Date x) throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         if (x != null) {
             stmt.setDate(parameterIndex,x);
         } else {
@@ -126,7 +160,7 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
 
     @Override
     public void setTime(int parameterIndex, Time x) throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         if (x == null) {
             stmt.setNull(parameterIndex);
         } else {
@@ -136,7 +170,7 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
 
     @Override
     public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         if (x == null) {
             stmt.setNull(parameterIndex);
         } else {
@@ -190,18 +224,19 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
 
     @Override
     public void clearParameters() throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         stmt.clearParams();
     }
 
     @Override
     public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException {
-
+        setObject(parameterIndex,x);
     }
 
     @Override
     public void setObject(int parameterIndex, Object x) throws SQLException {
-
+        MySQLPreparedStatement stmt = getStmt();
+        stmt.setObject(parameterIndex,x);
     }
 
     @Override
@@ -211,7 +246,7 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
 
     @Override
     public void addBatch() throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         stmt.addBatch();
     }
 
@@ -308,7 +343,7 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
 
     @Override
     public void setURL(int parameterIndex, URL x) throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         if (x == null) {
             stmt.setNull(parameterIndex);
         } else {
@@ -328,7 +363,7 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
 
     @Override
     public void setNString(int parameterIndex, String value) throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         stmt.setString(parameterIndex,value);
     }
 
@@ -364,12 +399,13 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
 
     @Override
     public void setObject(int parameterIndex, Object x, int targetSqlType, int scaleOrLength) throws SQLException {
-
+        MySQLPreparedStatement stmt = getStmt();
+        stmt.setObject(parameterIndex,x);
     }
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         if (x == null) {
             stmt.setNull(parameterIndex);
         } else {
@@ -394,7 +430,7 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
 
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x, long length) throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         if (x == null) {
             stmt.setNull(parameterIndex);
         } else {
@@ -420,7 +456,7 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader value, long length) throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         if (value == null) {
             stmt.setNull(parameterIndex);
         } else {
@@ -474,7 +510,7 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader value) throws SQLException {
-        MySQLPreparedStatement stmt = (MySQLPreparedStatement) statement;
+        MySQLPreparedStatement stmt = getStmt();
         if (value == null) {
             stmt.setNull(parameterIndex);
         } else {

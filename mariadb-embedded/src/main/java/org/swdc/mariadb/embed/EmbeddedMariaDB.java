@@ -10,6 +10,7 @@ import org.swdc.mariadb.core.mysql.MYSQL;
 import org.swdc.mariadb.core.mysql.MYSQL_RES;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -85,13 +86,12 @@ public class EmbeddedMariaDB {
                 if (!initialized) {
                     String[] argv = {
                             "mysql",    // 该参数会被忽略
+                            "--basedir=" + baseDir.toPath().normalize().toAbsolutePath(),
+                            "--datadir=" + dataDir.toPath().normalize().toAbsolutePath(),
                             "--console",  // 输出到控制台而不是文件，否则system.err会被重定向
                             "--skip-grant-tables",
                             "--default-time-zone=" + getTimeZoneId(),
-                            "--datadir=" + dataDir.toPath().toAbsolutePath(),
-                            "--basedir=" + baseDir.toPath().toAbsolutePath()
                     };
-
                     PointerPointer argvPointer = argvPointer(argv);
 
                     int rst = MariaDB.mysql_server_init(
@@ -110,6 +110,11 @@ public class EmbeddedMariaDB {
                     MyGlobal.ext_char_list_free(argvPointer);
 
                     initialized = rst == 0;
+                    if (initialized) {
+                        Runtime.getRuntime().addShutdownHook(
+                                new Thread(EmbeddedMariaDB::shutdownEnvironment)
+                        );
+                    }
                 }
             }
         }
@@ -293,6 +298,112 @@ public class EmbeddedMariaDB {
 
     }
 
+    public void initSystemData() {
+
+        MySQLDBConnection exist = connect("mysql");
+        if (exist != null) {
+            return;
+        }
+
+        String initScript = "";
+        String initTableScript = "";
+        String initSysDataScript = "";
+        String initHelpScript = "";
+
+        try {
+
+            InputStream initSystemTables = EmbeddedMariaDB.class.getModule().getResourceAsStream("mysystem/mariadb_system_tables.sql");
+            initScript = new String(initSystemTables.readAllBytes());
+            initSystemTables.close();
+
+            InputStream initTables = EmbeddedMariaDB.class.getModule().getResourceAsStream("mysystem/mariadb_performance_tables.sql");
+            initTableScript = new String(initTables.readAllBytes());
+            initTables.close();
+
+            InputStream initSystemData = EmbeddedMariaDB.class.getModule().getResourceAsStream("mysystem/mariadb_system_tables_data.sql");
+            initSysDataScript = new String(initSystemData.readAllBytes());
+            initSystemData.close();
+
+            InputStream initHelp = EmbeddedMariaDB.class.getModule().getResourceAsStream("mysystem/fill_help_tables.sql");
+            initHelpScript = new String(initHelp.readAllBytes());
+            initHelp.close();
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        MYSQL conn = getDefault();
+        String initMySQL = "create database if not exists mysql;";
+        int rst = MariaDB.mysql_real_query(conn,initMySQL,initMySQL.length());
+        if (rst != 0) {
+            freeDefault(conn);
+            throw new RuntimeException("can not init mysql system database, errno : " + MariaDB.mysql_errno(conn));
+        }
+
+        rst = MariaDB.mysql_select_db(conn,"mysql");
+        if (rst != 0) {
+            freeDefault(conn);
+            throw new RuntimeException("can not init mysql system database, errno : " + MariaDB.mysql_errno(conn));
+        }
+
+        initMySQL = "SET @auth_root_socket=NULL;";
+        rst += MariaDB.mysql_real_query(conn,initMySQL,initMySQL.length());
+
+        boolean state = executeScript(conn,initScript);
+        if (!state) {
+            String msg = "can not init mysql system database, errno : " + MariaDB.mysql_errno(conn) + " " + MariaDB.mysql_error(conn).getString();
+            freeDefault(conn);
+            throw new RuntimeException(msg);
+        }
+
+        state = executeScript(conn,initTableScript);
+        if (!state) {
+            String msg = "can not init mysql system database, errno : " + MariaDB.mysql_errno(conn) + " " + MariaDB.mysql_error(conn).getString();
+            freeDefault(conn);
+            throw new RuntimeException(msg);
+        }
+
+        state = executeScript(conn,initSysDataScript);
+        if (!state) {
+            String msg = "can not init mysql system database, errno : " + MariaDB.mysql_errno(conn) + " " + MariaDB.mysql_error(conn).getString();
+            freeDefault(conn);
+            throw new RuntimeException(msg);
+        }
+
+        freeDefault(conn);
+    }
+
+
+    private static boolean executeScript(MYSQL conn, String script) {
+        List<String> initSplit = splitSQLScript(script);
+        for (String sc: initSplit) {
+            int rst = MariaDB.mysql_real_query(conn,sc,sc.length());
+            if (rst != 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static List<String> splitSQLScript(String sql) {
+        String[] splited = sql.split("\n");
+        StringBuilder sb = new StringBuilder();
+        List<String> results = new ArrayList<>();
+        for (String item : splited) {
+            if (item.startsWith("--")) {
+                continue;
+            }
+            if (item.endsWith(";")) {
+                sb.append("\n").append(item);
+                results.add(sb.toString());
+                sb = new StringBuilder();
+            } else {
+                sb.append("\n").append(item);
+            }
+        }
+        return results;
+    }
+
     /**
      * 获取单例对象。
      * @param baseDir 公共文件夹
@@ -304,5 +415,11 @@ public class EmbeddedMariaDB {
             instance = new EmbeddedMariaDB(dataDir,baseDir);
         }
         return instance;
+    }
+
+    public synchronized static void shutdownEnvironment() {
+        if (instance != null && instance.initialized) {
+            instance.shutdown();
+        }
     }
 }

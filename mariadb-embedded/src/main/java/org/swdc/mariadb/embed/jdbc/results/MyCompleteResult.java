@@ -273,4 +273,10 @@ public class MyCompleteResult extends MyResult {
     public ResultSetMetaData getMetaData() throws SQLException {
         return metadata;
     }
+
+    @Override
+    public Object getObject(int columnIndex) throws SQLException {
+        Class type = metadata.getJavaType(columnIndex);
+        return getAs(columnIndex,type);
+    }
 }

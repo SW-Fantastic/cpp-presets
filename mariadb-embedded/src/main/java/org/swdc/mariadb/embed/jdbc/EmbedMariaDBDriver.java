@@ -31,14 +31,29 @@ public class EmbedMariaDBDriver implements Driver {
         }
         info.put("database",databaseName);
 
+        if (!info.containsKey("datadir") || !info.containsKey("basedir")) {
+            throw new SQLException("parameter datadir and basedir is required, please add them on url");
+        }
+
+        File dataDir = new File(info.getProperty("datadir"));
+        File baseDir = new File(info.getProperty("basedir"));
+
         if (mariaDB == null) {
-            if (!info.containsKey("datadir") || !info.containsKey("basedir")) {
-                throw new SQLException("parameter datadir and basedir is required, please add them on url");
+
+            if (!baseDir.exists()) {
+                if(!baseDir.mkdirs()) {
+                    throw new SQLException("Failed to init database ,can not access basedir");
+                }
+            }
+
+            if (!dataDir.exists()) {
+                if(!dataDir.mkdirs()) {
+                    throw new SQLException("Failed to init database ,can not access datadir");
+                }
             }
 
             this.mariaDB = EmbeddedMariaDB.getMariaDB(
-                    new File(info.getProperty("basedir")),
-                    new File(info.getProperty("datadir"))
+                    baseDir, dataDir
             );
 
         }
@@ -47,9 +62,21 @@ public class EmbedMariaDBDriver implements Driver {
             throw new SQLException("failed to initialize this mariaDB library");
         }
 
+        mariaDB.initSystemData();
+
         MySQLDBConnection connection = mariaDB.connect(databaseName);
         if (connection != null) {
             return new MyConnection(connection);
+        } else {
+            if (info.getProperty("autocreate") != null) {
+                boolean autoCreate = Boolean.parseBoolean(info.getProperty("autocreate"));
+                if (autoCreate && mariaDB.createDatabase(databaseName,null,null)) {
+                    connection = mariaDB.connect(databaseName);
+                    if (connection != null) {
+                        return new MyConnection(connection);
+                    }
+                }
+            }
         }
         return null;
     }

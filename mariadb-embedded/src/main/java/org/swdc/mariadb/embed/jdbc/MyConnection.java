@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Not implement yet
@@ -20,6 +21,9 @@ public class MyConnection implements Connection {
     public MySQLDBConnection connection;
 
     private int lowercaseTableNames;
+
+    private final AtomicInteger savepointId = new AtomicInteger();
+
 
     public MyConnection(MySQLDBConnection conn) {
         this.connection = conn;
@@ -92,9 +96,9 @@ public class MyConnection implements Connection {
     public boolean isClosed() throws SQLException {
         try {
             connection.valid();
-            return true;
-        } catch (Exception e) {
             return false;
+        } catch (Exception e) {
+            return true;
         }
     }
 
@@ -163,7 +167,7 @@ public class MyConnection implements Connection {
 
     @Override
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
-        return null;
+        return new MyPreparedStatement(this,sql,resultSetType,resultSetConcurrency);
     }
 
     @Override
@@ -193,7 +197,13 @@ public class MyConnection implements Connection {
 
     @Override
     public Savepoint setSavepoint() throws SQLException {
-        return null;
+        MySavePoint savePoint = new MySavePoint(savepointId.incrementAndGet());
+        MySQLStatement statement = connection.createStatement();
+        if(statement.execute("SAVEPOINT `" + savePoint.rawValue() + "`")) {
+            statement.close();
+            return savePoint;
+        }
+        throw new SQLException("failed to create savepoint .");
     }
 
     @Override
