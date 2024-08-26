@@ -1,18 +1,29 @@
 package org.swdc.mariadb.test;
 
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
+import org.hibernate.boot.Metadata;
+import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.StandardServiceRegistry;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.cfg.Configuration;
 import org.swdc.mariadb.embed.EmbeddedMariaDB;
 import org.swdc.mariadb.embed.jdbc.EmbedMariaDBDriver;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import javax.persistence.*;
+import java.sql.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
 
 public class MariaDBJDBCTest {
 
-    public static void main(String[] args) throws SQLException {
-        DriverManager.registerDriver(new EmbedMariaDBDriver());
-        Connection connection = DriverManager.getConnection(
+    public static void main(String[] args) throws SQLException, InterruptedException {
+        //DriverManager.registerDriver(new EmbedMariaDBDriver());
+        /*Connection connection = DriverManager.getConnection(
                 "jdbc:mysql://dbForTest?basedir=./mysqlData&datadir=./mysqlData/data&autocreate=true"
         );
         boolean init = connection.createStatement().execute("CREATE TABLE IF NOT EXISTS testuser (" +
@@ -24,7 +35,48 @@ public class MariaDBJDBCTest {
             System.err.println("init table ok");
         }
         System.err.println("ok");
-        connection.close();
+        connection.close();*/
+
+
+
+        Properties properties = new Properties();
+        properties.setProperty("hibernate.connection.url", "jdbc:mysql://dbForTest?basedir=./mysqlData&datadir=./mysqlData/data&autocreate=true");
+        properties.setProperty("hibernate.connection.driver_class", EmbedMariaDBDriver.class.getName());
+        properties.setProperty("hibernate.dialect", org.hibernate.dialect.MariaDBDialect.class.getName());
+        properties.setProperty("hibernate.show_sql", "true");
+        properties.setProperty("hibernate.format_sql", "true");
+        properties.setProperty("hibernate.hbm2ddl.auto", "update");
+        properties.put(org.hibernate.jpa.AvailableSettings.LOADED_CLASSES, Arrays.asList(
+                EntUser.class
+        ));
+
+        EntityManagerFactory entityFactory = Persistence.createEntityManagerFactory("default", properties);
+
+        EntityManager em = entityFactory.createEntityManager();
+
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+        List<EntUser> users = em.createQuery("FROM EntUser").getResultList();
+        if (users != null && users.size() == 0) {
+
+            EntUser user = new EntUser();
+            user.setName("张三");
+            user.setAge(24);
+            user.setSource(8.2);
+            user.setNextAim(6.1f);
+            user.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
+            user.setCreatedOn(Date.valueOf(LocalDate.now()));
+
+            em.persist(user);
+
+        } else {
+            EntUser user = users.get(0);
+            System.err.println(user);
+        }
+        tx.commit();
+        em.close();
+        entityFactory.close();
+
     }
 
 }

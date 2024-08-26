@@ -3,6 +3,7 @@ package org.swdc.mariadb.embed;
 import org.bytedeco.javacpp.*;
 import org.swdc.mariadb.core.MariaDB;
 import org.swdc.mariadb.core.MyCom;
+import org.swdc.mariadb.core.MyGlobal;
 import org.swdc.mariadb.core.global.MYSQL_TIME;
 import org.swdc.mariadb.core.mysql.MYSQL_BIND;
 import org.swdc.mariadb.core.mysql.MYSQL_FIELD;
@@ -10,6 +11,7 @@ import org.swdc.mariadb.core.mysql.MYSQL_RES;
 import org.swdc.mariadb.core.mysql.MYSQL_STMT;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Time;
@@ -35,22 +37,78 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
 
     private MySQLResultMetadata metadata;
 
-    private CLongPointer lengths;
+    private CLongPointer[] lengths;
 
-    public MySQLPreparedResult(MYSQL_RES res, MYSQL_STMT stmt, MYSQL_BIND bindAndBuffer, CLongPointer lengths) {
+    private BytePointer[] errors;
+
+    private BytePointer[] isNulls;
+
+    public MySQLPreparedResult(MYSQL_RES res, MYSQL_STMT stmt) {
         this.res = res;
-        this.bindAndBuffer = bindAndBuffer;
         this.stmt = stmt;
         this.metadata = new MySQLResultMetadata(res);
+
+        this.bindAndBuffer = new MYSQL_BIND(Pointer.malloc(
+                (long) Pointer.sizeof(MYSQL_BIND.class) * res.field_count()
+        ));
+
+        lengths = new CLongPointer[res.field_count()];
+        errors = new BytePointer[res.field_count()];
+        isNulls = new BytePointer[res.field_count()];
+
+        for (int i = 0; i < res.field_count(); i++) {
+
+            MYSQL_FIELD field = MariaDB.mysql_fetch_field_direct(res,i);
+
+            lengths[i] = new CLongPointer(Pointer.malloc(
+                    Pointer.sizeof(CLongPointer.class)
+            ));
+            errors[i] = new BytePointer(Pointer.malloc(
+                    Pointer.sizeof(IntPointer.class)
+            ));
+            isNulls[i] = new BytePointer(Pointer.malloc(
+                    Pointer.sizeof(IntPointer.class)
+            ));
+
+
+            MYSQL_BIND bind = bindAndBuffer.getPointer(i);
+            bind.buffer_type(field.type());
+            bind.buffer_length(field.max_length());
+            bind.buffer(Pointer.malloc(field.max_length()));
+
+            bind.error(errors[i]);
+            bind.length(lengths[i]);
+            bind.is_null(isNulls[i]);
+
+        }
+
+        int state = MariaDB.mysql_stmt_bind_result(stmt,bindAndBuffer);
+        if (state != 0) {
+            for (int i = 0; i < metadata.getFieldCount(); i++) {
+                MYSQL_BIND bind = bindAndBuffer.getPointer(i);
+                bind.buffer().close();
+                bind.close();
+            }
+            MariaDB.mysql_free_result(res);
+            throw new RuntimeException("failed to bind result , errno : " + MariaDB.mysql_stmt_errno(stmt));
+        }
+
+        state = MariaDB.mysql_stmt_store_result(stmt);
+        if (state != 0) {
+            MariaDB.mysql_free_result(res);
+            throw new RuntimeException("failed to store a result set , errno : " + MariaDB.mysql_stmt_errno(stmt));
+        }
+
+
     }
 
     @Override
-    public boolean next() {
+    public boolean next() throws SQLException {
         return seek(currentRowNum + 1);
     }
 
     @Override
-    public boolean previous() {
+    public boolean previous() throws SQLException {
         if (currentRowNum <= 0) {
             return false;
         }
@@ -58,45 +116,50 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
     }
 
     @Override
-    public boolean seek(long rowNum) {
+    public boolean seek(long rowNum) throws SQLException {
         if (rowNum > MariaDB.mysql_stmt_num_rows(stmt) + 1) {
             // seek to after last
             currentRowNum =  MariaDB.mysql_stmt_num_rows(stmt) + 1;
-            return true;
-
+            return false;
         } else if (rowNum <= -1) {
             // seek to before first
             currentRowNum = -1;
-            return true;
-
+            return false;
         }
         // seek to normal position
         MariaDB.mysql_stmt_data_seek(stmt,rowNum);
         currentRowNum = rowNum;
 
-        for (int i = 0; i < res.field_count(); i++) {
-            MYSQL_BIND bind = bindAndBuffer.getPointer(i);
-            if (bind.buffer() != null && !bind.buffer().isNull()) {
-                bind.buffer().close();
-            }
-            bind.buffer(new Pointer());
-            bind.buffer_length(0);
-        }
-
-        if(MariaDB.mysql_stmt_fetch(stmt) != 0) {
+        if (MariaDB.mysql_stmt_fetch(stmt) == MariaDB.MYSQL_NO_DATA) {
+            // MYSQL_DATA_TRUNCATE直接无视，通过Mysql传入Length的长度申请buffer
+            // 并且提取数据。
             return false;
         }
 
         for (int i = 0; i < res.field_count(); i++) {
+
+            // 绑定的缓冲区
             MYSQL_BIND bind = bindAndBuffer.getPointer(i);
-            if (bind.buffer() != null && !bind.buffer().isNull()) {
-                bind.buffer().close();
-            }
-            if (lengths.get(i) > 0) {
-                bind.buffer(Pointer.malloc(lengths.get(i)));
-                bind.buffer_length(lengths.get(i));
-                MariaDB.mysql_stmt_fetch_column(stmt,bind.getPointer(i),i,0);
+            // 需要的buffer长度
+            long bufLength = lengths[i].get();
+
+            if (isNulls[i].get() == 0 && lengths[i].get() > 0) {
+                // 不为空，且长度不为0，可以读取数据
+                // 准备buffer
+                if (bind.buffer() != null && !bind.buffer().isNull()) {
+                    bind.buffer().close();
+                }
+                // 申请内存。
+                Pointer buf = Pointer.malloc(bufLength);
+                // 初始化Buffer
+                Pointer.memset(buf,0,bufLength);
+                bind.buffer(buf);
+                // 指定Buffer长度
+                bind.buffer_length(bufLength);
+                // 读取该字段数据。
+                MariaDB.mysql_stmt_fetch_column(stmt,bind,i,0);
             } else {
+                bind.buffer().close();
                 bind.buffer(new Pointer());
                 bind.buffer_length(0);
             }
@@ -129,12 +192,12 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
     }
 
     @Override
-    public void firstRow() {
+    public void firstRow() throws SQLException {
         seek(0);
     }
 
     @Override
-    public void lastRow() {
+    public void lastRow() throws SQLException {
         seek(MariaDB.mysql_num_rows(res) - 1);
     }
 
@@ -164,7 +227,7 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_DATETIME2
         )) {
             MYSQL_TIME time = new MYSQL_TIME(bindAndBuffer.getPointer(column).buffer());
-            LocalDate localDate = LocalDate.of(time.year(),time.month(),time.day());
+            LocalDate localDate = LocalDate.of(time.year(),time.month() + 1,time.day() + 1);
             return Date.valueOf(localDate);
         }
 
@@ -271,7 +334,7 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
         )) {
             MYSQL_BIND bind = bindAndBuffer.getPointer(column);
             if (bind.buffer_length() <= 0) {
-                return null;
+                return 0;
             }
             return new IntPointer(bind.buffer()).get();
         } else if (accept(
@@ -294,9 +357,9 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
         )) {
             MYSQL_BIND bind = bindAndBuffer.getPointer(column);
             if (bind.buffer_length() <= 0) {
-                return null;
+                return 0f;
             }
-            return new FloatPointer(bind.buffer()).get(column);
+            return new FloatPointer(bind.buffer()).get();
         } else if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_INT24,
@@ -306,7 +369,7 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
             Integer val = getInt(column);
             return val != null ? Float.valueOf(val) : null;
         }
-        return null;
+        return 0f;
     }
 
     @Override
@@ -319,7 +382,7 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
         )) {
             MYSQL_BIND bind = bindAndBuffer.getPointer(column);
             if (bind.buffer_length() <= 0) {
-                return null;
+                return 0d;
             }
 
             return new DoublePointer(bind.buffer()).get();
@@ -369,10 +432,10 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 return null;
             }
 
-            byte[] data = new byte[(int)lengths.get(column)];
+            byte[] data = new byte[(int)lengths[column].get()];
             BytePointer pointer = new BytePointer(bind.buffer());
             pointer.get(data);
-            return new String(data);
+            return new String(data, StandardCharsets.UTF_8);
         }
         if (accept(
                 field.type(),
@@ -384,14 +447,14 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
             if (bind.buffer_length() <= 0) {
                 return null;
             }
-            return new BytePointer(bind.buffer()).getString();
+            return new BytePointer(bind.buffer()).getString(StandardCharsets.UTF_8);
         } else if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_BLOB
         )) {
             byte[] data = getBlob(column);
             if (data != null) {
-                return new String(data);
+                return new String(data,StandardCharsets.UTF_8);
             }
         }
         return null;
@@ -405,7 +468,7 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
             if (bind.buffer_length() <= 0) {
                 return null;
             }
-            byte[] data = new byte[(int)lengths.get(column)];
+            byte[] data = new byte[(int)lengths[column].get()];
             BytePointer pointer = new BytePointer(bind.buffer());
             pointer.get(data);
             return data;
@@ -440,7 +503,7 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
             }
             MYSQL_TIME time = new MYSQL_TIME(bind.buffer());
             LocalDateTime dateTime = LocalDateTime.of(
-                    time.year(),time.month(),time.day(),time.hour(),time.minute(),time.second()
+                    time.year(),time.month() + 1,time.day() + 1,time.hour(),time.minute(),time.second()
             );
             ZoneOffset offset = ZoneOffset.UTC;
 
@@ -599,9 +662,7 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
         }
 
         Pointer.free(bindAndBuffer);
-        Pointer.free(lengths);
         bindAndBuffer = null;
-        lengths = null;
 
         MariaDB.mysql_free_result(res);
         res = null;

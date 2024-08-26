@@ -169,7 +169,7 @@ public class MySQLResultSet implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_DATETIME2
         )) {
             MYSQL_TIME time = new MYSQL_TIME(currentRow.get(column));
-            LocalDate localDate = LocalDate.of(time.year(),time.month(),time.day());
+            LocalDate localDate = LocalDate.of(time.year(),time.month() + 1,time.day() + 1);
             return Date.valueOf(localDate);
         }
 
@@ -281,8 +281,13 @@ public class MySQLResultSet implements IMySQLResultSet {
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_INT24,
-                MyCom.enum_field_types.MYSQL_TYPE_LONG
+                MyCom.enum_field_types.MYSQL_TYPE_LONG,
+                MyCom.enum_field_types.MYSQL_TYPE_NEWDECIMAL,
+                MyCom.enum_field_types.MYSQL_TYPE_LONGLONG
         )) {
+            if (currentRow.get(column) == null) {
+                return 0;
+            }
             return new IntPointer(currentRow.get(column)).get();
         } else if (accept(
                 field.type(),
@@ -448,7 +453,7 @@ public class MySQLResultSet implements IMySQLResultSet {
 
             MYSQL_TIME time = new MYSQL_TIME(currentRow.get(column));
             LocalDateTime dateTime = LocalDateTime.of(
-                    time.year(),time.month(),time.day(),time.hour(),time.minute(),time.second()
+                    time.year(),time.month() + 1,time.day() + 1,time.hour(),time.minute(),time.second()
             );
             ZoneOffset offset = ZoneOffset.UTC;
 

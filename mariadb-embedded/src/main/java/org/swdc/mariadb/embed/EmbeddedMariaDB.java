@@ -11,6 +11,7 @@ import org.swdc.mariadb.core.mysql.MYSQL_RES;
 
 import java.io.File;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -255,6 +256,8 @@ public class EmbeddedMariaDB {
             MariaDB.mysql_close(mysql);
             return null;
         }
+
+        MariaDB.mysql_set_character_set(mysql, "utf8");
 
         return new MySQLDBConnection(mysql);
 

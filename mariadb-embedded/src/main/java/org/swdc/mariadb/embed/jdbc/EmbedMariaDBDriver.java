@@ -10,33 +10,25 @@ import java.util.logging.Logger;
 
 public class EmbedMariaDBDriver implements Driver {
 
-    private static String PREFIX = "jdbc:mysql://";
+    public static final String PREFIX = "jdbc:mysql://";
 
     private EmbeddedMariaDB mariaDB;
 
     @Override
     public Connection connect(String url, Properties info) throws SQLException {
-        url = url.substring(PREFIX.length());
-        int indexOfQuery = url.lastIndexOf("?");
-        String props = url.substring(indexOfQuery + 1);
-        String databaseName = url.substring(0,indexOfQuery);
-        String[] kv = props.split("&");
-        for (String pair : kv) {
-            if (pair.contains("=")) {
-                String[] pairData = pair.split("=");
-                info.put(pairData[0],pairData[1]);
-            } else {
-                info.put(pair,"true");
-            }
-        }
-        info.put("database",databaseName);
+        Configure configure = new Configure(url);
+        info.putAll(configure.getInfo());
 
-        if (!info.containsKey("datadir") || !info.containsKey("basedir")) {
+        if (configure.getBaseDir() == null || configure.getBaseDir().isBlank() || configure.getDataDir() == null || configure.getDataDir().isBlank()) {
             throw new SQLException("parameter datadir and basedir is required, please add them on url");
         }
 
-        File dataDir = new File(info.getProperty("datadir"));
-        File baseDir = new File(info.getProperty("basedir"));
+        return connect(configure);
+    }
+
+    public Connection connect(Configure configure) throws SQLException {
+        File dataDir = new File(configure.getDataDir());
+        File baseDir = new File(configure.getBaseDir());
 
         if (mariaDB == null) {
 
@@ -64,21 +56,18 @@ public class EmbedMariaDBDriver implements Driver {
 
         mariaDB.initSystemData();
 
-        MySQLDBConnection connection = mariaDB.connect(databaseName);
+        MySQLDBConnection connection = mariaDB.connect(configure.getDbName());
         if (connection != null) {
             return new MyConnection(connection);
         } else {
-            if (info.getProperty("autocreate") != null) {
-                boolean autoCreate = Boolean.parseBoolean(info.getProperty("autocreate"));
-                if (autoCreate && mariaDB.createDatabase(databaseName,null,null)) {
-                    connection = mariaDB.connect(databaseName);
-                    if (connection != null) {
-                        return new MyConnection(connection);
-                    }
+            if (configure.isAutoCreate() && mariaDB.createDatabase(configure.getDbName(),null,null)) {
+                connection = mariaDB.connect(configure.getDbName());
+                if (connection != null) {
+                    return new MyConnection(connection);
                 }
             }
         }
-        return null;
+        throw new SQLException("failed to connect database");
     }
 
     @Override

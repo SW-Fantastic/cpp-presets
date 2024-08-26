@@ -6,7 +6,6 @@ import org.swdc.mariadb.core.MyCom;
 import org.swdc.mariadb.core.MyGlobal;
 import org.swdc.mariadb.core.global.MYSQL_TIME;
 import org.swdc.mariadb.core.mysql.*;
-import org.swdc.mariadb.embed.jdbc.results.MyQueryResult;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -14,13 +13,11 @@ import java.io.Reader;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.sql.*;
+import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 
 public class MySQLPreparedStatement extends MySQLStatement {
 
@@ -30,17 +27,25 @@ public class MySQLPreparedStatement extends MySQLStatement {
 
         Pointer[] buf;
 
+        BytePointer nullFlags;
+
+        CLongPointer lengths;
+
     }
 
     private MYSQL_STMT stmt;
 
     private String sql;
 
-    private List<BatchItem> batches = new ArrayList<>();
+    private Deque<BatchItem> batches = new ArrayDeque<>();
 
     private MYSQL_BIND binds;
 
     private Pointer[] buf;
+
+    private BytePointer nullFlags;
+
+    private CLongPointer lengths;
 
     protected MySQLPreparedStatement(MYSQL mysqlConnection, String sql) {
         super(mysqlConnection);
@@ -48,18 +53,43 @@ public class MySQLPreparedStatement extends MySQLStatement {
         this.stmt = MariaDB.mysql_stmt_init(mysqlConnection);
         if( stmt == null || stmt.isNull() || MariaDB.mysql_stmt_prepare(stmt,sql,sql.length()) != 0) {
             throw new RuntimeException(
-                    new SQLException("Can not prepare statement - errno :" + MariaDB.mysql_errno(mysqlConnection))
+                    new SQLException("Can not prepare statement - errno :" + MariaDB.mysql_errno(mysqlConnection) + "\n caused by " + MariaDB.mysql_stmt_error(stmt))
             );
         }
 
-        this.binds = new MYSQL_BIND(stmt.param_count());
+        long bindsSize = (long) Pointer.sizeof(MYSQL_BIND.class) * stmt.param_count();
+        this.binds = new MYSQL_BIND(Pointer.malloc(bindsSize));
+        Pointer.memset(binds,0,bindsSize);
+
         this.buf = new Pointer[stmt.param_count()];
+
+        long nullSize =(long)Pointer.sizeof(BytePointer.class) * stmt.param_count();
+        this.nullFlags = new BytePointer(Pointer.malloc(nullSize));
+        Pointer.memset(this.nullFlags,0,nullSize);
+
+        long lengthSize = (long) Pointer.sizeof(CLongPointer.class) * stmt.param_count();
+        this.lengths = new CLongPointer(Pointer.malloc(lengthSize));
+        Pointer.memset(lengths,0,lengthSize);
     }
 
     private void validate() {
         if (stmt == null || stmt.isNull() || binds == null || binds.isNull()) {
             throw new RuntimeException("statement has closed.");
         }
+    }
+
+    private void updateBind(MYSQL_BIND bind, int column, boolean nullVal, int length) {
+
+       // BytePointer nullFlag = nullFlags.getPointer(column);
+        bind.is_null(new BytePointer());
+        //nullFlag.put((byte) (nullVal ? 0 : 1));
+
+        //CLongPointer pLength = lengths.getPointer(column);
+        //pLength.put(length);
+        //bind.length(lengths.getPointer(column));
+        bind.length(new CLongPointer());
+        bind.buffer_length(length);
+
     }
 
     public void setInt(int index, int x) throws SQLException {
@@ -81,10 +111,12 @@ public class MySQLPreparedStatement extends MySQLStatement {
 
         buf[index] = p;
 
-        MYSQL_BIND bind = new MYSQL_BIND(binds.getPointer(index));
+        MYSQL_BIND bind = binds.getPointer(index);
         bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_LONG);
         bind.buffer_length(Pointer.sizeof(IntPointer.class));
         bind.buffer(p);
+
+        updateBind(bind,index,false,4);
 
     }
 
@@ -97,10 +129,10 @@ public class MySQLPreparedStatement extends MySQLStatement {
 
         buf[index] = null;
 
-        MYSQL_BIND bind = new MYSQL_BIND(binds.getPointer(index));
+        MYSQL_BIND bind = binds.getPointer(index);
         bind.buffer_length(0);
         bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_NULL);
-
+        updateBind(bind,index,true,0);
 
     }
 
@@ -123,11 +155,12 @@ public class MySQLPreparedStatement extends MySQLStatement {
 
         buf[index] = p;
 
-        MYSQL_BIND bind = new MYSQL_BIND(binds.getPointer(index));
-        bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_VAR_STRING);
+        MYSQL_BIND bind = binds.getPointer(index);
+        bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_BLOB);
         bind.buffer_length(size);
         bind.buffer(p);
 
+        updateBind(bind,index,false,size);
     }
 
 
@@ -151,10 +184,12 @@ public class MySQLPreparedStatement extends MySQLStatement {
 
         buf[index] = p;
 
-        MYSQL_BIND bind = new MYSQL_BIND(binds.getPointer(index));
+        MYSQL_BIND bind = binds.getPointer(index);
         bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_BIT);
         bind.buffer_length(leng);
         bind.buffer(p);
+
+        updateBind(bind,index,false,1);
     }
 
 
@@ -178,10 +213,12 @@ public class MySQLPreparedStatement extends MySQLStatement {
 
         buf[index] = p;
 
-        MYSQL_BIND bind = new MYSQL_BIND(binds.getPointer(index));
+        MYSQL_BIND bind = binds.getPointer(index);
         bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_BLOB);
         bind.buffer_length(leng);
         bind.buffer(p);
+
+        updateBind(bind,index,false,Pointer.sizeof(BytePointer.class));
     }
 
 
@@ -209,6 +246,7 @@ public class MySQLPreparedStatement extends MySQLStatement {
         bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_SHORT);
         bind.buffer_length(leng);
         bind.buffer(p);
+        updateBind(bind,index,false,Pointer.sizeof(ShortPointer.class));
     }
 
     public void setLong(int index, long x) throws SQLException {
@@ -231,10 +269,12 @@ public class MySQLPreparedStatement extends MySQLStatement {
 
         buf[index] = p;
 
-        MYSQL_BIND bind = new MYSQL_BIND(binds.getPointer(index));
+        MYSQL_BIND bind = binds.getPointer(index);
         bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_LONGLONG);
         bind.buffer_length(leng);
         bind.buffer(p);
+
+        updateBind(bind,index,false,Pointer.sizeof(LongPointer.class));
 
     }
 
@@ -263,6 +303,7 @@ public class MySQLPreparedStatement extends MySQLStatement {
         bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_FLOAT);
         bind.buffer_length(leng);
         bind.buffer(p);
+        updateBind(bind,index,false,Pointer.sizeof(FloatPointer.class));
 
     }
 
@@ -292,6 +333,7 @@ public class MySQLPreparedStatement extends MySQLStatement {
         bind.buffer_length(leng);
         bind.buffer(p);
 
+        updateBind(bind,index,false,Pointer.sizeof(DoublePointer.class));
     }
 
     public void setDecimal(int index, BigDecimal decimal) throws SQLException {
@@ -319,6 +361,7 @@ public class MySQLPreparedStatement extends MySQLStatement {
         bind.buffer_length(size);
         bind.buffer(p);
 
+        updateBind(bind,index,false,size);
     }
 
     public void setBytes(int index, byte[] x) throws SQLException {
@@ -346,6 +389,7 @@ public class MySQLPreparedStatement extends MySQLStatement {
         bind.buffer_length(leng);
         bind.buffer(p);
 
+        updateBind(bind,index,false,leng);
     }
 
     public void setDate(int index, Date date) throws SQLException {
@@ -371,7 +415,7 @@ public class MySQLPreparedStatement extends MySQLStatement {
         bind.buffer_length(leng);
         bind.buffer(time);
 
-
+        updateBind(bind,index,false,Pointer.sizeof(MYSQL_TIME.class));
     }
 
     public void setTime(int index, Time date) throws SQLException {
@@ -396,6 +440,8 @@ public class MySQLPreparedStatement extends MySQLStatement {
         bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_TIME);
         bind.buffer_length(leng);
         bind.buffer(time);
+
+        updateBind(bind,index,false,Pointer.sizeof(MYSQL_TIME.class));
 
     }
 
@@ -427,6 +473,7 @@ public class MySQLPreparedStatement extends MySQLStatement {
         bind.buffer_length(leng);
         bind.buffer(time);
 
+        updateBind(bind,index,false,Pointer.sizeof(MYSQL_TIME.class));
 
     }
 
@@ -494,10 +541,19 @@ public class MySQLPreparedStatement extends MySQLStatement {
         BatchItem item = new BatchItem();
         item.buf = buf;
         item.binds = binds;
+        item.nullFlags = nullFlags;
+        item.lengths = lengths;
+
         batches.add(item);
 
         this.binds = new MYSQL_BIND(stmt.param_count());
         this.buf = new Pointer[stmt.param_count()];
+        this.nullFlags = new BytePointer(Pointer.malloc(
+                (long) Pointer.sizeof(BytePointer.class) * stmt.param_count())
+        );
+        this.lengths = new CLongPointer(Pointer.malloc(
+                (long) Pointer.sizeof(CLongPointer.class) * stmt.param_count()
+        ));
 
     }
 
@@ -526,9 +582,16 @@ public class MySQLPreparedStatement extends MySQLStatement {
             throw new SQLException("failed to complete operation.");
         }
 
-        int state = MariaDB.mysql_stmt_execute(stmt);
+        int state = MariaDB.mysql_stmt_bind_param(stmt,binds);
         if (state != 0) {
-            throw new SQLException("failed to execute this query : " + sql + " with errno : " + MariaDB.mysql_stmt_errno(stmt));
+            throw new SQLException("failed to execute this query : " + sql + " with errno : " + MariaDB.mysql_stmt_errno(stmt) +
+                    "\n" + MariaDB.mysql_stmt_error(stmt).getString());
+        }
+
+        state = MariaDB.mysql_stmt_execute(stmt);
+        if (state != 0) {
+            throw new SQLException("failed to execute this query : " + sql + " with errno : " + MariaDB.mysql_stmt_errno(stmt) +
+                    "\n" + MariaDB.mysql_stmt_error(stmt).getString());
         }
 
 
@@ -544,7 +607,11 @@ public class MySQLPreparedStatement extends MySQLStatement {
             throw new SQLException("failed to complete operation.");
         }
 
-        int state = MariaDB.mysql_stmt_bind_param(stmt,binds);
+        int state = 0;
+        if (stmt.param_count() > 0) {
+            state = MariaDB.mysql_stmt_bind_param(stmt,binds);
+        }
+
         if (state != 0) {
             throw new SQLException("failed to bind parameter : " + sql + " with errno : " + MariaDB.mysql_stmt_errno(stmt));
         }
@@ -559,81 +626,72 @@ public class MySQLPreparedStatement extends MySQLStatement {
         if (res == null || res.isNull()) {
             return null;
         }
-        state = MariaDB.mysql_stmt_store_result(stmt);
-        if (state != 0) {
-            MariaDB.mysql_free_result(res);
-            throw new SQLException("failed to store a result set , errno : " + MariaDB.mysql_stmt_errno(stmt));
-        }
 
-
-        int count = res.field_count();
-        MYSQL_BIND binds = new MYSQL_BIND(Pointer.malloc(
-                (long) Pointer.sizeof(MYSQL_BIND.class) * count
-        ));
-        CLongPointer lengths = new CLongPointer(Pointer.malloc(
-                (long) Pointer.sizeof(CLongPointer.class) * count
-        ));
-        for (int i = 0; i < count; i++) {
-            MYSQL_FIELD field = MariaDB.mysql_fetch_field_direct(res,i);
-            MYSQL_BIND bind = binds.getPointer(i);
-            bind.buffer_type(field.type());
-            bind.buffer_length(0);
-            bind.length(lengths.getPointer(i));
-        }
-
-        state = MariaDB.mysql_stmt_bind_result(stmt,binds);
-        if (state != 0) {
-            for (int i = 0; i < count; i++) {
-                MYSQL_BIND bind = binds.getPointer(i);
-                bind.buffer().close();
-                bind.close();
-            }
-            MariaDB.mysql_free_result(res);
-            throw new SQLException("failed to bind result , errno : " + MariaDB.mysql_stmt_errno(stmt));
-        }
-
-        return new MySQLPreparedResult(res,stmt,binds,lengths);
+        return new MySQLPreparedResult(res,stmt);
 
     }
 
-    public synchronized long[] executeBatch() throws SQLException {
+    public boolean executeNext() throws SQLException {
 
-        BatchItem saved = new BatchItem();
-        saved.binds = this.binds;
-        saved.buf = this.buf;
+        this.executeUpdate();
+        if (!batches.isEmpty()) {
 
-        long[] effectRows = new long[batches.size()];
+            for (int idx = 0; idx < stmt.param_count(); idx ++) {
+                MYSQL_BIND bind = binds.getPointer(idx);
+                if (bind.buffer() != null && !bind.buffer().isNull()) {
+                    bind.close();
+                }
+                if (buf[idx] != null && !buf[idx].isNull()) {
+                    buf[idx].close();
+                }
+                bind.close();
+                buf = null;
+            }
+            lengths.close();
+            nullFlags.close();
 
-        ListIterator<BatchItem> iter = batches.listIterator();
-        while (iter.hasNext()) {
-
-            int idx = iter.nextIndex();
-            BatchItem item = iter.next();
+            BatchItem item = batches.removeFirst();
             this.binds = item.binds;
             this.buf = item.buf;
-
-            try {
-
-                effectRows[idx] = this.executeUpdate();
-                for (int colIdx = 0; colIdx < stmt.param_count(); colIdx ++) {
-                    this.binds.getPointer(colIdx).close();
-                    this.buf[colIdx].close();
-                }
-
-                iter.remove();
-
-            } finally {
-                this.binds = saved.binds;
-                this.buf = saved.buf;
-            }
-
+            this.lengths = item.lengths;
+            this.nullFlags = item.nullFlags;
         }
 
-        this.binds = saved.binds;
-        this.buf = saved.buf;
+        return true;
 
-        return effectRows;
+    }
 
+    public long executeUpdateNext() throws SQLException {
+
+        long affectRows = this.executeUpdate();
+        if (!batches.isEmpty()) {
+            for (int idx = 0; idx < stmt.param_count(); idx ++) {
+                MYSQL_BIND bind = binds.getPointer(idx);
+                if (bind.buffer() != null && !bind.buffer().isNull()) {
+                    bind.close();
+                }
+                if (buf[idx] != null && !buf[idx].isNull()) {
+                    buf[idx].close();
+                }
+                bind.close();
+                buf = null;
+            }
+            lengths.close();
+            nullFlags.close();
+
+            BatchItem item = batches.removeFirst();
+            this.binds = item.binds;
+            this.buf = item.buf;
+            this.lengths = item.lengths;
+            this.nullFlags = item.nullFlags;
+        }
+
+        return affectRows;
+
+    }
+
+    public int getBatchSize() {
+        return batches.size();
     }
 
 

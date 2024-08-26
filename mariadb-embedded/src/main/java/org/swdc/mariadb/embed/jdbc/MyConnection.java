@@ -6,16 +6,15 @@ import org.swdc.mariadb.core.mysql.MYSQL;
 import org.swdc.mariadb.embed.MySQLDBConnection;
 import org.swdc.mariadb.embed.MySQLStatement;
 
+import javax.sql.ConnectionEvent;
 import java.sql.*;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * Not implement yet
- */
+
 public class MyConnection implements Connection {
 
     public MySQLDBConnection connection;
@@ -24,6 +23,9 @@ public class MyConnection implements Connection {
 
     private final AtomicInteger savepointId = new AtomicInteger();
 
+    private MyPooledConnection pooledConnection;
+
+    private ReentrantLock lock = new ReentrantLock();
 
     public MyConnection(MySQLDBConnection conn) {
         this.connection = conn;
@@ -50,7 +52,7 @@ public class MyConnection implements Connection {
 
     @Override
     public PreparedStatement prepareStatement(String sql) throws SQLException {
-        return null;
+        return prepareStatement(sql,ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_READ_ONLY);
     }
 
     @Override
@@ -65,30 +67,58 @@ public class MyConnection implements Connection {
 
     @Override
     public void setAutoCommit(boolean autoCommit) throws SQLException {
-        connection.setAutoCommit(autoCommit);
+        try {
+            requireLock();
+            connection.setAutoCommit(autoCommit);
+        } finally {
+            releaseLock();
+        }
     }
 
     @Override
     public boolean getAutoCommit() throws SQLException {
-        return (connection.getServerStatus() & MyCom.SERVER_STATUS_AUTOCOMMIT) > 0;
+        try {
+            requireLock();
+            return (connection.getServerStatus() & MyCom.SERVER_STATUS_AUTOCOMMIT) > 0;
+        } finally {
+            releaseLock();
+        }
     }
 
     @Override
     public void commit() throws SQLException {
-        connection.commit();
+        try {
+            requireLock();
+            connection.commit();
+        } finally {
+            releaseLock();
+        }
     }
 
     @Override
     public void rollback() throws SQLException {
-        connection.rollback();
+        try {
+            requireLock();
+            connection.rollback();
+        } finally {
+            releaseLock();
+        }
     }
 
     @Override
     public void close() throws SQLException {
-        if (!isClosed()) {
-            connection.close();
-        } else {
-            throw new SQLException("connection has closed.");
+        try {
+            requireLock();
+            if (!isClosed()) {
+                connection.close();
+                if (pooledConnection != null) {
+                    this.pooledConnection.fireConnectionClosed(new ConnectionEvent(pooledConnection));
+                }
+            } else {
+                throw new SQLException("connection has closed.");
+            }
+        } finally {
+            releaseLock();
         }
     }
 
@@ -126,11 +156,16 @@ public class MyConnection implements Connection {
      */
     @Override
     public void setCatalog(String catalog) throws SQLException {
-        if (catalog == null || catalog.isBlank()) {
-            return;
-        }
-        if(!connection.selectDB(catalog)) {
-            throw new RuntimeException("failed to change the database");
+        try {
+            if (catalog == null || catalog.isBlank()) {
+                return;
+            }
+            requireLock();
+            if(!connection.selectDB(catalog)) {
+                throw new RuntimeException("failed to change the database");
+            }
+        } finally {
+            releaseLock();
         }
     }
 
@@ -147,12 +182,22 @@ public class MyConnection implements Connection {
 
     @Override
     public void setTransactionIsolation(int level) throws SQLException {
-        connection.setJDBCTransactionIsolation(level);
+        try {
+            requireLock();
+            connection.setJDBCTransactionIsolation(level);
+        } finally {
+            releaseLock();
+        }
     }
 
     @Override
     public int getTransactionIsolation() throws SQLException {
-        return connection.getJDBCTransactionIsolation();
+        try {
+            requireLock();
+            return connection.getJDBCTransactionIsolation();
+        } finally {
+            releaseLock();
+        }
     }
 
     @Override
@@ -167,7 +212,7 @@ public class MyConnection implements Connection {
 
     @Override
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
-        return new MyPreparedStatement(this,sql,resultSetType,resultSetConcurrency);
+        return prepareStatement(sql,resultSetType,resultSetConcurrency,ResultSet.HOLD_CURSORS_OVER_COMMIT);
     }
 
     @Override
@@ -197,27 +242,86 @@ public class MyConnection implements Connection {
 
     @Override
     public Savepoint setSavepoint() throws SQLException {
-        MySavePoint savePoint = new MySavePoint(savepointId.incrementAndGet());
-        MySQLStatement statement = connection.createStatement();
-        if(statement.execute("SAVEPOINT `" + savePoint.rawValue() + "`")) {
-            statement.close();
-            return savePoint;
+        try {
+
+            requireLock();
+
+            MySavePoint savePoint = new MySavePoint(savepointId.incrementAndGet());
+            MySQLStatement statement = connection.createStatement();
+            if(statement.execute("SAVEPOINT `" + savePoint.rawValue() + "`")) {
+                statement.close();
+                return savePoint;
+            }
+            throw new SQLException("failed to create savepoint .");
+        } finally {
+
+            releaseLock();
+
         }
-        throw new SQLException("failed to create savepoint .");
+
     }
 
     @Override
     public Savepoint setSavepoint(String name) throws SQLException {
-        return null;
+        try {
+
+            requireLock();
+
+            MySavePoint savePoint = new MySavePoint(name);
+            MySQLStatement statement = connection.createStatement();
+            if(statement.execute("SAVEPOINT `" + savePoint.rawValue() + "`")) {
+                statement.close();
+                return savePoint;
+            }
+            throw new SQLException("failed to create savepoint .");
+
+        } finally {
+
+            releaseLock();
+
+        }
+
     }
 
     @Override
     public void rollback(Savepoint savepoint) throws SQLException {
+        try {
+
+            requireLock();
+
+            if (savepoint instanceof MySavePoint) {
+                MySavePoint mySavePoint = (MySavePoint)savepoint;
+                MySQLStatement statement = connection.createStatement();
+                if (statement.execute("ROLLBACK TO SAVEPOINT `" + mySavePoint.rawValue() + "`")) {
+                    statement.close();
+                }
+                throw new SQLException("failed to rollback.");
+            } else {
+                throw new SQLException("Unknown savepoint type");
+            }
+        } finally {
+            releaseLock();
+        }
 
     }
 
     @Override
     public void releaseSavepoint(Savepoint savepoint) throws SQLException {
+        try {
+            requireLock();
+            if (savepoint instanceof MySavePoint) {
+                MySavePoint mySavePoint = (MySavePoint)savepoint;
+                MySQLStatement statement = connection.createStatement();
+                if (statement.execute("RELEASE SAVEPOINT `" + mySavePoint.rawValue() + "`")) {
+                    statement.close();
+                }
+                throw new SQLException("failed to rollback.");
+            } else {
+                throw new SQLException("Unknown savepoint type");
+            }
+        } finally {
+            releaseLock();
+        }
 
     }
 
@@ -237,7 +341,7 @@ public class MyConnection implements Connection {
 
     @Override
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-        return null;
+        return new MyPreparedStatement(this,sql,Statement.RETURN_GENERATED_KEYS,resultSetType,resultSetConcurrency);
     }
 
     @Override
@@ -247,17 +351,22 @@ public class MyConnection implements Connection {
 
     @Override
     public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
-        return null;
+        return new MyPreparedStatement(
+                this,sql,
+                autoGeneratedKeys,
+                ResultSet.CONCUR_READ_ONLY,
+                ResultSet.HOLD_CURSORS_OVER_COMMIT
+        );
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
-        return null;
+        return prepareStatement(sql,Statement.RETURN_GENERATED_KEYS);
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
-        return null;
+        return prepareStatement(sql,Statement.RETURN_GENERATED_KEYS);
     }
 
     /**
@@ -271,15 +380,20 @@ public class MyConnection implements Connection {
      * @throws SQLException if a connection error occur
      */
     public int getLowercaseTableNames() throws SQLException {
-        if (lowercaseTableNames == -1) {
-            try (java.sql.Statement st = createStatement()) {
-                try (ResultSet rs = st.executeQuery("select @@lower_case_table_names")) {
-                    rs.next();
-                    lowercaseTableNames = rs.getInt(1);
+        try {
+            requireLock();
+            if (lowercaseTableNames == -1) {
+                try (java.sql.Statement st = createStatement()) {
+                    try (ResultSet rs = st.executeQuery("select @@lower_case_table_names")) {
+                        rs.next();
+                        lowercaseTableNames = rs.getInt(1);
+                    }
                 }
             }
+            return lowercaseTableNames;
+        } finally {
+            releaseLock();
         }
-        return lowercaseTableNames;
     }
 
     @Override
@@ -304,7 +418,7 @@ public class MyConnection implements Connection {
 
     @Override
     public boolean isValid(int timeout) throws SQLException {
-        return false;
+        return !isClosed() && !lock.isLocked();
     }
 
     @Override
@@ -368,12 +482,29 @@ public class MyConnection implements Connection {
 
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
-        return null;
+        if (isWrapperFor(iface)) {
+            return iface.cast(this);
+        }
+        throw new SQLException("Connection is not a wrapper for " + iface.getName());
     }
 
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        return false;
+        return iface.isInstance(this);
+    }
+
+    public void setPoolConnection(MyPooledConnection myPooledConnection) {
+        this.pooledConnection = myPooledConnection;
+    }
+
+    public void requireLock() {
+        MyThreadHolder.threadVerify(this);
+        lock.lock();
+    }
+
+    public void releaseLock() {
+        MyThreadHolder.threadRelease(this);
+        lock.unlock();
     }
 
 }

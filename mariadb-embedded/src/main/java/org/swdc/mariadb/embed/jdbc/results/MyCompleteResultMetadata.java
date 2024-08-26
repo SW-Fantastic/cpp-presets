@@ -22,14 +22,14 @@ public class MyCompleteResultMetadata implements ResultSetMetaData {
     }
 
     public Class getJavaType(int column) {
-        return types.get(column);
+        return types.get(column - 1);
     }
 
     public int findColumn(String label) throws SQLException{
         String lbl = label.toUpperCase();
         for (Map.Entry<Integer,String> ent: labels.entrySet()) {
             if (ent.getValue().toUpperCase().equals(lbl)) {
-                return ent.getKey();
+                return ent.getKey() + 1;
             }
         }
         throw new SQLException("no such column" + label);
@@ -67,7 +67,7 @@ public class MyCompleteResultMetadata implements ResultSetMetaData {
 
     @Override
     public boolean isSigned(int column) throws SQLException {
-        Class type = types.get(column);
+        Class type = types.get(column - 1);
         if (type == null) {
             return false;
         }
@@ -84,17 +84,17 @@ public class MyCompleteResultMetadata implements ResultSetMetaData {
 
     @Override
     public int getColumnDisplaySize(int column) throws SQLException {
-        return types.get(column) == String.class ? labels.get(column).length() : 0;
+        return types.get(column - 1) == String.class ? labels.get(column - 1).length() : 0;
     }
 
     @Override
     public String getColumnLabel(int column) throws SQLException {
-        return labels.get(column);
+        return labels.get(column - 1);
     }
 
     @Override
     public String getColumnName(int column) throws SQLException {
-        return labels.get(column);
+        return labels.get(column - 1);
     }
 
     @Override
@@ -124,7 +124,7 @@ public class MyCompleteResultMetadata implements ResultSetMetaData {
 
     @Override
     public int getColumnType(int column) throws SQLException {
-        Class type = types.get(column);
+        Class type = types.get(column - 1);
         if (type == int.class || type == Integer.class) {
             return Types.INTEGER;
         } else if (type == long.class || type == Long.class) {
@@ -149,7 +149,7 @@ public class MyCompleteResultMetadata implements ResultSetMetaData {
 
     @Override
     public String getColumnTypeName(int column) throws SQLException {
-        Class type = types.get(column);
+        Class type = types.get(column - 1);
         if (type == int.class || type == Integer.class) {
             return "MEDIUMINT";
         } else if (type == long.class || type == Long.class) {
@@ -189,7 +189,7 @@ public class MyCompleteResultMetadata implements ResultSetMetaData {
 
     @Override
     public String getColumnClassName(int column) throws SQLException {
-        return types.containsKey(column) ? types.get(column).getName() : null;
+        return types.containsKey(column - 1) ? types.get(column - 1).getName() : null;
     }
 
     @Override

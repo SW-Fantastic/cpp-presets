@@ -25,11 +25,11 @@ public interface IMySQLResultSet extends Closeable {
         return false;
     }
 
-    boolean next();
+    boolean next() throws SQLException;
 
-    boolean previous();
+    boolean previous() throws SQLException;
 
-    boolean seek(long rowNum);
+    boolean seek(long rowNum) throws SQLException;
 
     boolean beforeFirst();
 
@@ -39,9 +39,9 @@ public interface IMySQLResultSet extends Closeable {
 
     boolean isAfterLast();
 
-    void firstRow();
+    void firstRow() throws SQLException;
 
-    void lastRow();
+    void lastRow() throws SQLException;
 
     boolean isFirst();
 

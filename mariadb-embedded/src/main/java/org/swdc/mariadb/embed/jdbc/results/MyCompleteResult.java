@@ -51,7 +51,7 @@ public class MyCompleteResult extends MyResult {
                 continue;
             }
 
-            Class type = metadata.getJavaType(idx);
+            Class type = metadata.getJavaType(idx + 1);
             Class sourceType = field.getClass();
             if (type == sourceType) {
                 data[idx] = field;
@@ -111,7 +111,7 @@ public class MyCompleteResult extends MyResult {
             return null;
         }
         for (Class item: type) {
-            if (item == metadata.getJavaType(columnIndex)) {
+            if (item == metadata.getJavaType(columnIndex + 1)) {
                 return (T)data[columnIndex];
             } else {
                 Converter conv = converter.getConverter(data[columnIndex].getClass(),item);
@@ -125,62 +125,62 @@ public class MyCompleteResult extends MyResult {
 
     @Override
     public String getString(int columnIndex) throws SQLException {
-        return getAs(columnIndex,String.class);
+        return getAs(columnIndex - 1,String.class);
     }
 
     @Override
     public boolean getBoolean(int columnIndex) throws SQLException {
-        return getAs(columnIndex,Boolean.class, boolean.class);
+        return getAs(columnIndex - 1,Boolean.class, boolean.class);
     }
 
     @Override
     public byte getByte(int columnIndex) throws SQLException {
-        return getAs(columnIndex,Byte.class, byte.class);
+        return getAs(columnIndex - 1,Byte.class, byte.class);
     }
 
     @Override
     public short getShort(int columnIndex) throws SQLException {
-        return getAs(columnIndex,Short.class, short.class);
+        return getAs(columnIndex - 1,Short.class, short.class);
     }
 
     @Override
     public int getInt(int columnIndex) throws SQLException {
-        return getAs(columnIndex,Integer.class, int.class);
+        return getAs(columnIndex - 1,Integer.class, int.class);
     }
 
     @Override
     public long getLong(int columnIndex) throws SQLException {
-        return getAs(columnIndex,Long.class,long.class);
+        return getAs(columnIndex - 1,Long.class,long.class);
     }
 
     @Override
     public float getFloat(int columnIndex) throws SQLException {
-        return getAs(columnIndex,float.class, Float.class);
+        return getAs(columnIndex - 1,float.class, Float.class);
     }
 
     @Override
     public double getDouble(int columnIndex) throws SQLException {
-        return getAs(columnIndex,double.class, Double.class);
+        return getAs(columnIndex - 1,double.class, Double.class);
     }
 
     @Override
     public byte[] getBytes(int columnIndex) throws SQLException {
-        return getAs(columnIndex, byte[].class);
+        return getAs(columnIndex - 1, byte[].class);
     }
 
     @Override
     public Date getDate(int columnIndex) throws SQLException {
-        return getAs(columnIndex,Date.class);
+        return getAs(columnIndex - 1,Date.class);
     }
 
     @Override
     public Time getTime(int columnIndex) throws SQLException {
-        return getAs(columnIndex,Time.class);
+        return getAs(columnIndex - 1,Time.class);
     }
 
     @Override
     public Timestamp getTimestamp(int columnIndex) throws SQLException {
-        return getAs(columnIndex, Timestamp.class);
+        return getAs(columnIndex - 1, Timestamp.class);
     }
 
     @Override
@@ -277,6 +277,6 @@ public class MyCompleteResult extends MyResult {
     @Override
     public Object getObject(int columnIndex) throws SQLException {
         Class type = metadata.getJavaType(columnIndex);
-        return getAs(columnIndex,type);
+        return getAs(columnIndex - 1,type);
     }
 }
