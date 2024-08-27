@@ -694,6 +694,30 @@ public class MySQLPreparedStatement extends MySQLStatement {
         return batches.size();
     }
 
-
-
+    @Override
+    public void close() {
+        if (stmt != null && !stmt.isNull()) {
+            MariaDB.mysql_stmt_free_result(stmt);
+            MariaDB.mysql_stmt_close(stmt);
+            stmt = null;
+        }
+        for (Pointer buf: this.buf) {
+            if (buf != null && !buf.isNull()) {
+                buf.close();
+            }
+        }
+        this.buf = null;
+        if (nullFlags != null && !nullFlags.isNull()) {
+            nullFlags.close();
+            nullFlags = null;
+        }
+        if (lengths != null && !lengths.isNull()) {
+            lengths.close();
+            lengths = null;
+        }
+        if (binds != null) {
+            binds.close();
+            binds = null;
+        }
+    }
 }

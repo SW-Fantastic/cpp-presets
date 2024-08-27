@@ -14,6 +14,7 @@ import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -168,9 +169,20 @@ public class MySQLResultSet implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_DATETIME,
                 MyCom.enum_field_types.MYSQL_TYPE_DATETIME2
         )) {
-            MYSQL_TIME time = new MYSQL_TIME(currentRow.get(column));
-            LocalDate localDate = LocalDate.of(time.year(),time.month() + 1,time.day() + 1);
+
+            BytePointer pointer = new BytePointer(currentRow.get(column));
+            if (pointer.isNull()) {
+                return null;
+            }
+
+            byte[] data = new byte[(int) currentRowLength.getPointer(column).get()];
+            pointer.get(data);
+
+            String dateStr = new String(data);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss");
+            LocalDate localDate = LocalDate.parse(dateStr,formatter);
             return Date.valueOf(localDate);
+
         }
 
         return null;
@@ -228,7 +240,10 @@ public class MySQLResultSet implements IMySQLResultSet {
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_SHORT
         )) {
-            return new ShortPointer(currentRow.get(column)).get();
+            BytePointer pointer = new BytePointer(currentRow.get(column));
+            byte[] data = new byte[(int) currentRowLength.getPointer(column).get()];
+            pointer.get(data);
+            return Short.parseShort(new String(data));
         }
         if (accept(
                 field.type(),
@@ -254,7 +269,10 @@ public class MySQLResultSet implements IMySQLResultSet {
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_LONGLONG
         )) {
-            return new LongPointer(currentRow.get(column)).get();
+            BytePointer pointer = new BytePointer(currentRow.get(column));
+            byte[] data = new byte[(int) currentRowLength.getPointer(column).get()];
+            pointer.get(data);
+            return Long.parseLong(new String(data));
         } else if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_INT24,
@@ -288,7 +306,10 @@ public class MySQLResultSet implements IMySQLResultSet {
             if (currentRow.get(column) == null) {
                 return 0;
             }
-            return new IntPointer(currentRow.get(column)).get();
+            BytePointer pointer = new BytePointer(currentRow.get(column));
+            byte[] data = new byte[(int) currentRowLength.getPointer(column).get()];
+            pointer.get(data);
+            return Integer.parseInt(new String(data));
         } else if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_TINY,
@@ -311,7 +332,10 @@ public class MySQLResultSet implements IMySQLResultSet {
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_FLOAT
         )) {
-            return new FloatPointer(currentRow).get(column);
+            BytePointer pointer = new BytePointer(currentRow.get(column));
+            byte[] data = new byte[(int) currentRowLength.getPointer(column).get()];
+            pointer.get(data);
+            return Float.parseFloat(new String(data));
         } else if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_INT24,
@@ -336,7 +360,10 @@ public class MySQLResultSet implements IMySQLResultSet {
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_DOUBLE
         )) {
-            return new DoublePointer(currentRow.get(column)).get();
+            BytePointer pointer = new BytePointer(currentRow.get(column));
+            byte[] data = new byte[(int) currentRowLength.getPointer(column).get()];
+            pointer.get(data);
+            return Double.parseDouble(new String(data));
         } else if (accept(field.type(),MyCom.enum_field_types.MYSQL_TYPE_FLOAT)) {
             Float val = getFloat(column);
             return val != null ? Double.valueOf(val) : null;

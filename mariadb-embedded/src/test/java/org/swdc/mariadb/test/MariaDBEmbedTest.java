@@ -2,58 +2,71 @@ package org.swdc.mariadb.test;
 
 import org.bytedeco.javacpp.*;
 import org.swdc.mariadb.core.MariaDB;
-import org.swdc.mariadb.embed.EmbeddedMariaDB;
-import org.swdc.mariadb.embed.MySQLDBConnection;
+import org.swdc.mariadb.embed.*;
+import org.swdc.mariadb.embed.exec.MySQLExecutor;
 
 import java.io.File;
+import java.sql.SQLException;
 import java.util.List;
 
 public class MariaDBEmbedTest {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException {
 
         Loader.load(MariaDB.class);
 
-        EmbeddedMariaDB mariaDB = EmbeddedMariaDB.getMariaDB(
+        MySQLExecutor mariaDB = EmbeddedMariaDB.getMariaDB(
                 new File("./mysqlData/base"),
                 new File("./mysqlData/data")
         );
 
-        if (mariaDB == null || !mariaDB.initialize()) {
-            System.err.println("failed to init mariadb.");
-            return;
-        }
-
-        mariaDB.withMySQL(() -> {
-
-
-            List<String> names = mariaDB.getDatabases();
+        mariaDB.execute(db -> {
+            List<String> names = db.getDatabases();
             System.err.println("load databases");
             for (String name: names) {
                 System.err.println("DB: " + name);
             }
 
-            String myCustomDB = "test_db";
-            MySQLDBConnection customDB = mariaDB.connect("information_schema");
+            String myCustomDB = "dbForTest";
+            MySQLDBConnection customDB = db.connect(myCustomDB);
             if (customDB == null) {
-                mariaDB.createDatabase(myCustomDB,null,null);
+                db.createDatabase(myCustomDB,null,null);
             } else {
-                List<String> tables = customDB.getTables(null);
-                for (String t: tables) {
-                    customDB.listFields(t).forEach(f -> {
-                        System.err.println("----------------------------------------");
-                        System.err.println(f);
-                    });
+                System.err.println("");
+                for (int i = 0; i < 80 ; i ++) {
+                    /*MySQLPreparedStatement statement=customDB.preparedStatement("SELECT id,name,age,nextAim,source,createdOn FROM entuser");
+                    MySQLPreparedResult result = statement.execute();
+                    while (result.next()) {
+                        System.err.print("Id : " + result.getLong(0) + " | ");
+                        System.err.print("Name:" + result.getString(1) + " | ");
+                        System.err.print("Age: " + result.getInt(2) + " | ");
+                        System.err.print("NextAim: " + result.getFloat(3) + " | ");
+                        System.err.print("Source: " + result.getDouble(4) + " | ");
+                        System.err.print("Created : " + result.getDate(5) + " | ");
+                        System.err.println();
+                    }
+                    result.close();
+                    statement.close();*/
+                    MySQLStatement statement=customDB.createStatement();
+                    MySQLResultSet result = statement.executeQuery("SELECT id,name,age,nextAim,source,createdOn FROM entuser");
+                    while (result.next()) {
+                        System.err.print("Id : " + result.getLong(0) + " | ");
+                        System.err.print("Name:" + result.getString(1) + " | ");
+                        System.err.print("Age: " + result.getInt(2) + " | ");
+                        System.err.print("NextAim: " + result.getFloat(3) + " | ");
+                        System.err.print("Source: " + result.getDouble(4) + " | ");
+                        System.err.print("Created : " + result.getDate(5) + " | ");
+                        System.err.println();
+                    }
+                    result.close();
                 }
+
             }
-
             customDB.close();
-
-
+            return null;
         });
 
-
-        mariaDB.shutdown();
+        System.exit(0);
     }
 
 }

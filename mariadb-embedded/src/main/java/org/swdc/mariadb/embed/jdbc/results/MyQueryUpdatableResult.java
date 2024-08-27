@@ -1,6 +1,7 @@
 package org.swdc.mariadb.embed.jdbc.results;
 
 import org.swdc.mariadb.embed.MySQLResultSet;
+import org.swdc.mariadb.embed.exec.MySQLExecutor;
 import org.swdc.mariadb.embed.jdbc.MyStatement;
 
 import java.sql.SQLException;
@@ -10,8 +11,8 @@ import java.sql.SQLException;
  */
 public class MyQueryUpdatableResult extends MyQueryResult {
 
-    public MyQueryUpdatableResult(MyStatement connection, MySQLResultSet rs, int type) {
-        super(connection,rs,type);
+    public MyQueryUpdatableResult(MySQLExecutor executor, MyStatement connection, MySQLResultSet rs, int type) {
+        super(executor,connection,rs,type);
     }
 
     @Override

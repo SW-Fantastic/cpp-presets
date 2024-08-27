@@ -5,6 +5,7 @@ import org.swdc.mariadb.core.MyCom;
 import org.swdc.mariadb.core.mysql.MYSQL;
 import org.swdc.mariadb.embed.MySQLDBConnection;
 import org.swdc.mariadb.embed.MySQLStatement;
+import org.swdc.mariadb.embed.exec.MySQLExecutor;
 
 import javax.sql.ConnectionEvent;
 import java.sql.*;
@@ -27,8 +28,11 @@ public class MyConnection implements Connection {
 
     private ReentrantLock lock = new ReentrantLock();
 
-    public MyConnection(MySQLDBConnection conn) {
+    private MySQLExecutor executor;
+
+    public MyConnection(MySQLExecutor executor, MySQLDBConnection conn) {
         this.connection = conn;
+        this.executor = executor;
     }
 
     @Override
@@ -38,16 +42,19 @@ public class MyConnection implements Connection {
 
     @Override
     public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
-        MySQLStatement statement = connection.createStatement();
-        if (statement != null) {
-            return new MyStatement(
-                    this,
-                    connection.createStatement(),
-                    resultSetType,
-                    resultSetConcurrency
-            );
-        }
-        throw new SQLException("failed to create statement.");
+        return executor.execute(db -> {
+            MySQLStatement statement = connection.createStatement();
+            if (statement != null) {
+                return new MyStatement(
+                        executor,
+                        this,
+                        connection.createStatement(),
+                        resultSetType,
+                        resultSetConcurrency
+                );
+            }
+            throw new SQLException("failed to create statement.");
+        });
     }
 
     @Override
@@ -67,12 +74,10 @@ public class MyConnection implements Connection {
 
     @Override
     public void setAutoCommit(boolean autoCommit) throws SQLException {
-        try {
-            requireLock();
+        executor.execute(db -> {
             connection.setAutoCommit(autoCommit);
-        } finally {
-            releaseLock();
-        }
+            return null;
+        });
     }
 
     @Override
@@ -87,28 +92,23 @@ public class MyConnection implements Connection {
 
     @Override
     public void commit() throws SQLException {
-        try {
-            requireLock();
+        executor.execute(db -> {
             connection.commit();
-        } finally {
-            releaseLock();
-        }
+            return null;
+        });
     }
 
     @Override
     public void rollback() throws SQLException {
-        try {
-            requireLock();
+        executor.execute(db -> {
             connection.rollback();
-        } finally {
-            releaseLock();
-        }
+            return null;
+        });
     }
 
     @Override
     public void close() throws SQLException {
-        try {
-            requireLock();
+        executor.execute(db -> {
             if (!isClosed()) {
                 connection.close();
                 if (pooledConnection != null) {
@@ -117,9 +117,8 @@ public class MyConnection implements Connection {
             } else {
                 throw new SQLException("connection has closed.");
             }
-        } finally {
-            releaseLock();
-        }
+            return null;
+        });
     }
 
     @Override
@@ -156,17 +155,15 @@ public class MyConnection implements Connection {
      */
     @Override
     public void setCatalog(String catalog) throws SQLException {
-        try {
+        executor.execute(db -> {
             if (catalog == null || catalog.isBlank()) {
-                return;
+                return null;
             }
-            requireLock();
             if(!connection.selectDB(catalog)) {
                 throw new RuntimeException("failed to change the database");
             }
-        } finally {
-            releaseLock();
-        }
+            return null;
+        });
     }
 
     /**
@@ -177,27 +174,24 @@ public class MyConnection implements Connection {
      */
     @Override
     public String getCatalog() throws SQLException {
-        return connection.getConnectedDB();
+        return executor.execute(db -> {
+            return connection.getConnectedDB();
+        });
     }
 
     @Override
     public void setTransactionIsolation(int level) throws SQLException {
-        try {
-            requireLock();
+        executor.execute(db -> {
             connection.setJDBCTransactionIsolation(level);
-        } finally {
-            releaseLock();
-        }
+            return null;
+        });
     }
 
     @Override
     public int getTransactionIsolation() throws SQLException {
-        try {
-            requireLock();
+        return executor.execute(db -> {
             return connection.getJDBCTransactionIsolation();
-        } finally {
-            releaseLock();
-        }
+        });
     }
 
     @Override
@@ -330,6 +324,7 @@ public class MyConnection implements Connection {
         MySQLStatement statement = connection.createStatement();
         if (statement != null) {
             return new MyStatement(
+                    executor,
                     this,
                     connection.createStatement(),
                     resultSetType,
@@ -341,7 +336,7 @@ public class MyConnection implements Connection {
 
     @Override
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-        return new MyPreparedStatement(this,sql,Statement.RETURN_GENERATED_KEYS,resultSetType,resultSetConcurrency);
+        return new MyPreparedStatement(executor,this,sql,Statement.RETURN_GENERATED_KEYS,resultSetType,resultSetConcurrency);
     }
 
     @Override
@@ -352,7 +347,7 @@ public class MyConnection implements Connection {
     @Override
     public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
         return new MyPreparedStatement(
-                this,sql,
+                executor,this,sql,
                 autoGeneratedKeys,
                 ResultSet.CONCUR_READ_ONLY,
                 ResultSet.HOLD_CURSORS_OVER_COMMIT
@@ -380,8 +375,7 @@ public class MyConnection implements Connection {
      * @throws SQLException if a connection error occur
      */
     public int getLowercaseTableNames() throws SQLException {
-        try {
-            requireLock();
+        return executor.execute(db -> {
             if (lowercaseTableNames == -1) {
                 try (java.sql.Statement st = createStatement()) {
                     try (ResultSet rs = st.executeQuery("select @@lower_case_table_names")) {
@@ -391,9 +385,7 @@ public class MyConnection implements Connection {
                 }
             }
             return lowercaseTableNames;
-        } finally {
-            releaseLock();
-        }
+        });
     }
 
     @Override
@@ -498,12 +490,10 @@ public class MyConnection implements Connection {
     }
 
     public void requireLock() {
-        MyThreadHolder.threadVerify(this);
         lock.lock();
     }
 
     public void releaseLock() {
-        MyThreadHolder.threadRelease(this);
         lock.unlock();
     }
 

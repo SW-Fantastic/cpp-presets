@@ -8,10 +8,10 @@ import org.swdc.mariadb.core.MariaDB;
 import org.swdc.mariadb.core.MyGlobal;
 import org.swdc.mariadb.core.mysql.MYSQL;
 import org.swdc.mariadb.core.mysql.MYSQL_RES;
+import org.swdc.mariadb.embed.exec.MySQLExecutor;
 
 import java.io.File;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +24,8 @@ public class EmbeddedMariaDB {
      * Mariadb的单例对象，每一个应用只需要一个这样的对象。
      */
     private static EmbeddedMariaDB instance;
+
+    private static MySQLExecutor executor;
 
     /**
      * Mariadb是否成功初始化
@@ -311,7 +313,6 @@ public class EmbeddedMariaDB {
         String initScript = "";
         String initTableScript = "";
         String initSysDataScript = "";
-        String initHelpScript = "";
 
         try {
 
@@ -327,9 +328,6 @@ public class EmbeddedMariaDB {
             initSysDataScript = new String(initSystemData.readAllBytes());
             initSystemData.close();
 
-            InputStream initHelp = EmbeddedMariaDB.class.getModule().getResourceAsStream("mysystem/fill_help_tables.sql");
-            initHelpScript = new String(initHelp.readAllBytes());
-            initHelp.close();
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -413,16 +411,18 @@ public class EmbeddedMariaDB {
      * @param dataDir 数据文件夹
      * @return Mariadb环境对象。
      */
-    public synchronized static EmbeddedMariaDB getMariaDB(File baseDir, File dataDir) {
+    public synchronized static MySQLExecutor getMariaDB(File baseDir, File dataDir) {
         if (instance == null) {
             instance = new EmbeddedMariaDB(dataDir,baseDir);
+            executor = new MySQLExecutor(instance);
         }
-        return instance;
+        return executor;
     }
+
 
     public synchronized static void shutdownEnvironment() {
         if (instance != null && instance.initialized) {
-            instance.shutdown();
+            executor.shutdown();
         }
     }
 }

@@ -56,26 +56,27 @@ public class MariaDBJDBCTest {
 
         EntityTransaction tx = em.getTransaction();
         tx.begin();
-        List<EntUser> users = em.createQuery("FROM EntUser").getResultList();
-        if (users != null && users.size() == 0) {
+        for (int i=0 ; i < 8; i++) {
+            List<EntUser> users = em.createQuery("FROM EntUser").getResultList();
+            if (users != null && users.size() == 0) {
 
-            EntUser user = new EntUser();
-            user.setName("张三");
-            user.setAge(24);
-            user.setSource(8.2);
-            user.setNextAim(6.1f);
-            user.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
-            user.setCreatedOn(Date.valueOf(LocalDate.now()));
+                EntUser user = new EntUser();
+                user.setName("张三");
+                user.setAge(24);
+                user.setSource(8.2);
+                user.setNextAim(6.1f);
 
-            em.persist(user);
+                em.persist(user);
 
-        } else {
-            EntUser user = users.get(0);
-            System.err.println(user);
+            } else {
+                EntUser user = users.get(0);
+                System.err.println(user);
+            }
         }
         tx.commit();
         em.close();
         entityFactory.close();
+        System.exit(0);
 
     }
 

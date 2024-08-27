@@ -37,11 +37,14 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
 
     private MySQLResultMetadata metadata;
 
+    private CLongPointer clength;
     private CLongPointer[] lengths;
 
     private BytePointer[] errors;
 
     private BytePointer[] isNulls;
+
+    private Pointer[] buf;
 
     public MySQLPreparedResult(MYSQL_RES res, MYSQL_STMT stmt) {
         this.res = res;
@@ -55,6 +58,7 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
         lengths = new CLongPointer[res.field_count()];
         errors = new BytePointer[res.field_count()];
         isNulls = new BytePointer[res.field_count()];
+        buf = new Pointer[res.field_count()];
 
         for (int i = 0; i < res.field_count(); i++) {
 
@@ -63,19 +67,59 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
             lengths[i] = new CLongPointer(Pointer.malloc(
                     Pointer.sizeof(CLongPointer.class)
             ));
-            errors[i] = new BytePointer(Pointer.malloc(
-                    Pointer.sizeof(IntPointer.class)
-            ));
-            isNulls[i] = new BytePointer(Pointer.malloc(
-                    Pointer.sizeof(IntPointer.class)
-            ));
+            Pointer.memset(lengths[i],0,Pointer.sizeof(CLongPointer.class));
 
+            errors[i] = new BytePointer(Pointer.malloc(
+                    Pointer.sizeof(BytePointer.class)
+            ));
+            Pointer.memset(errors[i],0,Pointer.sizeof(BytePointer.class));
+
+            isNulls[i] = new BytePointer(Pointer.malloc(
+                    Pointer.sizeof(BytePointer.class)
+            ));
+            Pointer.memset(isNulls[i],0,Pointer.sizeof(BytePointer.class));
+
+            int length = 4;
+            if (accept(field.type(),
+                    MyCom.enum_field_types.MYSQL_TYPE_INT24,
+                    MyCom.enum_field_types.MYSQL_TYPE_LONG,
+                    MyCom.enum_field_types.MYSQL_TYPE_SHORT,
+                    MyCom.enum_field_types.MYSQL_TYPE_TINY
+            )) {
+                length = Pointer.sizeof(IntPointer.class);
+            } else if (accept(field.type(),
+                    MyCom.enum_field_types.MYSQL_TYPE_LONGLONG,
+                    MyCom.enum_field_types.MYSQL_TYPE_LONG
+            )) {
+                length = Pointer.sizeof(LongPointer.class);
+            } else if (accept(
+                    field.type(),
+                    MyCom.enum_field_types.MYSQL_TYPE_DATE,
+                    MyCom.enum_field_types.MYSQL_TYPE_DATETIME,
+                    MyCom.enum_field_types.MYSQL_TYPE_DATETIME2,
+                    MyCom.enum_field_types.MYSQL_TYPE_NEWDATE,
+                    MyCom.enum_field_types.MYSQL_TYPE_TIMESTAMP,
+                    MyCom.enum_field_types.MYSQL_TYPE_TIMESTAMP2
+            )) {
+                length = Pointer.sizeof(MYSQL_TIME.class);
+            } else if (accept(
+                    field.type(),
+                    MyCom.enum_field_types.MYSQL_TYPE_VAR_STRING,
+                    MyCom.enum_field_types.MYSQL_TYPE_STRING,
+                    MyCom.enum_field_types.MYSQL_TYPE_LONG_BLOB,
+                    MyCom.enum_field_types.MYSQL_TYPE_TINY_BLOB,
+                    MyCom.enum_field_types.MYSQL_TYPE_MEDIUM_BLOB,
+                    MyCom.enum_field_types.MYSQL_TYPE_BLOB
+            )) {
+                length = Pointer.sizeof(BytePointer.class);
+            }
+
+            buf[i] = Pointer.malloc(length);
 
             MYSQL_BIND bind = bindAndBuffer.getPointer(i);
             bind.buffer_type(field.type());
-            bind.buffer_length(field.max_length());
-            bind.buffer(Pointer.malloc(field.max_length()));
-
+            bind.buffer_length(length);
+            bind.buffer(buf[i]);
             bind.error(errors[i]);
             bind.length(lengths[i]);
             bind.is_null(isNulls[i]);
@@ -130,11 +174,13 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
         MariaDB.mysql_stmt_data_seek(stmt,rowNum);
         currentRowNum = rowNum;
 
-        if (MariaDB.mysql_stmt_fetch(stmt) == MariaDB.MYSQL_NO_DATA) {
+        int rst = MariaDB.mysql_stmt_fetch(stmt);
+        if (rst != 0 && (rst != MariaDB.MYSQL_DATA_TRUNCATED)) {
             // MYSQL_DATA_TRUNCATE直接无视，通过Mysql传入Length的长度申请buffer
             // 并且提取数据。
             return false;
         }
+        //System.err.println("Fetch called.");
 
         for (int i = 0; i < res.field_count(); i++) {
 
@@ -143,23 +189,23 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
             // 需要的buffer长度
             long bufLength = lengths[i].get();
 
-            if (isNulls[i].get() == 0 && lengths[i].get() > 0) {
+            if (bufLength > 0) {
                 // 不为空，且长度不为0，可以读取数据
                 // 准备buffer
-                if (bind.buffer() != null && !bind.buffer().isNull()) {
-                    bind.buffer().close();
+                if (buf[i] != null && !buf[i].isNull()) {
+                    buf[i].close();
                 }
                 // 申请内存。
-                Pointer buf = Pointer.malloc(bufLength);
-                // 初始化Buffer
-                Pointer.memset(buf,0,bufLength);
-                bind.buffer(buf);
-                // 指定Buffer长度
+                this.buf[i] = Pointer.malloc(bufLength);
+                Pointer.memset(buf[i],0,bufLength);
+                bind.buffer(buf[i]);
                 bind.buffer_length(bufLength);
+                // 初始化Buffer
                 // 读取该字段数据。
                 MariaDB.mysql_stmt_fetch_column(stmt,bind,i,0);
             } else {
-                bind.buffer().close();
+                buf[i].close();
+                buf[i] = null;
                 bind.buffer(new Pointer());
                 bind.buffer_length(0);
             }
@@ -218,7 +264,7 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
 
     @Override
     public Date getDate(int column) throws SQLException {
-
+        // TODO 存在BUG
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
@@ -226,8 +272,13 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_DATETIME,
                 MyCom.enum_field_types.MYSQL_TYPE_DATETIME2
         )) {
-            MYSQL_TIME time = new MYSQL_TIME(bindAndBuffer.getPointer(column).buffer());
-            LocalDate localDate = LocalDate.of(time.year(),time.month() + 1,time.day() + 1);
+
+            if (lengths[column].get() <= 0) {
+                return null;
+            }
+
+            MYSQL_TIME time = new MYSQL_TIME(buf[column]);
+            LocalDate localDate = LocalDate.of(time.year(),time.month(),time.day());
             return Date.valueOf(localDate);
         }
 
@@ -236,7 +287,7 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
 
     @Override
     public Time getTime(int column) throws SQLException {
-
+        // TODO 存在BUG
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
@@ -246,11 +297,10 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_TIME,
                 MyCom.enum_field_types.MYSQL_TYPE_TIME2
         )) {
-            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
-            if (bind.buffer_length() <= 0) {
+            if (lengths[column].get() <= 0) {
                 return null;
             }
-            MYSQL_TIME time = new MYSQL_TIME(bind.buffer());
+            MYSQL_TIME time = new MYSQL_TIME(buf[column]);
             LocalTime localTime = LocalTime.of(time.hour(),time.minute(),time.second());
             return Time.valueOf(localTime);
         }
@@ -265,11 +315,10 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_TINY,
                 MyCom.enum_field_types.MYSQL_TYPE_BLOB
         )) {
-            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
-            if (bind.buffer_length() <= 0) {
+            if (lengths[column].get() <= 0) {
                 return null;
             }
-            return new BytePointer(bind.buffer()).get();
+            return new BytePointer(buf[column]).get();
         }
         return null;
     }
@@ -281,11 +330,10 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_SHORT
         )) {
-            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
-            if (bind.buffer_length() <= 0) {
+            if (lengths[column].get() <= 0) {
                 return null;
             }
-            return new ShortPointer(bind.buffer()).get();
+            return new ShortPointer(buf[column]).get();
         }
         if (accept(
                 field.type(),
@@ -304,11 +352,10 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_LONGLONG
         )) {
-            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
-            if (bind.buffer_length() <= 0) {
+            if (lengths[column].get() <= 0) {
                 return null;
             }
-            return new LongPointer(bind.buffer()).get();
+            return new LongPointer(buf[column]).get();
         } else if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_INT24,
@@ -332,11 +379,10 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_INT24,
                 MyCom.enum_field_types.MYSQL_TYPE_LONG
         )) {
-            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
-            if (bind.buffer_length() <= 0) {
+            if (lengths[column].get() <= 0) {
                 return 0;
             }
-            return new IntPointer(bind.buffer()).get();
+            return new IntPointer(buf[column]).get();
         } else if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_TINY,
@@ -355,11 +401,10 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_FLOAT
         )) {
-            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
-            if (bind.buffer_length() <= 0) {
+            if (lengths[column].get() <= 0) {
                 return 0f;
             }
-            return new FloatPointer(bind.buffer()).get();
+            return new FloatPointer(buf[column]).get();
         } else if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_INT24,
@@ -380,12 +425,11 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_DOUBLE
         )) {
-            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
-            if (bind.buffer_length() <= 0) {
+            if (lengths[column].get() <= 0) {
                 return 0d;
             }
 
-            return new DoublePointer(bind.buffer()).get();
+            return new DoublePointer(buf[column]).get();
         } else if (accept(field.type(),MyCom.enum_field_types.MYSQL_TYPE_FLOAT)) {
             Float val = getFloat(column);
             return val != null ? Double.valueOf(val) : null;
@@ -409,11 +453,10 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_DECIMAL,
                 MyCom.enum_field_types.MYSQL_TYPE_NEWDECIMAL
         )) {
-            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
-            if (bind.buffer_length() <= 0) {
+            if (lengths[column].get() <= 0) {
                 return null;
             }
-            BytePointer pData = new BytePointer(bind.buffer());
+            BytePointer pData = new BytePointer(buf[column]);
             if (pData.isNull()) {
                 return null;
             }
@@ -426,28 +469,19 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
     @Override
     public String getString(int column) throws SQLException {
         MYSQL_FIELD field = metadata.getField(column);
-        if (accept(field.type(),MyCom.enum_field_types.MYSQL_TYPE_VAR_STRING)) {
-            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
-            if (bind.buffer_length() <= 0) {
-                return null;
-            }
-
-            byte[] data = new byte[(int)lengths[column].get()];
-            BytePointer pointer = new BytePointer(bind.buffer());
-            pointer.get(data);
-            return new String(data, StandardCharsets.UTF_8);
-        }
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_STRING,
                 MyCom.enum_field_types.MYSQL_TYPE_VAR_STRING,
                 MyCom.enum_field_types.MYSQL_TYPE_VARCHAR
         )) {
-            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
-            if (bind.buffer_length() <= 0) {
+            if (lengths[column].get() <= 0) {
                 return null;
             }
-            return new BytePointer(bind.buffer()).getString(StandardCharsets.UTF_8);
+            byte[] data = new byte[(int)lengths[column].get()];
+            BytePointer pointer = new BytePointer(buf[column]);
+            pointer.get(data);
+            return new String(data,StandardCharsets.UTF_8);
         } else if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_BLOB
@@ -464,12 +498,11 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
     public byte[] getBlob(int column) throws SQLException {
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_BLOB)) {
-            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
-            if (bind.buffer_length() <= 0) {
+            if (lengths[column].get() <= 0) {
                 return null;
             }
             byte[] data = new byte[(int)lengths[column].get()];
-            BytePointer pointer = new BytePointer(bind.buffer());
+            BytePointer pointer = new BytePointer(buf[column]);
             pointer.get(data);
             return data;
         }
@@ -485,11 +518,10 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_TIMESTAMP2
         )) {
 
-            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
-            if (bind.buffer_length() <= 0) {
+            if (lengths[column].get() <= 0) {
                 return null;
             }
-            return new LongPointer(bind.buffer()).get();
+            return new LongPointer(buf[column]).get();
 
         } else if (accept(
                 field.type(),
@@ -497,11 +529,10 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_DATETIME2
         )) {
 
-            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
-            if (bind.buffer_length() <= 0) {
+            if (lengths[column].get() <= 0) {
                 return null;
             }
-            MYSQL_TIME time = new MYSQL_TIME(bind.buffer());
+            MYSQL_TIME time = new MYSQL_TIME(buf[column]);
             LocalDateTime dateTime = LocalDateTime.of(
                     time.year(),time.month() + 1,time.day() + 1,time.hour(),time.minute(),time.second()
             );
@@ -522,13 +553,12 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_TINY
         )) {
 
-            MYSQL_BIND bind = bindAndBuffer.getPointer(column);
-            if (bind.buffer_length() <= 0) {
+            if (lengths[column].get() <= 0) {
                 return null;
             }
 
             return new BooleanPointer(
-                    bind.buffer()
+                    buf[column]
             ).get();
         }
         return null;

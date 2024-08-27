@@ -2,6 +2,7 @@ package org.swdc.mariadb.embed.jdbc;
 
 import org.swdc.mariadb.embed.EmbeddedMariaDB;
 import org.swdc.mariadb.embed.MySQLDBConnection;
+import org.swdc.mariadb.embed.exec.MySQLExecutor;
 
 import java.io.File;
 import java.sql.*;
@@ -12,7 +13,7 @@ public class EmbedMariaDBDriver implements Driver {
 
     public static final String PREFIX = "jdbc:mysql://";
 
-    private EmbeddedMariaDB mariaDB;
+    private MySQLExecutor mariaDB;
 
     @Override
     public Connection connect(String url, Properties info) throws SQLException {
@@ -50,22 +51,32 @@ public class EmbedMariaDBDriver implements Driver {
 
         }
 
-        if (!mariaDB.initialize()) {
+        /*if (!mariaDB.initialize()) {
             throw new SQLException("failed to initialize this mariaDB library");
         }
 
-        mariaDB.initSystemData();
+        mariaDB.initSystemData();*/
 
-        MySQLDBConnection connection = mariaDB.connect(configure.getDbName());
-        if (connection != null) {
-            return new MyConnection(connection);
-        } else {
-            if (configure.isAutoCreate() && mariaDB.createDatabase(configure.getDbName(),null,null)) {
-                connection = mariaDB.connect(configure.getDbName());
-                if (connection != null) {
-                    return new MyConnection(connection);
+        try {
+            MySQLDBConnection connection = mariaDB.execute(
+                    db -> db.connect(configure.getDbName())
+            );
+            if (connection != null) {
+                return new MyConnection(mariaDB,connection);
+            } else {
+                if (configure.isAutoCreate() && mariaDB.execute(
+                        db -> db.createDatabase(configure.getDbName(),null,null)
+                )) {
+                    connection = mariaDB.execute(
+                            db -> db.connect(configure.getDbName())
+                    );
+                    if (connection != null) {
+                        return new MyConnection(mariaDB,connection);
+                    }
                 }
             }
+        } catch (Exception e) {
+            throw new SQLException("failed to connect database", e);
         }
         throw new SQLException("failed to connect database");
     }

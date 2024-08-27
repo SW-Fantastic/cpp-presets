@@ -2,6 +2,7 @@ package org.swdc.mariadb.embed.jdbc.results;
 
 import org.swdc.mariadb.embed.IMySQLResultSet;
 import org.swdc.mariadb.embed.MySQLResultSet;
+import org.swdc.mariadb.embed.exec.MySQLExecutor;
 import org.swdc.mariadb.embed.jdbc.MyStatement;
 
 import java.math.BigDecimal;
@@ -17,19 +18,24 @@ public class MyQueryResult extends MyResult {
 
     protected int type;
 
-    public MyQueryResult(MyStatement connection, IMySQLResultSet rs) {
-        this(connection,rs,TYPE_FORWARD_ONLY);
+    protected MySQLExecutor executor;
+
+    public MyQueryResult(MySQLExecutor executor, MyStatement connection, IMySQLResultSet rs) {
+        this(executor,connection,rs,TYPE_FORWARD_ONLY);
     }
 
-    public MyQueryResult(MyStatement statement,IMySQLResultSet rs, int type) {
+    public MyQueryResult(MySQLExecutor executor, MyStatement statement,IMySQLResultSet rs, int type) {
         this.resultSet = rs;
         this.type = type;
         this.statement = statement;
+        this.executor = executor;
     }
 
     @Override
     public boolean next() throws SQLException {
-        return resultSet.next();
+        return executor.execute(db -> {
+            return resultSet.next();
+        });
     }
 
     @Override
