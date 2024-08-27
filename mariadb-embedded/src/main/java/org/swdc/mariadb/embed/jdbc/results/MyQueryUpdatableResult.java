@@ -1,18 +1,14 @@
 package org.swdc.mariadb.embed.jdbc.results;
 
 import org.swdc.mariadb.embed.MySQLResultSet;
-import org.swdc.mariadb.embed.exec.MySQLExecutor;
 import org.swdc.mariadb.embed.jdbc.MyStatement;
 
 import java.sql.SQLException;
 
-/**
- * not impl yet
- */
 public class MyQueryUpdatableResult extends MyQueryResult {
 
-    public MyQueryUpdatableResult(MySQLExecutor executor, MyStatement connection, MySQLResultSet rs, int type) {
-        super(executor,connection,rs,type);
+    public MyQueryUpdatableResult(MyStatement connection, MySQLResultSet rs, int type) {
+        super(connection,rs,type);
     }
 
     @Override

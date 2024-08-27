@@ -26,8 +26,8 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
 
     private int autoGenerateKey;
 
-    public MyPreparedStatement(MySQLExecutor executor, MyConnection connection, String sql, int autoGenerateKey, int resultType, int resultConcurrency) {
-        super(executor,connection, null, resultType, resultConcurrency);
+    public MyPreparedStatement(MyConnection connection,String sql, int autoGenerateKey, int resultType, int resultConcurrency) {
+        super(connection, null, resultType, resultConcurrency);
         this.sql = sql;
         this.autoGenerateKey = autoGenerateKey;
     }
@@ -46,7 +46,8 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
 
     @Override
     public ResultSet executeQuery() throws SQLException {
-        return executor.execute(db -> {
+        try {
+            connection.requireLock();
             if (result != null) {
                 result.close();
                 result = null;
@@ -54,11 +55,13 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
             MySQLPreparedStatement stmt = getStmt();
             MySQLPreparedResult result = stmt.execute();
             if (result != null) {
-                this.result = new MyQueryResult(this.executor,this,result);
+                this.result = new MyQueryResult(this,result);
                 return this.result;
             }
             return null;
-        });
+        } finally {
+            connection.releaseLock();
+        }
     }
 
     @Override
@@ -126,8 +129,9 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
 
     @Override
     public int executeUpdate() throws SQLException {
-        return executor.execute(db -> {
+        try {
             generateKeys.clear();
+            connection.requireLock();
             if (result != null) {
                 result.close();
                 result = null;
@@ -140,7 +144,9 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
                 }
             }
             return result;
-        });
+        } finally {
+            connection.releaseLock();
+        }
     }
 
     @Override
@@ -638,13 +644,5 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
         setCharacterStream(parameterIndex - 1,reader);
     }
 
-    @Override
-    public void close() throws SQLException {
-        executor.execute(db -> {
-            if (statement != null) {
-                statement.close();
-            }
-            return null;
-        });
-    }
+
 }

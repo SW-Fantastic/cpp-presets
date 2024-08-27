@@ -25,8 +25,6 @@ public class EmbeddedMariaDB {
      */
     private static EmbeddedMariaDB instance;
 
-    private static MySQLExecutor executor;
-
     /**
      * Mariadb是否成功初始化
      */
@@ -411,18 +409,17 @@ public class EmbeddedMariaDB {
      * @param dataDir 数据文件夹
      * @return Mariadb环境对象。
      */
-    public synchronized static MySQLExecutor getMariaDB(File baseDir, File dataDir) {
+    public synchronized static EmbeddedMariaDB getMariaDB(File baseDir, File dataDir) {
         if (instance == null) {
             instance = new EmbeddedMariaDB(dataDir,baseDir);
-            executor = new MySQLExecutor(instance);
         }
-        return executor;
+        return instance;
     }
 
 
     public synchronized static void shutdownEnvironment() {
         if (instance != null && instance.initialized) {
-            executor.shutdown();
+            instance.shutdown();
         }
     }
 }

@@ -18,24 +18,19 @@ public class MyQueryResult extends MyResult {
 
     protected int type;
 
-    protected MySQLExecutor executor;
-
-    public MyQueryResult(MySQLExecutor executor, MyStatement connection, IMySQLResultSet rs) {
-        this(executor,connection,rs,TYPE_FORWARD_ONLY);
+    public MyQueryResult(MyStatement connection, IMySQLResultSet rs) {
+        this(connection,rs,TYPE_FORWARD_ONLY);
     }
 
-    public MyQueryResult(MySQLExecutor executor, MyStatement statement,IMySQLResultSet rs, int type) {
+    public MyQueryResult(MyStatement statement,IMySQLResultSet rs, int type) {
         this.resultSet = rs;
         this.type = type;
         this.statement = statement;
-        this.executor = executor;
     }
 
     @Override
     public boolean next() throws SQLException {
-        return executor.execute(db -> {
-            return resultSet.next();
-        });
+        return resultSet.next();
     }
 
     @Override
