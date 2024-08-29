@@ -24,7 +24,7 @@ import static org.swdc.mariadb.embed.IMySQLResultSet.accept;
 /**
  * MySQL的结果集，用于从MySQL读取返回的数据。
  */
-public class MySQLResultSet implements IMySQLResultSet {
+public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
 
     /**
      * MySQL的结果集的本地对象。
@@ -50,6 +50,8 @@ public class MySQLResultSet implements IMySQLResultSet {
 
     private MySQLResultMetadata metadata;
 
+    private CloseableListener closeableListener;
+
 
     public MySQLResultSet( MYSQL_RES res) {
 
@@ -58,13 +60,21 @@ public class MySQLResultSet implements IMySQLResultSet {
 
     }
 
+    public void validate() throws SQLException {
+        if (res == null || res.isNull()) {
+            throw new SQLException("result set has closed.");
+        }
+    }
+
     @Override
-    public boolean next() {
+    public boolean next() throws SQLException {
+        validate();
         return seek(currentRowNum + 1);
     }
 
     @Override
-    public boolean previous() {
+    public boolean previous() throws SQLException {
+        validate();
         if (currentRowNum <= 0) {
             return false;
         }
@@ -72,7 +82,8 @@ public class MySQLResultSet implements IMySQLResultSet {
     }
 
     @Override
-    public boolean seek(long rowNum) {
+    public boolean seek(long rowNum) throws SQLException {
+        validate();
         if (rowNum > MariaDB.mysql_num_rows(res) + 1) {
             // seek to after last
             currentRow = null;
@@ -103,7 +114,8 @@ public class MySQLResultSet implements IMySQLResultSet {
     }
 
     @Override
-    public boolean beforeFirst() {
+    public boolean beforeFirst() throws SQLException {
+        validate();
         currentRowNum = -1;
         this.currentRow = null;
         this.currentRowLength = null;
@@ -111,7 +123,8 @@ public class MySQLResultSet implements IMySQLResultSet {
     }
 
     @Override
-    public boolean afterLast() {
+    public boolean afterLast() throws SQLException {
+        validate();
         currentRowNum = MariaDB.mysql_num_rows(res) + 1;
         this.currentRow = null;
         this.currentRowLength = null;
@@ -129,27 +142,30 @@ public class MySQLResultSet implements IMySQLResultSet {
     }
 
     @Override
-    public void firstRow() {
+    public void firstRow() throws SQLException {
         seek(0);
     }
 
     @Override
-    public void lastRow() {
+    public void lastRow() throws SQLException {
         seek(MariaDB.mysql_num_rows(res) - 1);
     }
 
     @Override
-    public boolean isFirst() {
+    public boolean isFirst() throws SQLException {
+        validate();
         return currentRowNum == 0;
     }
 
     @Override
-    public boolean isLast() {
+    public boolean isLast() throws SQLException {
+        validate();
         return currentRowNum == MariaDB.mysql_num_rows(res);
     }
 
     @Override
     public int findColumn(String label) throws SQLException {
+        validate();
         // jdbc的column从1开始，这里额外加一。
         return metadata.findField(label) + 1;
     }
@@ -158,9 +174,7 @@ public class MySQLResultSet implements IMySQLResultSet {
     @Override
     public Date getDate(int column) throws SQLException {
 
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
+        validate();
 
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
@@ -190,9 +204,7 @@ public class MySQLResultSet implements IMySQLResultSet {
 
     @Override
     public Time getTime(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
+        validate();
 
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
@@ -212,9 +224,9 @@ public class MySQLResultSet implements IMySQLResultSet {
 
     @Override
     public Byte getByte(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
+
+        validate();
+
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
@@ -232,9 +244,9 @@ public class MySQLResultSet implements IMySQLResultSet {
 
     @Override
     public Short getShort(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
+
+        validate();
+
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
@@ -260,9 +272,7 @@ public class MySQLResultSet implements IMySQLResultSet {
     @Override
     public Long getLong(int column) throws SQLException {
 
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
+        validate();
 
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
@@ -292,9 +302,9 @@ public class MySQLResultSet implements IMySQLResultSet {
 
     @Override
     public Integer getInt(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
+
+        validate();
+
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
@@ -324,9 +334,10 @@ public class MySQLResultSet implements IMySQLResultSet {
 
     @Override
     public Float getFloat(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
+
+
+        validate();
+
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
@@ -351,9 +362,9 @@ public class MySQLResultSet implements IMySQLResultSet {
 
     @Override
     public Double getDouble(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
+
+        validate();
+
         MYSQL_FIELD field = metadata.getField(column);
 
         if (accept(
@@ -382,9 +393,9 @@ public class MySQLResultSet implements IMySQLResultSet {
 
     @Override
     public BigDecimal getDecimal(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
+
+        validate();
+
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
@@ -403,9 +414,9 @@ public class MySQLResultSet implements IMySQLResultSet {
 
     @Override
     public String getString(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
+
+        validate();
+
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(field.type(),MyCom.enum_field_types.MYSQL_TYPE_VAR_STRING)) {
             byte[] data = new byte[(int)currentRowLength.get(column)];
@@ -438,9 +449,9 @@ public class MySQLResultSet implements IMySQLResultSet {
 
     @Override
     public byte[] getBlob(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
+
+        validate();
+
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
@@ -460,9 +471,9 @@ public class MySQLResultSet implements IMySQLResultSet {
 
     @Override
     public Long getTimestamp(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
+
+        validate();
+
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
@@ -492,9 +503,9 @@ public class MySQLResultSet implements IMySQLResultSet {
 
     @Override
     public Boolean getBoolean(int column) throws SQLException {
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
+
+        validate();
+
         MYSQL_FIELD field = metadata.getField(column);
 
         if (accept(
@@ -512,9 +523,8 @@ public class MySQLResultSet implements IMySQLResultSet {
     @Override
     public Object getObject(int columnIndex) throws SQLException {
 
-        if (currentRow == null || currentRow.isNull()) {
-            return null;
-        }
+        validate();
+
         MYSQL_FIELD field = metadata.getField(columnIndex);
         if (accept(
                 field.type(),
@@ -620,7 +630,8 @@ public class MySQLResultSet implements IMySQLResultSet {
     }
 
     @Override
-    public MySQLResultMetadata getMetadata() {
+    public MySQLResultMetadata getMetadata() throws SQLException {
+        validate();
         return metadata;
     }
 
@@ -630,11 +641,30 @@ public class MySQLResultSet implements IMySQLResultSet {
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
+
+       if(closeBySource()) {
+           if (closeableListener != null) {
+               closeableListener.closed(this);
+           }
+       }
+
+    }
+
+    @Override
+    public void setCloseListener(CloseableListener listener) {
+        this.closeableListener = listener;
+    }
+
+    @Override
+    public synchronized boolean closeBySource() {
+        if (res == null || res.isNull()) {
+            return false;
+        }
 
         MariaDB.mysql_free_result(res);
         currentRow = null;
         res = null;
-
+        return true;
     }
 }

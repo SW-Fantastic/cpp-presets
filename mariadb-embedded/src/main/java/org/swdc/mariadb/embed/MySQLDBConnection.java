@@ -14,9 +14,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class MySQLDBConnection implements Closeable {
+public class MySQLDBConnection implements CloseableSource {
 
     private MYSQL mariaDB;
+
+    private List<CloseableSource> activeStatements = new ArrayList<>();
+
+    private CloseableListener closeableListener;
 
     protected MySQLDBConnection(MYSQL db) {
         this.mariaDB = db;
@@ -82,6 +86,7 @@ public class MySQLDBConnection implements Closeable {
     }
 
     public long getMinerVersion() {
+        valid();
         long ver = MariaDB.mysql_get_server_version(mariaDB);
         return (ver % 10000) / 100;
     }
@@ -132,15 +137,19 @@ public class MySQLDBConnection implements Closeable {
     }
 
     public MySQLStatement createStatement() {
+
         valid();
-        return new MySQLStatement(mariaDB);
+        MySQLStatement statement = new MySQLStatement(mariaDB);
+        activeStatements.add(statement);
+        statement.setCloseListener(activeStatements::remove);
+        return statement;
+
     }
 
 
     public int getJDBCTransactionIsolation() throws SQLException {
 
         valid();
-
 
         MySQLStatement statement = new MySQLStatement(mariaDB);
         MySQLResultSet rs = statement.executeQuery("SELECT @@tx_isolation");
@@ -207,10 +216,32 @@ public class MySQLDBConnection implements Closeable {
 
     @Override
     public void close() {
-        if (mariaDB != null && !mariaDB.isNull()) {
-            MariaDB.mysql_close(mariaDB);
-            mariaDB = null;
+        if (closeBySource() && this.closeableListener != null) {
+            this.closeableListener.closed(this);
         }
     }
 
+    @Override
+    public void setCloseListener(CloseableListener listener) {
+        this.closeableListener = listener;
+    }
+
+    @Override
+    public boolean closeBySource() {
+
+        if (mariaDB != null && !mariaDB.isNull()) {
+
+            for (CloseableSource source : activeStatements) {
+                source.closeBySource();
+            }
+            activeStatements.clear();
+
+            MariaDB.mysql_close(mariaDB);
+            mariaDB = null;
+            return true;
+        }
+
+       return false;
+
+    }
 }

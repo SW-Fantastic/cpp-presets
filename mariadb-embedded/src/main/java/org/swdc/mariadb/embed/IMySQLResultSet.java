@@ -31,9 +31,9 @@ public interface IMySQLResultSet extends Closeable {
 
     boolean seek(long rowNum) throws SQLException;
 
-    boolean beforeFirst();
+    boolean beforeFirst() throws SQLException;
 
-    boolean afterLast();
+    boolean afterLast() throws SQLException;
 
     boolean isBeforeFirst();
 
@@ -43,9 +43,9 @@ public interface IMySQLResultSet extends Closeable {
 
     void lastRow() throws SQLException;
 
-    boolean isFirst();
+    boolean isFirst() throws SQLException;
 
-    boolean isLast();
+    boolean isLast() throws SQLException;
 
     int findColumn(String label) throws SQLException;
 
@@ -133,7 +133,7 @@ public interface IMySQLResultSet extends Closeable {
 
     Object getObject(int column) throws SQLException;
 
-    MySQLResultMetadata getMetadata();
+    MySQLResultMetadata getMetadata() throws SQLException;
 
     int getCurrentRowNum();
 

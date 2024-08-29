@@ -4,14 +4,17 @@ import org.swdc.mariadb.core.MariaDB;
 import org.swdc.mariadb.core.mysql.MYSQL;
 import org.swdc.mariadb.core.mysql.MYSQL_RES;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.sql.SQLException;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.ArrayList;
+import java.util.List;
 
-public class MySQLStatement implements Closeable {
+public class MySQLStatement implements CloseableSource {
 
     private MYSQL connection;
+
+    protected List<CloseableSource> activeResults = new ArrayList<>();
+
+    protected CloseableListener closeableListener;
 
 
     protected MySQLStatement( MYSQL mysqlConnection) {
@@ -30,7 +33,12 @@ public class MySQLStatement implements Closeable {
         if (res == null || res.isNull()) {
             return null;
         }
-        return  new MySQLResultSet(res);
+
+        MySQLResultSet resultSet =  new MySQLResultSet(res);
+        activeResults.add(resultSet);
+        resultSet.setCloseListener(activeResults::remove);
+
+        return resultSet;
     }
 
     public long executeUpdate(String sql) throws SQLException {
@@ -53,7 +61,10 @@ public class MySQLStatement implements Closeable {
         if (res == null || res.isNull()) {
             return null;
         }
-        return new MySQLResultSet(res);
+        MySQLResultSet resultSet = new MySQLResultSet(res);
+        activeResults.add(resultSet);
+        resultSet.setCloseListener(activeResults::remove);
+        return resultSet;
     }
 
     public boolean execute(String sql) throws SQLException {
@@ -68,7 +79,29 @@ public class MySQLStatement implements Closeable {
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
 
+        if(closeBySource()) {
+            if (closeableListener != null) {
+                closeableListener.closed(this);
+            }
+        }
+    }
+
+    @Override
+    public void setCloseListener(CloseableListener listener) {
+        this.closeableListener = listener;
+    }
+
+    @Override
+    public synchronized boolean closeBySource() {
+        if (!activeResults.isEmpty()) {
+            for (CloseableSource closeable : activeResults) {
+                closeable.closeBySource();
+            }
+            activeResults.clear();
+            return true;
+        }
+        return false;
     }
 }

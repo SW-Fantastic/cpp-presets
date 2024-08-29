@@ -80,14 +80,13 @@ public class MySQLPreparedStatement extends MySQLStatement {
 
     private void updateBind(MYSQL_BIND bind, int column, boolean nullVal, int length) {
 
-       // BytePointer nullFlag = nullFlags.getPointer(column);
-        bind.is_null(new BytePointer());
-        //nullFlag.put((byte) (nullVal ? 0 : 1));
+        BytePointer nullFlag = nullFlags.getPointer(column);
+        bind.is_null(nullFlag);
+        nullFlag.put((byte) (nullVal ? 1 : 0));
 
-        //CLongPointer pLength = lengths.getPointer(column);
-        //pLength.put(length);
-        //bind.length(lengths.getPointer(column));
-        bind.length(new CLongPointer());
+        CLongPointer pLength = lengths.getPointer(column);
+        pLength.put(length);
+        bind.length(pLength);
         bind.buffer_length(length);
 
     }
@@ -695,29 +694,38 @@ public class MySQLPreparedStatement extends MySQLStatement {
     }
 
     @Override
-    public void close() {
+    public synchronized boolean closeBySource() {
+
         if (stmt != null && !stmt.isNull()) {
+
             MariaDB.mysql_stmt_free_result(stmt);
             MariaDB.mysql_stmt_close(stmt);
             stmt = null;
-        }
-        for (Pointer buf: this.buf) {
-            if (buf != null && !buf.isNull()) {
-                buf.close();
+
+            for (Pointer buf: this.buf) {
+                if (buf != null && !buf.isNull()) {
+                    buf.close();
+                }
             }
+            this.buf = null;
+            if (nullFlags != null && !nullFlags.isNull()) {
+                nullFlags.close();
+                nullFlags = null;
+            }
+            if (lengths != null && !lengths.isNull()) {
+                lengths.close();
+                lengths = null;
+            }
+            if (binds != null) {
+                binds.close();
+                binds = null;
+            }
+
+            return true;
+
         }
-        this.buf = null;
-        if (nullFlags != null && !nullFlags.isNull()) {
-            nullFlags.close();
-            nullFlags = null;
-        }
-        if (lengths != null && !lengths.isNull()) {
-            lengths.close();
-            lengths = null;
-        }
-        if (binds != null) {
-            binds.close();
-            binds = null;
-        }
+
+        return false;
+
     }
 }
