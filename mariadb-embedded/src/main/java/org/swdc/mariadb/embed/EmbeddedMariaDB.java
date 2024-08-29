@@ -8,7 +8,7 @@ import org.swdc.mariadb.core.MariaDB;
 import org.swdc.mariadb.core.MyGlobal;
 import org.swdc.mariadb.core.mysql.MYSQL;
 import org.swdc.mariadb.core.mysql.MYSQL_RES;
-import org.swdc.mariadb.embed.exec.MySQLExecutor;
+import org.swdc.mariadb.embed.jdbc.MyThreadHolder;
 
 import java.io.File;
 import java.io.InputStream;
@@ -41,6 +41,8 @@ public class EmbeddedMariaDB {
     private File baseDir;
 
     private String timeZoneId = "+0:00";
+
+    private List<CloseableSource> activeConnections = new ArrayList<>();
 
     private EmbeddedMariaDB(File dataDir, File baseDir) {
         this.baseDir = baseDir;
@@ -259,8 +261,10 @@ public class EmbeddedMariaDB {
 
         MariaDB.mysql_set_character_set(mysql, "utf8");
 
-        return new MySQLDBConnection(mysql);
-
+        MySQLDBConnection connection = new MySQLDBConnection(mysql);
+        activeConnections.add(connection);
+        connection.setCloseListener(activeConnections::remove);
+        return connection;
     }
 
 
@@ -346,7 +350,7 @@ public class EmbeddedMariaDB {
         }
 
         initMySQL = "SET @auth_root_socket=NULL;";
-        rst += MariaDB.mysql_real_query(conn,initMySQL,initMySQL.length());
+        MariaDB.mysql_real_query(conn,initMySQL,initMySQL.length());
 
         boolean state = executeScript(conn,initScript);
         if (!state) {
@@ -418,7 +422,12 @@ public class EmbeddedMariaDB {
 
 
     public synchronized static void shutdownEnvironment() {
+        MariaDB.mysql_thread_init();
         if (instance != null && instance.initialized) {
+            for (CloseableSource connections : instance.activeConnections) {
+                connections.closeBySource();
+            }
+            instance.activeConnections.clear();
             instance.shutdown();
         }
     }

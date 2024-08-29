@@ -3,7 +3,6 @@ package org.swdc.mariadb.test;
 import org.bytedeco.javacpp.*;
 import org.swdc.mariadb.core.MariaDB;
 import org.swdc.mariadb.embed.*;
-import org.swdc.mariadb.embed.exec.MySQLExecutor;
 
 import java.io.File;
 import java.sql.SQLException;
@@ -35,23 +34,13 @@ public class MariaDBEmbedTest {
         String myCustomDB = "dbForTest";
         MySQLDBConnection customDB = mariaDB.connect(myCustomDB);
         if (customDB == null) {
-            mariaDB.createDatabase(myCustomDB,null,null);
+            return;
         } else {
             System.err.println("");
             for (int i = 0; i < 80 ; i ++) {
-                    /*MySQLPreparedStatement statement=customDB.preparedStatement("SELECT id,name,age,nextAim,source,createdOn FROM entuser");
-                    MySQLPreparedResult result = statement.execute();
-                    while (result.next()) {
-                        System.err.print("Id : " + result.getLong(0) + " | ");
-                        System.err.print("Name:" + result.getString(1) + " | ");
-                        System.err.print("Age: " + result.getInt(2) + " | ");
-                        System.err.print("NextAim: " + result.getFloat(3) + " | ");
-                        System.err.print("Source: " + result.getDouble(4) + " | ");
-                        System.err.print("Created : " + result.getDate(5) + " | ");
-                        System.err.println();
-                    }
-                    result.close();
-                    statement.close();*/
+                if (i == 60) {
+                    throw new SQLException("just throw for test close function on exception.");
+                }
                 MySQLStatement statement=customDB.createStatement();
                 MySQLResultSet result = statement.executeQuery("SELECT id,name,age,nextAim,source,createdOn FROM entuser");
                 while (result.next()) {
@@ -64,11 +53,11 @@ public class MariaDBEmbedTest {
                     System.err.println();
                 }
                 result.close();
+                statement.close();
             }
 
         }
         customDB.close();
-        System.exit(0);
     }
 
 }

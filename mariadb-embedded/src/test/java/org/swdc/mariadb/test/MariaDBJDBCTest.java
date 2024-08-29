@@ -65,6 +65,7 @@ public class MariaDBJDBCTest {
                 user.setAge(24);
                 user.setSource(8.2);
                 user.setNextAim(6.1f);
+                user.setCreatedOn(LocalDate.now());
 
                 em.persist(user);
 
@@ -76,7 +77,6 @@ public class MariaDBJDBCTest {
         tx.commit();
         em.close();
         entityFactory.close();
-        System.exit(0);
 
     }
 

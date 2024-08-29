@@ -3,7 +3,6 @@ package org.swdc.mariadb.embed.jdbc;
 import org.swdc.mariadb.embed.MySQLPreparedResult;
 import org.swdc.mariadb.embed.MySQLPreparedStatement;
 import org.swdc.mariadb.embed.MySQLResultSet;
-import org.swdc.mariadb.embed.exec.MySQLExecutor;
 import org.swdc.mariadb.embed.jdbc.results.MyQueryResult;
 
 import java.io.*;
@@ -14,7 +13,6 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 

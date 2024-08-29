@@ -1,8 +1,6 @@
 package org.swdc.mariadb.embed.jdbc.results;
 
 import org.swdc.mariadb.embed.IMySQLResultSet;
-import org.swdc.mariadb.embed.MySQLResultSet;
-import org.swdc.mariadb.embed.exec.MySQLExecutor;
 import org.swdc.mariadb.embed.jdbc.MyStatement;
 
 import java.math.BigDecimal;
