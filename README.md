@@ -12,4 +12,5 @@ Please clone and build it yourself if you want to have a try。
    - Build with Live2D Native SDK version 1.5-r1
 2. Pdfium Core & Pdfium4J（new library）
    - Build with pdfium version 122.0.6248
-3. coming soon...
+3. MariaDB Embedded & MariaDB Embedded JDBC（Embedded Mariadb java version）
+4. coming soon...
