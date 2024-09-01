@@ -42,7 +42,7 @@ public class MariaDBEmbedTest {
                     throw new SQLException("just throw for test close function on exception.");
                 }
                 MySQLStatement statement=customDB.createStatement();
-                MySQLResultSet result = statement.executeQuery("SELECT id,name,age,nextAim,source,createdOn FROM entuser");
+                MySQLResultSet result = statement.executeQuery("SELECT id,name,age,nextAim,source,createdOn,createdAt,state FROM entuser");
                 while (result.next()) {
                     System.err.print("Id : " + result.getLong(0) + " | ");
                     System.err.print("Name:" + result.getString(1) + " | ");
@@ -50,6 +50,8 @@ public class MariaDBEmbedTest {
                     System.err.print("NextAim: " + result.getFloat(3) + " | ");
                     System.err.print("Source: " + result.getDouble(4) + " | ");
                     System.err.print("Created : " + result.getDate(5) + " | ");
+                    System.err.print("Created at: " + result.getTimestamp(6) + " | ");
+                    System.err.print("State : " + result.getBoolean(7) + " | ");
                     System.err.println();
                 }
                 result.close();

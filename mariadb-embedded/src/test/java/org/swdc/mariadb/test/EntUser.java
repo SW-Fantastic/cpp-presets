@@ -2,6 +2,7 @@ package org.swdc.mariadb.test;
 
 import javax.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "entuser")
@@ -20,6 +21,10 @@ public class EntUser {
     private Float nextAim;
 
     private LocalDate createdOn;
+
+    private Boolean state;
+
+    private LocalDateTime createdAt;
 
     public Float getNextAim() {
         return nextAim;
@@ -69,6 +74,22 @@ public class EntUser {
         this.createdOn = createdOn;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Boolean getState() {
+        return state;
+    }
+
+    public void setState(Boolean state) {
+        this.state = state;
+    }
+
     @Override
     public String toString() {
         return "EntUser{" +
@@ -78,6 +99,8 @@ public class EntUser {
                 ", source=" + source +
                 ", nextAim=" + nextAim +
                 ", createdOn=" + createdOn +
+                ", createdAt=" + createdAt +
+                ", state=" + state +
                 '}';
     }
 }

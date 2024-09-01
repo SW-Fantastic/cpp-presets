@@ -184,11 +184,11 @@ public class MySQLPreparedStatement extends MySQLStatement {
         buf[index] = p;
 
         MYSQL_BIND bind = binds.getPointer(index);
-        bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_BIT);
+        bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_BLOB);
         bind.buffer_length(leng);
         bind.buffer(p);
 
-        updateBind(bind,index,false,1);
+        updateBind(bind,index,false,leng);
     }
 
 
@@ -348,6 +348,7 @@ public class MySQLPreparedStatement extends MySQLStatement {
         BytePointer p = new BytePointer(
                 Pointer.malloc(size)
         );
+        Pointer.memset(p,0,size);
         p.putString(str);
         if (buf[index] != null && !buf[index].isNull()) {
             buf[index].close();
@@ -375,6 +376,7 @@ public class MySQLPreparedStatement extends MySQLStatement {
         BytePointer p = new BytePointer(
                 Pointer.malloc(leng)
         );
+        Pointer.memset(p,0,leng);
         p.put(x);
 
         if (buf[index] != null && !buf[index].isNull()) {
@@ -398,10 +400,17 @@ public class MySQLPreparedStatement extends MySQLStatement {
             throw new SQLException("no such parameter : " + index);
         }
 
+        if (buf[index] != null && !buf[index].isNull()) {
+            buf[index].close();
+        }
+
         int leng = Pointer.sizeof(MYSQL_TIME.class);
-        MYSQL_TIME time = new MYSQL_TIME(
-                Pointer.malloc(leng)
-        );
+        Pointer p = Pointer.malloc(leng);
+        Pointer.memset(p,0,leng);
+
+        buf[index] = p;
+
+        MYSQL_TIME time = new MYSQL_TIME(p);
 
         LocalDate localDate = date.toLocalDate();
         time.year(localDate.getYear());
@@ -409,7 +418,7 @@ public class MySQLPreparedStatement extends MySQLStatement {
         time.day(localDate.getDayOfMonth());
         time.time_type(MyGlobal.enum_mysql_timestamp_type.MYSQL_TIMESTAMP_DATE);
 
-        MYSQL_BIND bind = new MYSQL_BIND(binds.getPointer(index));
+        MYSQL_BIND bind = binds.getPointer(index);
         bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_DATE);
         bind.buffer_length(leng);
         bind.buffer(time);
@@ -424,10 +433,17 @@ public class MySQLPreparedStatement extends MySQLStatement {
             throw new SQLException("no such parameter : " + index);
         }
 
+        if (buf[index] != null && !buf[index].isNull()) {
+            buf[index].close();
+        }
+
         int leng = Pointer.sizeof(MYSQL_TIME.class);
-        MYSQL_TIME time = new MYSQL_TIME(
-                Pointer.malloc(leng)
-        );
+        Pointer p = Pointer.malloc(leng);
+        Pointer.memset(p,0,leng);
+
+        buf[index] = p;
+
+        MYSQL_TIME time = new MYSQL_TIME(p);
 
         LocalTime localDate = date.toLocalTime();
         time.hour(localDate.getHour());
@@ -435,7 +451,7 @@ public class MySQLPreparedStatement extends MySQLStatement {
         time.second(localDate.getSecond());
         time.time_type(MyGlobal.enum_mysql_timestamp_type.MYSQL_TIMESTAMP_TIME);
 
-        MYSQL_BIND bind = new MYSQL_BIND(binds.getPointer(index));
+        MYSQL_BIND bind = binds.getPointer(index);
         bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_TIME);
         bind.buffer_length(leng);
         bind.buffer(time);
@@ -455,6 +471,7 @@ public class MySQLPreparedStatement extends MySQLStatement {
         MYSQL_TIME time = new MYSQL_TIME(
                 Pointer.malloc(leng)
         );
+        Pointer.memset(time,0,leng);
 
         LocalDateTime localDate = ts.toLocalDateTime();
 

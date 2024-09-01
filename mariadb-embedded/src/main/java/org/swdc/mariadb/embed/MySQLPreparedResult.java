@@ -3,7 +3,6 @@ package org.swdc.mariadb.embed;
 import org.bytedeco.javacpp.*;
 import org.swdc.mariadb.core.MariaDB;
 import org.swdc.mariadb.core.MyCom;
-import org.swdc.mariadb.core.MyGlobal;
 import org.swdc.mariadb.core.global.MYSQL_TIME;
 import org.swdc.mariadb.core.mysql.MYSQL_BIND;
 import org.swdc.mariadb.core.mysql.MYSQL_FIELD;
@@ -264,7 +263,6 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
 
     @Override
     public Date getDate(int column) throws SQLException {
-        // TODO 存在BUG
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
@@ -287,7 +285,6 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
 
     @Override
     public Time getTime(int column) throws SQLException {
-        // TODO 存在BUG
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
@@ -412,7 +409,13 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_TINY
         )) {
             Integer val = getInt(column);
-            return val != null ? Float.valueOf(val) : null;
+            return val != null ? Float.valueOf(val) : 0f;
+        } else if (accept(
+                field.type(),
+                MyCom.enum_field_types.MYSQL_TYPE_DOUBLE
+        )) {
+            Double val = getDouble(column);
+            return val == null ? null : val.floatValue();
         }
         return 0f;
     }
@@ -432,7 +435,7 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
             return new DoublePointer(buf[column]).get();
         } else if (accept(field.type(),MyCom.enum_field_types.MYSQL_TYPE_FLOAT)) {
             Float val = getFloat(column);
-            return val != null ? Double.valueOf(val) : null;
+            return val != null ? Double.valueOf(val) : 0d;
         } else if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_INT24,
@@ -440,9 +443,9 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_TINY
         )) {
             Integer val = getInt(column);
-            return val != null ? Double.valueOf(val) : null;
+            return val != null ? Double.valueOf(val) : 0d;
         }
-        return null;
+        return 0d;
     }
 
     @Override
@@ -554,14 +557,14 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
         )) {
 
             if (lengths[column].get() <= 0) {
-                return null;
+                return false;
             }
 
             return new BooleanPointer(
                     buf[column]
             ).get();
         }
-        return null;
+        return false;
     }
 
     @Override

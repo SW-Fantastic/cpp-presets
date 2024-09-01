@@ -54,11 +54,14 @@ public class MariaDBJDBCTest {
 
         EntityManager em = entityFactory.createEntityManager();
 
-        EntityTransaction tx = em.getTransaction();
-        tx.begin();
+
+
         for (int i=0 ; i < 8; i++) {
             List<EntUser> users = em.createQuery("FROM EntUser").getResultList();
             if (users != null && users.size() == 0) {
+
+                EntityTransaction tx = em.getTransaction();
+                tx.begin();
 
                 EntUser user = new EntUser();
                 user.setName("张三");
@@ -66,15 +69,16 @@ public class MariaDBJDBCTest {
                 user.setSource(8.2);
                 user.setNextAim(6.1f);
                 user.setCreatedOn(LocalDate.now());
-
+                user.setCreatedAt(LocalDateTime.now());
+                user.setState(true);
                 em.persist(user);
+                tx.commit();
 
             } else {
                 EntUser user = users.get(0);
                 System.err.println(user);
             }
         }
-        tx.commit();
         em.close();
         entityFactory.close();
 

@@ -10,7 +10,6 @@ import java.util.logging.Logger;
 
 public class MyDataSource implements DataSource, Closeable, AutoCloseable {
 
-
     private String url;
 
     private PrintWriter writer;

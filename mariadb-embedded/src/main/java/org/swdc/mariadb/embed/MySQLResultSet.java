@@ -192,11 +192,21 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
             byte[] data = new byte[(int) currentRowLength.getPointer(column).get()];
             pointer.get(data);
 
+            String patternDateTime = "yyyy-MM-dd HH:mm:ss";
+            String patternDate = "yyyy-MM-dd";
             String dateStr = new String(data);
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss");
+            DateTimeFormatter formatter = null;
+            if (dateStr.length() == patternDate.length()) {
+                formatter = DateTimeFormatter.ofPattern(patternDate);
+
+            } else if (dateStr.length() == patternDateTime.length()) {
+                formatter = DateTimeFormatter.ofPattern(patternDateTime);
+            } else {
+                throw new SQLException("unsupport data time : "  + dateStr);
+            }
+
             LocalDate localDate = LocalDate.parse(dateStr,formatter);
             return Date.valueOf(localDate);
-
         }
 
         return null;
@@ -215,9 +225,30 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
                 MyCom.enum_field_types.MYSQL_TYPE_TIME,
                 MyCom.enum_field_types.MYSQL_TYPE_TIME2
         )) {
-            MYSQL_TIME time = new MYSQL_TIME(currentRow.get(column));
-            LocalTime localTime = LocalTime.of(time.hour(),time.minute(),time.second());
-            return Time.valueOf(localTime);
+
+            BytePointer pointer = new BytePointer(currentRow.get(column));
+            if (pointer.isNull()) {
+                return null;
+            }
+
+            byte[] data = new byte[(int) currentRowLength.getPointer(column).get()];
+            pointer.get(data);
+
+            String patternDateTime = "yyyy-MM-dd HH:mm:ss";
+            String patternDate = "yyyy-MM-dd";
+            String dateStr = new String(data);
+            DateTimeFormatter formatter = null;
+            if (dateStr.length() == patternDate.length()) {
+                formatter = DateTimeFormatter.ofPattern(patternDate);
+
+            } else if (dateStr.length() == patternDateTime.length()) {
+                formatter = DateTimeFormatter.ofPattern(patternDateTime);
+            } else {
+                throw new SQLException("unsupport data time : "  + dateStr);
+            }
+
+            LocalDateTime localDateTime = LocalDateTime.parse(dateStr,formatter);
+            return Time.valueOf(localDateTime.toLocalTime());
         }
         return null;
     }
@@ -262,9 +293,9 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
                 MyCom.enum_field_types.MYSQL_TYPE_TINY
         )) {
             Byte val = getByte(column);
-            return val != null ? Short.valueOf(val) : null;
+            return val != null ? Short.valueOf(val) : 0;
         }
-        return null;
+        return 0;
     }
 
 
@@ -292,10 +323,10 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
         )) {
 
             Integer val = getInt(column);
-            return val != null ? Long.valueOf(val) : null;
+            return val != null ? Long.valueOf(val) : 0l;
         }
 
-        return null;
+        return 0l;
     }
 
 
@@ -326,9 +357,9 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
                 MyCom.enum_field_types.MYSQL_TYPE_SHORT
         )) {
             Short val = getShort(column);
-            return val != null ? Integer.valueOf(val) : null;
+            return val != null ? Integer.valueOf(val) : 0;
         }
-        return null;
+        return 0;
     }
 
 
@@ -354,9 +385,17 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
                 MyCom.enum_field_types.MYSQL_TYPE_TINY
         )) {
             Integer val = getInt(column);
-            return val != null ? Float.valueOf(val) : null;
+            return val != null ? Float.valueOf(val) : 0f;
+        } else if (accept(
+                field.type(),
+                MyCom.enum_field_types.MYSQL_TYPE_DOUBLE
+        )) {
+            Double val = getDouble(column);
+            if (val != null) {
+                return val.floatValue();
+            }
         }
-        return null;
+        return 0f;
     }
 
 
@@ -377,7 +416,7 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
             return Double.parseDouble(new String(data));
         } else if (accept(field.type(),MyCom.enum_field_types.MYSQL_TYPE_FLOAT)) {
             Float val = getFloat(column);
-            return val != null ? Double.valueOf(val) : null;
+            return val != null ? Double.valueOf(val) : 0d;
         } else if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_INT24,
@@ -385,9 +424,9 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
                 MyCom.enum_field_types.MYSQL_TYPE_TINY
         )) {
             Integer val = getInt(column);
-            return val != null ? Double.valueOf(val) : null;
+            return val != null ? Double.valueOf(val) : 0d;
         }
-        return null;
+        return 0d;
     }
 
 
@@ -409,7 +448,7 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
             return new BigDecimal(pData.getString());
         }
 
-        return null;
+        return new BigDecimal(0);
     }
 
     @Override
@@ -443,7 +482,7 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
                 return new String(data);
             }
         }
-        return null;
+        return "";
     }
 
 
@@ -465,7 +504,7 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
             pointer.get(data);
             return data;
         }
-        return null;
+        return new byte[0];
     }
 
 
@@ -489,13 +528,27 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
                 MyCom.enum_field_types.MYSQL_TYPE_DATETIME2
         )) {
 
-            MYSQL_TIME time = new MYSQL_TIME(currentRow.get(column));
-            LocalDateTime dateTime = LocalDateTime.of(
-                    time.year(),time.month() + 1,time.day() + 1,time.hour(),time.minute(),time.second()
-            );
+            byte[] data = new byte[(int)currentRowLength.get(column)];
+            BytePointer pointer = new BytePointer(currentRow.get(column));
+            pointer.get(data);
+
+            String patternDateTime = "yyyy-MM-dd HH:mm:ss";
+            String patternDate = "yyyy-MM-dd";
+            String dateStr = new String(data);
+            DateTimeFormatter formatter = null;
+            if (dateStr.length() == patternDate.length()) {
+                formatter = DateTimeFormatter.ofPattern(patternDate);
+
+            } else if (dateStr.length() == patternDateTime.length()) {
+                formatter = DateTimeFormatter.ofPattern(patternDateTime);
+            } else {
+                throw new SQLException("unsupport data time : "  + dateStr);
+            }
+
+            LocalDateTime time = LocalDateTime.parse(dateStr,formatter);
             ZoneOffset offset = ZoneOffset.UTC;
 
-            return dateTime.atOffset(offset).toEpochSecond();
+            return time.atOffset(offset).toEpochSecond();
         }
         return null;
     }
@@ -513,11 +566,14 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
                 MyCom.enum_field_types.MYSQL_TYPE_BIT,
                 MyCom.enum_field_types.MYSQL_TYPE_TINY
         )) {
+            if (currentRow.get(column).isNull()) {
+                return false;
+            }
             return new BooleanPointer(
                     currentRow.get(column)
             ).get();
         }
-        return null;
+        return false;
     }
 
     @Override
