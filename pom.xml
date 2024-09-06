@@ -15,6 +15,7 @@
         <module>pdfium4j</module>
         <module>mariadb</module>
         <module>mariadb-embedded</module>
+        <module>dearImgui</module>
     </modules>
 
     <properties>
