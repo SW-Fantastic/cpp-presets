@@ -3,7 +3,9 @@ package org.swdc.dear.imgui;
 
 import org.bytedeco.javacpp.BoolPointer;
 import org.bytedeco.javacpp.BytePointer;
+import org.bytedeco.javacpp.IntPointer;
 import org.swdc.imgui.core.ImGUICore;
+import org.swdc.imgui.core.ImGUIGL;
 import org.swdc.imgui.core.ImGUIGLFW;
 import org.swdc.imgui.core.glfw.GLFWerrorfun;
 import org.swdc.imgui.core.glfw.GLFWwindow;
@@ -26,7 +28,6 @@ public class Test {
         GLFWwindow window = ImGUIGLFW.glfwCreateWindow(1000,800,"Demo",null,null);
         ImGUIGLFW.glfwMakeContextCurrent(window);
         ImGUIGLFW.glfwSwapInterval(1);
-
         ImGUICore.ImGui_CreateContext(null);
         ImGuiIO imGuiIO = ImGUICore.ImGui_GetIO();
         imGuiIO.ConfigFlags(imGuiIO.ConfigFlags() | ImGUICore.ImGuiConfigFlags_NavEnableGamepad | ImGUICore.ImGuiConfigFlags_NavEnableKeyboard);
@@ -48,11 +49,37 @@ public class Test {
 
             if (!shown) {
                 ImGUIGLFW.glfwShowWindow(window);
+                shown = true;
             }
+
             ImGUIGLFW.glfwPollEvents();
-            //ImGUIGLFW.ImGui_ImplOpenGL3_NewFrame();
-            //ImGUIGLFW.ImGui_ImplGlfw_NewFrame();
+
+            ImGUIGLFW.ImGui_ImplOpenGL3_NewFrame();
+            ImGUIGLFW.ImGui_ImplGlfw_NewFrame();
+            ImGUICore.ImGui_NewFrame();
+
+            ImGUICore.ImGui_ShowDemoWindow((BoolPointer) null);
+            ImGUICore.ImGui_Render();
+
+            IntPointer pWidth = new IntPointer(1);
+            IntPointer pHeight = new IntPointer(1);
+            ImGUIGLFW.glfwGetFramebufferSize(window,pWidth,pHeight);
+            ImGUIGL.glViewport(0,0,pWidth.get(),pHeight.get());
+            ImGUIGL.glClearColor(clear_color.x() * clear_color.w(), clear_color.y() * clear_color.w(), clear_color.z() * clear_color.w(), clear_color.w());
+            ImGUIGL.glClear(ImGUIGL.GL_COLOR_BUFFER_BIT);
+
+            ImGUIGLFW.ImGui_ImplOpenGL3_RenderDrawData(ImGUICore.ImGui_GetDrawData());
+            ImGUIGLFW.glfwSwapBuffers(window);
+
         }
+
+
+        ImGUIGLFW.ImGui_ImplOpenGL3_Shutdown();
+        ImGUIGLFW.ImGui_ImplGlfw_Shutdown();
+        ImGUICore.ImGui_DestroyContext(null);
+
+        ImGUIGLFW.glfwDestroyWindow(window);
+        ImGUIGLFW.glfwTerminate();
     }
 
 }
