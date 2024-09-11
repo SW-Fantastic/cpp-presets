@@ -30,7 +30,7 @@ public class ImFont extends Pointer {
     }
 
     // Members: Hot ~20/24 bytes (for CalcTextSize)
-    public native @ByRef ImVector_float IndexAdvanceX(); public native ImFont IndexAdvanceX(ImVector_float setter);                                         // 12-16 // out //            // Sparse. Glyphs->AdvanceX in a directly indexable way (cache-friendly for CalcTextSize functions which only this this info, and are often bottleneck in large UI).
+    public native @ByRef ImVector_float IndexAdvanceX(); public native ImFont IndexAdvanceX(ImVector_float setter);                                         // 12-16 // out //            // Sparse. Glyphs->AdvanceX in a directly indexable way (cache-friendly for CalcTextSize functions which only this info, and are often bottleneck in large UI).
     public native float FallbackAdvanceX(); public native ImFont FallbackAdvanceX(float setter);                                      // 4     // out // = FallbackGlyph->AdvanceX
     public native float FontSize(); public native ImFont FontSize(float setter);                                              // 4     // in  //            // Height of characters/line, set during loading (don't change after loading)
 

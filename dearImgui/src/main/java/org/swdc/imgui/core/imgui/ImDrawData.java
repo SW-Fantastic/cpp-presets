@@ -31,7 +31,7 @@ public class ImDrawData extends Pointer {
     }
 
     public native @Cast("bool") boolean Valid(); public native ImDrawData Valid(boolean setter);             // Only valid after Render() is called and before the next NewFrame() is called.
-    public native int CmdListsCount(); public native ImDrawData CmdListsCount(int setter);     // Number of ImDrawList* to render (should always be == CmdLists.size)
+    public native int CmdListsCount(); public native ImDrawData CmdListsCount(int setter);     // Number of ImDrawList* to render
     public native int TotalIdxCount(); public native ImDrawData TotalIdxCount(int setter);     // For convenience, sum of all ImDrawList's IdxBuffer.Size
     public native int TotalVtxCount(); public native ImDrawData TotalVtxCount(int setter);     // For convenience, sum of all ImDrawList's VtxBuffer.Size
     public native @ByRef ImVector_ImDrawListPtr CmdLists(); public native ImDrawData CmdLists(ImVector_ImDrawListPtr setter);          // Array of ImDrawList* to render. The ImDrawLists are owned by ImGuiContext and only pointed to from here.

@@ -46,6 +46,18 @@ public class ImGuiIO extends Pointer {
     public native ImFont FontDefault(); public native ImGuiIO FontDefault(ImFont setter);                        // = NULL           // Font to use on NewFrame(). Use NULL to uses Fonts->Fonts[0].
     public native @ByRef ImVec2 DisplayFramebufferScale(); public native ImGuiIO DisplayFramebufferScale(ImVec2 setter);            // = (1, 1)         // For retina display or other situations where window coordinates are different from framebuffer coordinates. This generally ends up in ImDrawData::FramebufferScale.
 
+    // Docking options (when ImGuiConfigFlags_DockingEnable is set)
+    public native @Cast("bool") boolean ConfigDockingNoSplit(); public native ImGuiIO ConfigDockingNoSplit(boolean setter);               // = false          // Simplified docking mode: disable window splitting, so docking is limited to merging multiple windows together into tab-bars.
+    public native @Cast("bool") boolean ConfigDockingWithShift(); public native ImGuiIO ConfigDockingWithShift(boolean setter);             // = false          // Enable docking with holding Shift key (reduce visual noise, allows dropping in wider space)
+    public native @Cast("bool") boolean ConfigDockingAlwaysTabBar(); public native ImGuiIO ConfigDockingAlwaysTabBar(boolean setter);          // = false          // [BETA] [FIXME: This currently creates regression with auto-sizing and general overhead] Make every single floating window display within a docking node.
+    public native @Cast("bool") boolean ConfigDockingTransparentPayload(); public native ImGuiIO ConfigDockingTransparentPayload(boolean setter);    // = false          // [BETA] Make window or viewport transparent when docking and only display docking boxes on the target viewport. Useful if rendering of multiple viewport cannot be synced. Best used with ConfigViewportsNoAutoMerge.
+
+    // Viewport options (when ImGuiConfigFlags_ViewportsEnable is set)
+    public native @Cast("bool") boolean ConfigViewportsNoAutoMerge(); public native ImGuiIO ConfigViewportsNoAutoMerge(boolean setter);         // = false;         // Set to make all floating imgui windows always create their own viewport. Otherwise, they are merged into the main host viewports when overlapping it. May also set ImGuiViewportFlags_NoAutoMerge on individual viewport.
+    public native @Cast("bool") boolean ConfigViewportsNoTaskBarIcon(); public native ImGuiIO ConfigViewportsNoTaskBarIcon(boolean setter);       // = false          // Disable default OS task bar icon flag for secondary viewports. When a viewport doesn't want a task bar icon, ImGuiViewportFlags_NoTaskBarIcon will be set on it.
+    public native @Cast("bool") boolean ConfigViewportsNoDecoration(); public native ImGuiIO ConfigViewportsNoDecoration(boolean setter);        // = true           // Disable default OS window decoration flag for secondary viewports. When a viewport doesn't want window decorations, ImGuiViewportFlags_NoDecoration will be set on it. Enabling decoration can create subsequent issues at OS levels (e.g. minimum window size).
+    public native @Cast("bool") boolean ConfigViewportsNoDefaultParent(); public native ImGuiIO ConfigViewportsNoDefaultParent(boolean setter);     // = false          // Disable default OS parenting to main viewport for secondary viewports. By default, viewports are marked with ParentViewportId = <main_viewport>, expecting the platform backend to setup a parent/child relationship between the OS windows (some backend may ignore this). Set to true if you want the default to be 0, then all viewports will be top-level OS windows.
+
     // Miscellaneous options
     public native @Cast("bool") boolean MouseDrawCursor(); public native ImGuiIO MouseDrawCursor(boolean setter);                    // = false          // Request ImGui to draw a mouse cursor for you (if you are on a platform without a mouse cursor). Cannot be easily renamed to 'io.ConfigXXX' because this is frequently used by backend implementations.
     public native @Cast("bool") boolean ConfigMacOSXBehaviors(); public native ImGuiIO ConfigMacOSXBehaviors(boolean setter);              // = defined(__APPLE__) // Swap Cmd<>Ctrl keys + OS X style text editing cursor movement using Alt instead of Ctrl, Shortcuts using Cmd/Super instead of Ctrl, Line/Text Start and End using Cmd+Arrows instead of Home/End, Double click selects by word instead of selecting whole text, Multi-selection in lists uses Cmd/Super instead of Ctrl.
@@ -103,57 +115,6 @@ public class ImGuiIO extends Pointer {
     public native Pointer BackendRendererUserData(); public native ImGuiIO BackendRendererUserData(Pointer setter);            // = NULL           // User data for renderer backend
     public native Pointer BackendLanguageUserData(); public native ImGuiIO BackendLanguageUserData(Pointer setter);            // = NULL           // User data for non C++ programming language backend
 
-    // Optional: Access OS clipboard
-    // (default to use native Win32 clipboard on Windows, otherwise uses a private clipboard. Override to access OS clipboard on other architectures)
-    public static class GetClipboardTextFn_Pointer extends FunctionPointer {
-        static { Loader.load(); }
-        /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */
-        public    GetClipboardTextFn_Pointer(Pointer p) { super(p); }
-        protected GetClipboardTextFn_Pointer() { allocate(); }
-        private native void allocate();
-        public native @Cast("const char*") BytePointer call(Pointer user_data);
-    }
-    public native GetClipboardTextFn_Pointer GetClipboardTextFn(); public native ImGuiIO GetClipboardTextFn(GetClipboardTextFn_Pointer setter);
-    public static class SetClipboardTextFn_Pointer_BytePointer extends FunctionPointer {
-        static { Loader.load(); }
-        /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */
-        public    SetClipboardTextFn_Pointer_BytePointer(Pointer p) { super(p); }
-        protected SetClipboardTextFn_Pointer_BytePointer() { allocate(); }
-        private native void allocate();
-        public native void call(Pointer user_data, @Cast("const char*") BytePointer text);
-    }
-    public native SetClipboardTextFn_Pointer_BytePointer SetClipboardTextFn(); public native ImGuiIO SetClipboardTextFn(SetClipboardTextFn_Pointer_BytePointer setter);
-    public native Pointer ClipboardUserData(); public native ImGuiIO ClipboardUserData(Pointer setter);
-
-    // Optional: Open link/folder/file in OS Shell
-    // (default to use ShellExecuteA() on Windows, system() on Linux/Mac)
-    public static class PlatformOpenInShellFn_ImGuiContext_BytePointer extends FunctionPointer {
-        static { Loader.load(); }
-        /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */
-        public    PlatformOpenInShellFn_ImGuiContext_BytePointer(Pointer p) { super(p); }
-        protected PlatformOpenInShellFn_ImGuiContext_BytePointer() { allocate(); }
-        private native void allocate();
-        public native @Cast("bool") boolean call(ImGuiContext ctx, @Cast("const char*") BytePointer path);
-    }
-    public native PlatformOpenInShellFn_ImGuiContext_BytePointer PlatformOpenInShellFn(); public native ImGuiIO PlatformOpenInShellFn(PlatformOpenInShellFn_ImGuiContext_BytePointer setter);
-    public native Pointer PlatformOpenInShellUserData(); public native ImGuiIO PlatformOpenInShellUserData(Pointer setter);
-
-    // Optional: Notify OS Input Method Editor of the screen position of your cursor for text input position (e.g. when using Japanese/Chinese IME on Windows)
-    // (default to use native imm32 api on Windows)
-    public static class PlatformSetImeDataFn_ImGuiContext_ImGuiViewport_ImGuiPlatformImeData extends FunctionPointer {
-        static { Loader.load(); }
-        /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */
-        public    PlatformSetImeDataFn_ImGuiContext_ImGuiViewport_ImGuiPlatformImeData(Pointer p) { super(p); }
-        protected PlatformSetImeDataFn_ImGuiContext_ImGuiViewport_ImGuiPlatformImeData() { allocate(); }
-        private native void allocate();
-        public native void call(ImGuiContext ctx, ImGuiViewport viewport, ImGuiPlatformImeData data);
-    }
-    public native PlatformSetImeDataFn_ImGuiContext_ImGuiViewport_ImGuiPlatformImeData PlatformSetImeDataFn(); public native ImGuiIO PlatformSetImeDataFn(PlatformSetImeDataFn_ImGuiContext_ImGuiViewport_ImGuiPlatformImeData setter);
-    //void      (*SetPlatformImeDataFn)(ImGuiViewport* viewport, ImGuiPlatformImeData* data); // [Renamed to io.PlatformSetImeDataFn in 1.91.0]
-
-    // Optional: Platform locale
-    public native @Cast("ImWchar") int PlatformLocaleDecimalPoint(); public native ImGuiIO PlatformLocaleDecimalPoint(int setter);         // '.'              // [Experimental] Configure decimal point e.g. '.' or ',' useful for some languages (e.g. German), generally pulled from *localeconv()->decimal_point
-
     //------------------------------------------------------------------
     // Input - Call before calling NewFrame()
     //------------------------------------------------------------------
@@ -193,6 +154,7 @@ public class ImGuiIO extends Pointer {
     public native float MouseWheel(); public native ImGuiIO MouseWheel(float setter);                         // Mouse wheel Vertical: 1 unit scrolls about 5 lines text. >0 scrolls Up, <0 scrolls Down. Hold SHIFT to turn vertical scroll into horizontal scroll.
     public native float MouseWheelH(); public native ImGuiIO MouseWheelH(float setter);                        // Mouse wheel Horizontal. >0 scrolls Left, <0 scrolls Right. Most users don't have a mouse with a horizontal wheel, may not be filled by all backends.
     public native @Cast("ImGuiMouseSource") int MouseSource(); public native ImGuiIO MouseSource(int setter);                        // Mouse actual input peripheral (Mouse/TouchScreen/Pen).
+    public native @Cast("ImGuiID") int MouseHoveredViewport(); public native ImGuiIO MouseHoveredViewport(int setter);               // (Optional) Modify using io.AddMouseViewportEvent(). With multi-viewports: viewport the OS mouse is hovering. If possible _IGNORING_ viewports with the ImGuiViewportFlags_NoInputs flag is much better (few backends can handle that). Set io.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport if you can provide this info. If you don't imgui will infer the value using the rectangles and last focused time of the viewports it knows about (ignoring other OS windows).
     public native @Cast("bool") boolean KeyCtrl(); public native ImGuiIO KeyCtrl(boolean setter);                            // Keyboard modifier down: Control
     public native @Cast("bool") boolean KeyShift(); public native ImGuiIO KeyShift(boolean setter);                           // Keyboard modifier down: Shift
     public native @Cast("bool") boolean KeyAlt(); public native ImGuiIO KeyAlt(boolean setter);                             // Keyboard modifier down: Alt
@@ -228,6 +190,8 @@ public class ImGuiIO extends Pointer {
     @MemberGetter public native FloatPointer MouseDownDuration();               // Duration the mouse button has been down (0.0f == just clicked)
     public native float MouseDownDurationPrev(int i); public native ImGuiIO MouseDownDurationPrev(int i, float setter);
     @MemberGetter public native FloatPointer MouseDownDurationPrev();           // Previous time the mouse button has been down
+    public native @ByRef ImVec2 MouseDragMaxDistanceAbs(int i); public native ImGuiIO MouseDragMaxDistanceAbs(int i, ImVec2 setter);
+    @MemberGetter public native ImVec2 MouseDragMaxDistanceAbs();         // Maximum distance, absolute, on each axis, of how much mouse has traveled from the clicking point
     public native float MouseDragMaxDistanceSqr(int i); public native ImGuiIO MouseDragMaxDistanceSqr(int i, float setter);
     @MemberGetter public native FloatPointer MouseDragMaxDistanceSqr();         // Squared maximum distance of how much mouse has traveled from the clicking point (used for moving thresholds)
     public native float PenPressure(); public native ImGuiIO PenPressure(float setter);                        // Touch/Pen pressure (0.0f to 1.0f, should be >0.0f only when MouseDown[0] == true). Helper storage currently unused by Dear ImGui.
@@ -250,4 +214,27 @@ public class ImGuiIO extends Pointer {
     @MemberGetter public native FloatPointer NavInputs();     // [LEGACY] Since 1.88, NavInputs[] was removed. Backends from 1.60 to 1.86 won't build. Feed gamepad inputs via io.AddKeyEvent() and ImGuiKey_GamepadXXX enums.
     //void*     ImeWindowHandle;                    // [Obsoleted in 1.87] Set ImGuiViewport::PlatformHandleRaw instead. Set this to your HWND to get automatic IME cursor positioning.
 // #endif // #ifndef IMGUI_DISABLE_OBSOLETE_KEYIO
+    // Legacy: before 1.91.1, clipboard functions were stored in ImGuiIO instead of ImGuiPlatformIO.
+    // As this is will affect all users of custom engines/backends, we are providing proper legacy redirection (will obsolete).
+// #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+    public static class GetClipboardTextFn_Pointer extends FunctionPointer {
+        static { Loader.load(); }
+        /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */
+        public    GetClipboardTextFn_Pointer(Pointer p) { super(p); }
+        protected GetClipboardTextFn_Pointer() { allocate(); }
+        private native void allocate();
+        public native @Cast("const char*") BytePointer call(Pointer user_data);
+    }
+    public native GetClipboardTextFn_Pointer GetClipboardTextFn(); public native ImGuiIO GetClipboardTextFn(GetClipboardTextFn_Pointer setter);
+    public static class SetClipboardTextFn_Pointer_BytePointer extends FunctionPointer {
+        static { Loader.load(); }
+        /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */
+        public    SetClipboardTextFn_Pointer_BytePointer(Pointer p) { super(p); }
+        protected SetClipboardTextFn_Pointer_BytePointer() { allocate(); }
+        private native void allocate();
+        public native void call(Pointer user_data, @Cast("const char*") BytePointer text);
+    }
+    public native SetClipboardTextFn_Pointer_BytePointer SetClipboardTextFn(); public native ImGuiIO SetClipboardTextFn(SetClipboardTextFn_Pointer_BytePointer setter);
+    public native Pointer ClipboardUserData(); public native ImGuiIO ClipboardUserData(Pointer setter);
+// #endif // #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 }

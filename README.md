@@ -13,4 +13,6 @@ Please clone and build it yourself if you want to have a try。
 2. Pdfium Core & Pdfium4J（new library）
    - Build with pdfium version 122.0.6248
 3. MariaDB Embedded & MariaDB Embedded JDBC（Embedded Mariadb java version）
+   - Build with Mariadb version 11.6
 4. DearImGui（Library only，no frame at this time）
+   - Build with DearImGUI Docking branch version 1.91.1

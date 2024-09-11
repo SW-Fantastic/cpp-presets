@@ -17,13 +17,14 @@ public class ImGUICore extends org.swdc.imgui.conf.ImGuiCoreConfigure {
 // **DO NOT EDIT DIRECTLY**
 // https://github.com/dearimgui/dear_bindings
 
-// dear imgui, v1.91.0
+// dear imgui, v1.91.1
 // (headers)
 
 // Help:
 // - See links below.
 // - Call and read ImGui::ShowDemoWindow() in imgui_demo.cpp. All applications in examples/ are doing that.
 // - Read top of imgui.cpp for more details, links and comments.
+// - Add '#define IMGUI_DEFINE_MATH_OPERATORS' before including this file (or in imconfig.h) to access courtesy maths operators for ImVec2 and ImVec4.
 
 // Resources:
 // - FAQ ........................ https://dearimgui.com/faq (in repository as docs/FAQ.md)
@@ -46,9 +47,11 @@ public class ImGUICore extends org.swdc.imgui.conf.ImGuiCoreConfigure {
 
 // Library Version
 // (Integer encoded as XYYZZ for use in #if preprocessor conditionals, e.g. '#if IMGUI_VERSION_NUM >= 12345')
-public static final String IMGUI_VERSION =       "1.91.0";
-public static final int IMGUI_VERSION_NUM =   19100;
+public static final String IMGUI_VERSION =       "1.91.1";
+public static final int IMGUI_VERSION_NUM =   19110;
 // #define IMGUI_HAS_TABLE
+// #define IMGUI_HAS_VIEWPORT           // Viewport WIP branch
+// #define IMGUI_HAS_DOCK               // Docking WIP branch
 
 /*
 
@@ -61,13 +64,13 @@ Index of this file:
 // [SECTION] Helpers: Debug log, Memory allocations macros, ImVector<>
 // [SECTION] ImGuiStyle
 // [SECTION] ImGuiIO
-// [SECTION] Misc data structures (ImGuiInputTextCallbackData, ImGuiSizeCallbackData, ImGuiPayload)
+// [SECTION] Misc data structures (ImGuiInputTextCallbackData, ImGuiSizeCallbackData, ImGuiWindowClass, ImGuiPayload)
 // [SECTION] Helpers (ImGuiOnceUponAFrame, ImGuiTextFilter, ImGuiTextBuffer, ImGuiStorage, ImGuiListClipper, Math Operators, ImColor)
 // [SECTION] Multi-Select API flags and structures (ImGuiMultiSelectFlags, ImGuiMultiSelectIO, ImGuiSelectionRequest, ImGuiSelectionBasicStorage, ImGuiSelectionExternalStorage)
 // [SECTION] Drawing API (ImDrawCallback, ImDrawCmd, ImDrawIdx, ImDrawVert, ImDrawChannel, ImDrawListSplitter, ImDrawFlags, ImDrawListFlags, ImDrawList, ImDrawData)
 // [SECTION] Font API (ImFontConfig, ImFontGlyph, ImFontGlyphRangesBuilder, ImFontAtlasFlags, ImFontAtlas, ImFont)
 // [SECTION] Viewports (ImGuiViewportFlags, ImGuiViewport)
-// [SECTION] Platform Dependent Interfaces (ImGuiPlatformImeData)
+// [SECTION] ImGuiPlatformIO + other Platform Dependent Interfaces (ImGuiPlatformMonitor, ImGuiPlatformImeData)
 // [SECTION] Obsolete functions and types
 
 */
@@ -181,7 +184,7 @@ Index of this file:
                               // Opaque interface to a font builder (stb_truetype or FreeType).                                    // Configuration data when adding a font or merging fonts                                      // A single font glyph (code point + coordinates within in ImFontAtlas + offset)            // Helper to build glyph ranges from text/string data
 // Targeting imgui\ImGuiContext.java
 
-                                    // Dear ImGui context (opaque structure, unless including imgui_internal.h)                                              // Main configuration and I/O between your application and ImGui        // Shared state of InputText() when using custom ImGuiInputTextCallback (rare/advanced use)                                    // Storage for ImGuiIO and IsKeyDown(), IsKeyPressed() etc functions.                            // Helper to manually clip large list of items                        // Structure to interact with a BeginMultiSelect()/EndMultiSelect() block                                    // User data payload for drag and drop operations                    // Platform IME data for io.PlatformSetImeDataFn() function.        // Optional helper to store multi-selection state + apply multi-selection requests.  //Optional helper to apply multi-selection requests to existing randomly accessible storage.                  // A selection request (stored in ImGuiMultiSelectIO)                  // Callback data when using SetNextWindowSizeConstraints() (rare/advanced use)                                    // Helper for key->value storage (container sorted by key)                            // Helper for key->value storage (pair)                                        // Runtime data for styling/colors                      // Sorting specifications for a table (often handling sort specs for a single column, occasionally more)          // Sorting specification for one column of a table                              // Helper to hold and append into a text buffer (~string builder)                              // Helper to parse and apply text filters (e.g. "aaaaa[,bbbbb][,ccccc]")                                  // A Platform Window (always only one in 'master' branch), in the future may represent Platform Monitor
+                                    // Dear ImGui context (opaque structure, unless including imgui_internal.h)                                              // Main configuration and I/O between your application and ImGui (also see: ImGuiPlatformIO)        // Shared state of InputText() when using custom ImGuiInputTextCallback (rare/advanced use)                                    // Storage for ImGuiIO and IsKeyDown(), IsKeyPressed() etc functions.                            // Helper to manually clip large list of items                        // Structure to interact with a BeginMultiSelect()/EndMultiSelect() block                                    // User data payload for drag and drop operations                              // Interface between platform/renderer backends and ImGui (e.g. Clipboard, IME, Multi-Viewport support). Extends ImGuiIO.                    // Platform IME data for io.PlatformSetImeDataFn() function.                    // Multi-viewport support: user-provided bounds for each connected monitor/display. Used when positioning popups and tooltips to avoid them straddling monitors        // Optional helper to store multi-selection state + apply multi-selection requests.  //Optional helper to apply multi-selection requests to existing randomly accessible storage.                  // A selection request (stored in ImGuiMultiSelectIO)                  // Callback data when using SetNextWindowSizeConstraints() (rare/advanced use)                                    // Helper for key->value storage (container sorted by key)                            // Helper for key->value storage (pair)                                        // Runtime data for styling/colors                      // Sorting specifications for a table (often handling sort specs for a single column, occasionally more)          // Sorting specification for one column of a table                              // Helper to hold and append into a text buffer (~string builder)                              // Helper to parse and apply text filters (e.g. "aaaaa[,bbbbb][,ccccc]")                                  // A Platform Window (always 1 unless multi-viewport are enabled. One per platform window to output to). In the future may represent Platform Monitor                            // Window class (rare/advanced uses: provide hints to the platform backend via altered viewport flags and parent/child info)
 
 // Enumerations
 // - We don't use strongly typed enums much because they add constraints (can't extend in private code, can't store typed in bit fields, extra casting on iteration)
@@ -194,7 +197,7 @@ Index of this file:
 // - Tip: Use your programming IDE navigation facilities on the names in the _central column_ below to find the actual flags/enum lists!
 //   - In Visual Studio: CTRL+comma ("Edit.GoToAll") can follow symbols inside comments, whereas CTRL+F12 ("Edit.GoToImplementation") cannot.
 //   - In Visual Studio w/ Visual Assist installed: ALT+G ("VAssistX.GoToImplementation") can also follow symbols inside comments.
-//   - In VS Code, CLion, etc.: CTRL+click can follow symbols inside comments.            // -> enum ImDrawFlags_          // Flags: for ImDrawList functions        // -> enum ImDrawListFlags_      // Flags: for ImDrawList instance       // -> enum ImFontAtlasFlags_     // Flags: for ImFontAtlas build      // -> enum ImGuiBackendFlags_    // Flags: for io.BackendFlags       // -> enum ImGuiButtonFlags_     // Flags: for InvisibleButton()        // -> enum ImGuiChildFlags_      // Flags: for BeginChild()    // -> enum ImGuiColorEditFlags_  // Flags: for ColorEdit4(), ColorPicker4() etc.       // -> enum ImGuiConfigFlags_     // Flags: for io.ConfigFlags        // -> enum ImGuiComboFlags_      // Flags: for BeginCombo()     // -> enum ImGuiDragDropFlags_   // Flags: for BeginDragDropSource(), AcceptDragDropPayload()      // -> enum ImGuiFocusedFlags_    // Flags: for IsWindowFocused()      // -> enum ImGuiHoveredFlags_    // Flags: for IsItemHovered(), IsWindowHovered() etc.        // -> enum ImGuiInputFlags_      // Flags: for Shortcut(), SetNextItemShortcut()    // -> enum ImGuiInputTextFlags_  // Flags: for InputText(), InputTextMultiline()         // -> enum ImGuiItemFlags_       // Flags: for PushItemFlag(), shared by all items          // -> ImGuiKey | ImGuiMod_XXX    // Flags: for IsKeyChordPressed(), Shortcut() etc. an ImGuiKey optionally OR-ed with one or more ImGuiMod_XXX values.        // -> enum ImGuiPopupFlags_      // Flags: for OpenPopup*(), BeginPopupContext*(), IsPopupOpen()  // -> enum ImGuiMultiSelectFlags_// Flags: for BeginMultiSelect()   // -> enum ImGuiSelectableFlags_ // Flags: for Selectable()       // -> enum ImGuiSliderFlags_     // Flags: for DragFloat(), DragInt(), SliderFloat(), SliderInt() etc.       // -> enum ImGuiTabBarFlags_     // Flags: for BeginTabBar()      // -> enum ImGuiTabItemFlags_    // Flags: for BeginTabItem()        // -> enum ImGuiTableFlags_      // Flags: For BeginTable()  // -> enum ImGuiTableColumnFlags_// Flags: For TableSetupColumn()     // -> enum ImGuiTableRowFlags_   // Flags: For TableNextRow()     // -> enum ImGuiTreeNodeFlags_   // Flags: for TreeNode(), TreeNodeEx(), CollapsingHeader()     // -> enum ImGuiViewportFlags_   // Flags: for ImGuiViewport
+//   - In VS Code, CLion, etc.: CTRL+click can follow symbols inside comments.            // -> enum ImDrawFlags_          // Flags: for ImDrawList functions        // -> enum ImDrawListFlags_      // Flags: for ImDrawList instance       // -> enum ImFontAtlasFlags_     // Flags: for ImFontAtlas build      // -> enum ImGuiBackendFlags_    // Flags: for io.BackendFlags       // -> enum ImGuiButtonFlags_     // Flags: for InvisibleButton()        // -> enum ImGuiChildFlags_      // Flags: for BeginChild()    // -> enum ImGuiColorEditFlags_  // Flags: for ColorEdit4(), ColorPicker4() etc.       // -> enum ImGuiConfigFlags_     // Flags: for io.ConfigFlags        // -> enum ImGuiComboFlags_      // Flags: for BeginCombo()     // -> enum ImGuiDockNodeFlags_   // Flags: for DockSpace()     // -> enum ImGuiDragDropFlags_   // Flags: for BeginDragDropSource(), AcceptDragDropPayload()      // -> enum ImGuiFocusedFlags_    // Flags: for IsWindowFocused()      // -> enum ImGuiHoveredFlags_    // Flags: for IsItemHovered(), IsWindowHovered() etc.        // -> enum ImGuiInputFlags_      // Flags: for Shortcut(), SetNextItemShortcut()    // -> enum ImGuiInputTextFlags_  // Flags: for InputText(), InputTextMultiline()         // -> enum ImGuiItemFlags_       // Flags: for PushItemFlag(), shared by all items          // -> ImGuiKey | ImGuiMod_XXX    // Flags: for IsKeyChordPressed(), Shortcut() etc. an ImGuiKey optionally OR-ed with one or more ImGuiMod_XXX values.        // -> enum ImGuiPopupFlags_      // Flags: for OpenPopup*(), BeginPopupContext*(), IsPopupOpen()  // -> enum ImGuiMultiSelectFlags_// Flags: for BeginMultiSelect()   // -> enum ImGuiSelectableFlags_ // Flags: for Selectable()       // -> enum ImGuiSliderFlags_     // Flags: for DragFloat(), DragInt(), SliderFloat(), SliderInt() etc.       // -> enum ImGuiTabBarFlags_     // Flags: for BeginTabBar()      // -> enum ImGuiTabItemFlags_    // Flags: for BeginTabItem()        // -> enum ImGuiTableFlags_      // Flags: For BeginTable()  // -> enum ImGuiTableColumnFlags_// Flags: For TableSetupColumn()     // -> enum ImGuiTableRowFlags_   // Flags: For TableNextRow()     // -> enum ImGuiTreeNodeFlags_   // Flags: for TreeNode(), TreeNodeEx(), CollapsingHeader()     // -> enum ImGuiViewportFlags_   // Flags: for ImGuiViewport
 // Targeting imgui\ImTextureID.java
 
   // Default: store a pointer or an integer fitting in a pointer (most renderer backends are ok with that)
@@ -230,19 +233,28 @@ Index of this file:
 // Targeting imgui\ImVec4.java
 
 
+//-----------------------------------------------------------------------------
+// [SECTION] Dear ImGui end-user API functions
+// (Note that ImGui:: being a namespace, you can add extra ImGui:: functions in your own separate file. Please don't modify imgui source files!)
+//-----------------------------------------------------------------------------
 
+// Context creation and access
+// - Each context create its own ImFontAtlas by default. You may instance one yourself and pass it to CreateContext() to share a font atlas between contexts.
+// - DLL users: heaps and globals are not shared across DLL boundaries! You will need to call SetCurrentContext() + SetAllocatorFunctions()
+//   for each static/DLL boundary you are calling from. Read "Context and Memory Allocators" section of imgui.cpp for details.
 public static native ImGuiContext ImGui_CreateContext(ImFontAtlas shared_font_atlas);
-public static native void ImGui_DestroyContext(ImGuiContext ctx );  // NULL = destroy current context
+public static native void ImGui_DestroyContext(ImGuiContext ctx);  // NULL = destroy current context
 public static native ImGuiContext ImGui_GetCurrentContext();
 public static native void ImGui_SetCurrentContext(ImGuiContext ctx);
 
 // Main
-public static native ImGuiIO ImGui_GetIO();        // access the IO structure (mouse/keyboard/gamepad inputs, time, various configuration options/flags)
-public static native ImGuiStyle ImGui_GetStyle();     // access the Style structure (colors, sizes). Always use PushStyleColor(), PushStyleVar() to modify style mid-frame!
-public static native void ImGui_NewFrame();     // start a new Dear ImGui frame, you can submit any command from this point until Render()/EndFrame().
-public static native void ImGui_EndFrame();     // ends the Dear ImGui frame. automatically called by Render(). If you don't need to render data (skipping rendering) you may call EndFrame() without Render()... but you'll have wasted CPU already! If you don't need to render, better to not create any windows and not call NewFrame() at all!
-public static native void ImGui_Render();       // ends the Dear ImGui frame, finalize the draw data. You can then get call GetDrawData().
-public static native ImDrawData ImGui_GetDrawData();  // valid after Render() and until the next call to NewFrame(). this is what you have to render.
+public static native ImGuiIO ImGui_GetIO();          // access the ImGuiIO structure (mouse/keyboard/gamepad inputs, time, various configuration options/flags)
+public static native ImGuiPlatformIO ImGui_GetPlatformIO();  // access the ImGuiPlatformIO structure (mostly hooks/functions to connect to platform/renderer and OS Clipboard, IME etc.)
+public static native ImGuiStyle ImGui_GetStyle();       // access the Style structure (colors, sizes). Always use PushStyleColor(), PushStyleVar() to modify style mid-frame!
+public static native void ImGui_NewFrame();       // start a new Dear ImGui frame, you can submit any command from this point until Render()/EndFrame().
+public static native void ImGui_EndFrame();       // ends the Dear ImGui frame. automatically called by Render(). If you don't need to render data (skipping rendering) you may call EndFrame() without Render()... but you'll have wasted CPU already! If you don't need to render, better to not create any windows and not call NewFrame() at all!
+public static native void ImGui_Render();         // ends the Dear ImGui frame, finalize the draw data. You can then get call GetDrawData().
+public static native ImDrawData ImGui_GetDrawData();    // valid after Render() and until the next call to NewFrame(). this is what you have to render.
 
 // Demo, Debug, Information
 public static native void ImGui_ShowDemoWindow(@Cast("bool*") BoolPointer p_open);
@@ -288,10 +300,10 @@ public static native void ImGui_End();
 // Child Windows
 // - Use child windows to begin into a self-contained independent scrolling/clipping regions within a host window. Child windows can embed their own child.
 // - Before 1.90 (November 2023), the "ImGuiChildFlags child_flags = 0" parameter was "bool border = false".
-//   This API is backward compatible with old code, as we guarantee that ImGuiChildFlags_Border == true.
+//   This API is backward compatible with old code, as we guarantee that ImGuiChildFlags_Borders == true.
 //   Consider updating your old code:
 //      BeginChild("Name", size, false)   -> Begin("Name", size, 0); or Begin("Name", size, ImGuiChildFlags_None);
-//      BeginChild("Name", size, true)    -> Begin("Name", size, ImGuiChildFlags_Border);
+//      BeginChild("Name", size, true)    -> Begin("Name", size, ImGuiChildFlags_Borders);
 // - Manual sizing (each axis can use a different setting e.g. ImVec2(0.0f, 400.0f)):
 //     == 0.0f: use remaining parent window size for this axis.
 //      > 0.0f: use specified size for this axis.
@@ -315,10 +327,12 @@ public static native @Cast("bool") boolean ImGui_IsWindowCollapsed();
 public static native @Cast("bool") boolean ImGui_IsWindowFocused(@Cast("ImGuiFocusedFlags") int flags);  // is current window focused? or its root/child, depending on flags. see flags for options.
 public static native @Cast("bool") boolean ImGui_IsWindowHovered(@Cast("ImGuiHoveredFlags") int flags);  // is current window hovered and hoverable (e.g. not blocked by a popup/modal)? See ImGuiHoveredFlags_ for options. IMPORTANT: If you are trying to check whether your mouse should be dispatched to Dear ImGui or to your underlying app, you should not use this function! Use the 'io.WantCaptureMouse' boolean for that! Refer to FAQ entry "How can I tell whether to dispatch mouse/keyboard to Dear ImGui or my application?" for details.
 public static native ImDrawList ImGui_GetWindowDrawList();                             // get draw list associated to the current window, to append your own drawing primitives
+public static native float ImGui_GetWindowDpiScale();                             // get DPI scale currently associated to the current window's viewport.
 public static native @ByVal ImVec2 ImGui_GetWindowPos();                                  // get current window position in screen space (IT IS UNLIKELY YOU EVER NEED TO USE THIS. Consider always using GetCursorScreenPos() and GetContentRegionAvail() instead)
 public static native @ByVal ImVec2 ImGui_GetWindowSize();                                 // get current window size (IT IS UNLIKELY YOU EVER NEED TO USE THIS. Consider always using GetCursorScreenPos() and GetContentRegionAvail() instead)
 public static native float ImGui_GetWindowWidth();                                // get current window width (IT IS UNLIKELY YOU EVER NEED TO USE THIS). Shortcut for GetWindowSize().x.
 public static native float ImGui_GetWindowHeight();                               // get current window height (IT IS UNLIKELY YOU EVER NEED TO USE THIS). Shortcut for GetWindowSize().y.
+public static native ImGuiViewport ImGui_GetWindowViewport();                             // get viewport currently associated to the current window.
 
 // Window manipulation
 // - Prefer using SetNextXXX functions (before Begin) rather that SetXXX functions (after Begin).
@@ -331,6 +345,7 @@ public static native void ImGui_SetNextWindowCollapsed(@Cast("bool") boolean col
 public static native void ImGui_SetNextWindowFocus();                                                                     // set next window to be focused / top-most. call before Begin()
 public static native void ImGui_SetNextWindowScroll(@ByVal ImVec2 scroll);                                                           // set next window scrolling value (use < 0.0f to not affect a given axis).
 public static native void ImGui_SetNextWindowBgAlpha(float alpha);                                                            // set next window background color alpha. helper to easily override the Alpha component of ImGuiCol_WindowBg/ChildBg/PopupBg. you may also use ImGuiWindowFlags_NoBackground.
+public static native void ImGui_SetNextWindowViewport(@Cast("ImGuiID") int viewport_id);                                                   // set next window viewport
 public static native void ImGui_SetWindowPos(@ByVal ImVec2 pos, @Cast("ImGuiCond") int cond);                                           // (not recommended) set current window position - call within Begin()/End(). prefer using SetNextWindowPos(), as this may incur tearing and side-effects.
 public static native void ImGui_SetWindowSize(@ByVal ImVec2 size, @Cast("ImGuiCond") int cond);                                         // (not recommended) set current window size - call within Begin()/End(). set to ImVec2(0, 0) to force an auto-fit. prefer using SetNextWindowSize(), as this may incur tearing and minor side-effects.
 public static native void ImGui_SetWindowCollapsed(@Cast("bool") boolean collapsed, @Cast("ImGuiCond") int cond);                                 // (not recommended) set current window collapsed state. prefer using SetNextWindowCollapsed().
@@ -366,8 +381,10 @@ public static native void ImGui_PushStyleColor(@Cast("ImGuiCol") int idx, @Cast(
 public static native void ImGui_PushStyleColorImVec4(@Cast("ImGuiCol") int idx, @ByVal ImVec4 col);
 public static native void ImGui_PopStyleColor();                                // Implied count = 1
 public static native void ImGui_PopStyleColorEx(int count);
-public static native void ImGui_PushStyleVar(@Cast("ImGuiStyleVar") int idx, float val);         // modify a style float variable. always use this if you modify the style after NewFrame().
-public static native void ImGui_PushStyleVarImVec2(@Cast("ImGuiStyleVar") int idx, @ByVal ImVec2 val);  // modify a style ImVec2 variable. always use this if you modify the style after NewFrame().
+public static native void ImGui_PushStyleVar(@Cast("ImGuiStyleVar") int idx, float val);         // modify a style float variable. always use this if you modify the style after NewFrame()!
+public static native void ImGui_PushStyleVarImVec2(@Cast("ImGuiStyleVar") int idx, @ByVal ImVec2 val);  // modify a style ImVec2 variable. "
+public static native void ImGui_PushStyleVarX(@Cast("ImGuiStyleVar") int idx, float val_x);      // modify X component of a style ImVec2 variable. "
+public static native void ImGui_PushStyleVarY(@Cast("ImGuiStyleVar") int idx, float val_y);      // modify Y component of a style ImVec2 variable. "
 public static native void ImGui_PopStyleVar();                                  // Implied count = 1
 public static native void ImGui_PopStyleVarEx(int count);
 public static native void ImGui_PushItemFlag(@Cast("ImGuiItemFlags") int option, @Cast("bool") boolean enabled);  // modify specified shared item flag, e.g. PushItemFlag(ImGuiItemFlags_NoTabStop, true)
@@ -385,7 +402,7 @@ public static native void ImGui_PopTextWrapPos();
 // - Use the ShowStyleEditor() function to interactively see/edit the colors.
 public static native ImFont ImGui_GetFont();                                                // get current font
 public static native float ImGui_GetFontSize();                                            // get current font size (= height in pixels) of current font with current scale applied
-public static native @ByVal ImVec2 ImGui_GetFontTexUvWhitePixel();                                 // get UV coordinate for a while pixel, useful to draw custom shapes via the ImDrawList API
+public static native @ByVal ImVec2 ImGui_GetFontTexUvWhitePixel();                                 // get UV coordinate for a white pixel, useful to draw custom shapes via the ImDrawList API
 public static native @Cast("ImU32") int ImGui_GetColorU32(@Cast("ImGuiCol") int idx);                                    // Implied alpha_mul = 1.0f
 public static native @Cast("ImU32") int ImGui_GetColorU32Ex(@Cast("ImGuiCol") int idx, float alpha_mul);    // retrieve given style color with style alpha applied and optional extra alpha multiplier, packed as a 32-bit value suitable for ImDrawList
 public static native @Cast("ImU32") int ImGui_GetColorU32ImVec4(@ByVal ImVec4 col);                                // retrieve given color with style alpha applied, packed as a 32-bit value suitable for ImDrawList
@@ -1345,9 +1362,9 @@ public static native void ImGui_TableSetBgColor(@Cast("ImGuiTableBgTarget") int 
 
 // Legacy Columns API (prefer using Tables!)
 // - You can also use SameLine(pos_x) to mimic simplified columns.
-public static native void ImGui_Columns();                                      // Implied count = 1, id = NULL, border = true
-public static native void ImGui_ColumnsEx(int count, @Cast("const char*") BytePointer id, @Cast("bool") boolean border);
-public static native void ImGui_ColumnsEx(int count, String id, @Cast("bool") boolean border);
+public static native void ImGui_Columns();                                      // Implied count = 1, id = NULL, borders = true
+public static native void ImGui_ColumnsEx(int count, @Cast("const char*") BytePointer id, @Cast("bool") boolean borders);
+public static native void ImGui_ColumnsEx(int count, String id, @Cast("bool") boolean borders);
 public static native void ImGui_NextColumn();                                   // next column, defaults to current row or next row if the current row is finished
 public static native int ImGui_GetColumnIndex();                               // get current column index
 public static native float ImGui_GetColumnWidth(int column_index);        // get column width (in pixels). pass -1 to use current column
@@ -1368,6 +1385,28 @@ public static native @Cast("bool") boolean ImGui_TabItemButton(@Cast("const char
 public static native @Cast("bool") boolean ImGui_TabItemButton(String label, @Cast("ImGuiTabItemFlags") int flags);  // create a Tab behaving like a button. return true when clicked. cannot be selected in the tab bar.
 public static native void ImGui_SetTabItemClosed(@Cast("const char*") BytePointer tab_or_docked_window_label);
 public static native void ImGui_SetTabItemClosed(String tab_or_docked_window_label);             // notify TabBar or Docking system of a closed tab/window ahead (useful to reduce visual flicker on reorderable tab bars). For tab-bar: call after BeginTabBar() and before Tab submissions. Otherwise call with a window name.
+
+// Docking
+// [BETA API] Enable with io.ConfigFlags |= ImGuiConfigFlags_DockingEnable.
+// Note: You can use most Docking facilities without calling any API. You DO NOT need to call DockSpace() to use Docking!
+// - Drag from window title bar or their tab to dock/undock. Hold SHIFT to disable docking.
+// - Drag from window menu button (upper-left button) to undock an entire node (all windows).
+// - When io.ConfigDockingWithShift == true, you instead need to hold SHIFT to enable docking.
+// About dockspaces:
+// - Use DockSpaceOverViewport() to create a window covering the screen or a specific viewport + a dockspace inside it.
+//   This is often used with ImGuiDockNodeFlags_PassthruCentralNode to make it transparent.
+// - Use DockSpace() to create an explicit dock node _within_ an existing window. See Docking demo for details.
+// - Important: Dockspaces need to be submitted _before_ any window they can host. Submit it early in your frame!
+// - Important: Dockspaces need to be kept alive if hidden, otherwise windows docked into it will be undocked.
+//   e.g. if you have multiple tabs with a dockspace inside each tab: submit the non-visible dockspaces with ImGuiDockNodeFlags_KeepAliveOnly.
+public static native @Cast("ImGuiID") int ImGui_DockSpace(@Cast("ImGuiID") int dockspace_id);                                 // Implied size = ImVec2(0, 0), flags = 0, window_class = NULL
+public static native @Cast("ImGuiID") int ImGui_DockSpaceEx(@Cast("ImGuiID") int dockspace_id, @ByVal ImVec2 size, @Cast("ImGuiDockNodeFlags") int flags, @Const ImGuiWindowClass window_class);
+public static native @Cast("ImGuiID") int ImGui_DockSpaceOverViewport();                                     // Implied dockspace_id = 0, viewport = NULL, flags = 0, window_class = NULL
+public static native @Cast("ImGuiID") int ImGui_DockSpaceOverViewportEx(@Cast("ImGuiID") int dockspace_id, @Const ImGuiViewport viewport, @Cast("ImGuiDockNodeFlags") int flags, @Const ImGuiWindowClass window_class);
+public static native void ImGui_SetNextWindowDockID(@Cast("ImGuiID") int dock_id, @Cast("ImGuiCond") int cond);  // set next window dock id
+public static native void ImGui_SetNextWindowClass(@Const ImGuiWindowClass window_class);        // set next window class (control docking compatibility + provide hints to platform backend via custom viewport flags and platform parent/child relationship)
+public static native @Cast("ImGuiID") int ImGui_GetWindowDockID();
+public static native @Cast("bool") boolean ImGui_IsWindowDocked();                                            // is current window docked into another window?
 
 // Logging/Capture
 // - All text output from the interface can be captured into tty/file/clipboard. By default, tree nodes are automatically opened during logging.
@@ -1448,8 +1487,10 @@ public static native @ByVal ImVec2 ImGui_GetItemRectSize();                     
 public static native ImGuiViewport ImGui_GetMainViewport();  // return primary/default viewport. This can never be NULL.
 
 // Background/Foreground Draw Lists
-public static native ImDrawList ImGui_GetBackgroundDrawList();  // this draw list will be the first rendered one. Useful to quickly draw shapes/text behind dear imgui contents.
-public static native ImDrawList ImGui_GetForegroundDrawList();  // this draw list will be the last rendered one. Useful to quickly draw shapes/text over dear imgui contents.
+public static native ImDrawList ImGui_GetBackgroundDrawList();                                    // Implied viewport = NULL
+public static native ImDrawList ImGui_GetBackgroundDrawListEx(ImGuiViewport viewport);  // get background draw list for the given viewport or viewport associated to the current window. this draw list will be the first rendering one. Useful to quickly draw shapes/text behind dear imgui contents.
+public static native ImDrawList ImGui_GetForegroundDrawList();                                    // Implied viewport = NULL
+public static native ImDrawList ImGui_GetForegroundDrawListEx(ImGuiViewport viewport);  // get foreground draw list for the given viewport or viewport associated to the current window. this draw list will be the top-most rendered one. Useful to quickly draw shapes/text over dear imgui contents.
 
 // Miscellaneous Utilities
 public static native @Cast("bool") boolean ImGui_IsRectVisibleBySize(@ByVal ImVec2 size);                 // test if rectangle (of given size, starting from cursor position) is visible / not clipped.
@@ -1583,6 +1624,16 @@ public static native void ImGui_GetAllocatorFunctions(@ByPtrPtr ImGuiMemAllocFun
 public static native Pointer ImGui_MemAlloc(@Cast("size_t") long size);
 public static native void ImGui_MemFree(Pointer ptr);
 
+// (Optional) Platform/OS interface for multi-viewport support
+// Read comments around the ImGuiPlatformIO structure for more details.
+// Note: You may use GetWindowViewport() to get the current viewport of the current window.
+public static native void ImGui_UpdatePlatformWindows();                          // call in main loop. will call CreateWindow/ResizeWindow/etc. platform functions for each secondary viewport, and DestroyWindow for each inactive viewport.
+public static native void ImGui_RenderPlatformWindowsDefault();                   // Implied platform_render_arg = NULL, renderer_render_arg = NULL
+public static native void ImGui_RenderPlatformWindowsDefaultEx(Pointer platform_render_arg, Pointer renderer_render_arg); // call in main loop. will call RenderWindow/SwapBuffers platform functions for each secondary viewport which doesn't have the ImGuiViewportFlags_Minimized flag set. May be reimplemented by user for custom rendering needs.
+public static native void ImGui_DestroyPlatformWindows();                         // call DestroyWindow platform functions for all viewports. call from backend Shutdown() if you need to close platform windows before imgui shutdown. otherwise will be called by DestroyContext().
+public static native ImGuiViewport ImGui_FindViewportByID(@Cast("ImGuiID") int id);                         // this is a helper for backends.
+public static native ImGuiViewport ImGui_FindViewportByPlatformHandle(Pointer platform_handle);  // this is a helper for backends. the type platform_handle is decided by the backend (e.g. HWND, MyWindow*, GLFWwindow* etc.)
+
 //-----------------------------------------------------------------------------
 // [SECTION] Flags & Enumerations
 //-----------------------------------------------------------------------------
@@ -1611,6 +1662,7 @@ public static final int
     ImGuiWindowFlags_NoNavInputs               = 1<<16,  // No gamepad/keyboard navigation within the window
     ImGuiWindowFlags_NoNavFocus                = 1<<17,  // No focusing toward this window with gamepad/keyboard navigation (e.g. skipped by CTRL+TAB)
     ImGuiWindowFlags_UnsavedDocument           = 1<<18,  // Display a dot next to the title. When used in a tab/docking context, tab is selected when clicking the X + closure is not assumed (will wait for user to stop submitting the tab). Otherwise closure is assumed when pressing the X, so if you keep submitting the tab may reappear at end of tab bar.
+    ImGuiWindowFlags_NoDocking                 = 1<<19,  // Disable docking of this window
     ImGuiWindowFlags_NoNav                     = ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus,
     ImGuiWindowFlags_NoDecoration              = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse,
     ImGuiWindowFlags_NoInputs                  = ImGuiWindowFlags_NoMouseInputs | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus,
@@ -1621,6 +1673,7 @@ public static final int
     ImGuiWindowFlags_Popup                     = 1<<26,  // Don't use! For internal use by BeginPopup()
     ImGuiWindowFlags_Modal                     = 1<<27,  // Don't use! For internal use by BeginPopupModal()
     ImGuiWindowFlags_ChildMenu                 = 1<<28,  // Don't use! For internal use by BeginMenu()
+    ImGuiWindowFlags_DockNodeHost              = 1<<29,  // Don't use! For internal use by Begin()/NewFrame()
 
     // Obsolete names
 // #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
@@ -1629,7 +1682,7 @@ public static final int
 // #endif // #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 
 // Flags for ImGui::BeginChild()
-// (Legacy: bit 0 must always correspond to ImGuiChildFlags_Border to be backward compatible with old API using 'bool border = false'.
+// (Legacy: bit 0 must always correspond to ImGuiChildFlags_Borders to be backward compatible with old API using 'bool border = false'.
 // About using AutoResizeX/AutoResizeY flags:
 // - May be combined with SetNextWindowSizeConstraints() to set a min/max size for each axis (see "Demo->Child->Auto-resize with Constraints").
 // - Size measurement for a given axis is only performed when the child window is within visible boundaries, or is just appearing.
@@ -1640,15 +1693,20 @@ public static final int
 /** enum ImGuiChildFlags_ */
 public static final int
     ImGuiChildFlags_None                   = 0,
-    ImGuiChildFlags_Border                 = 1<<0,  // Show an outer border and enable WindowPadding. (IMPORTANT: this is always == 1 == true for legacy reason)
-    ImGuiChildFlags_AlwaysUseWindowPadding = 1<<1,  // Pad with style.WindowPadding even if no border are drawn (no padding by default for non-bordered child windows because it makes more sense)
-    ImGuiChildFlags_ResizeX                = 1<<2,  // Allow resize from right border (layout direction). Enable .ini saving (unless ImGuiWindowFlags_NoSavedSettings passed to window flags)
-    ImGuiChildFlags_ResizeY                = 1<<3,  // Allow resize from bottom border (layout direction). "
-    ImGuiChildFlags_AutoResizeX            = 1<<4,  // Enable auto-resizing width. Read "IMPORTANT: Size measurement" details above.
-    ImGuiChildFlags_AutoResizeY            = 1<<5,  // Enable auto-resizing height. Read "IMPORTANT: Size measurement" details above.
-    ImGuiChildFlags_AlwaysAutoResize       = 1<<6,  // Combined with AutoResizeX/AutoResizeY. Always measure size even when child is hidden, always return true, always disable clipping optimization! NOT RECOMMENDED.
-    ImGuiChildFlags_FrameStyle             = 1<<7,  // Style the child window like a framed item: use FrameBg, FrameRounding, FrameBorderSize, FramePadding instead of ChildBg, ChildRounding, ChildBorderSize, WindowPadding.
-    ImGuiChildFlags_NavFlattened           = 1<<8;  // [BETA] Share focus scope, allow gamepad/keyboard navigation to cross over parent border to this child or between sibling child windows.
+    ImGuiChildFlags_Borders                = 1<<0,                     // Show an outer border and enable WindowPadding. (IMPORTANT: this is always == 1 == true for legacy reason)
+    ImGuiChildFlags_AlwaysUseWindowPadding = 1<<1,                     // Pad with style.WindowPadding even if no border are drawn (no padding by default for non-bordered child windows because it makes more sense)
+    ImGuiChildFlags_ResizeX                = 1<<2,                     // Allow resize from right border (layout direction). Enable .ini saving (unless ImGuiWindowFlags_NoSavedSettings passed to window flags)
+    ImGuiChildFlags_ResizeY                = 1<<3,                     // Allow resize from bottom border (layout direction). "
+    ImGuiChildFlags_AutoResizeX            = 1<<4,                     // Enable auto-resizing width. Read "IMPORTANT: Size measurement" details above.
+    ImGuiChildFlags_AutoResizeY            = 1<<5,                     // Enable auto-resizing height. Read "IMPORTANT: Size measurement" details above.
+    ImGuiChildFlags_AlwaysAutoResize       = 1<<6,                     // Combined with AutoResizeX/AutoResizeY. Always measure size even when child is hidden, always return true, always disable clipping optimization! NOT RECOMMENDED.
+    ImGuiChildFlags_FrameStyle             = 1<<7,                     // Style the child window like a framed item: use FrameBg, FrameRounding, FrameBorderSize, FramePadding instead of ChildBg, ChildRounding, ChildBorderSize, WindowPadding.
+    ImGuiChildFlags_NavFlattened           = 1<<8,                     // [BETA] Share focus scope, allow gamepad/keyboard navigation to cross over parent border to this child or between sibling child windows.
+
+    // Obsolete names
+// #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+    ImGuiChildFlags_Border                 = ImGuiChildFlags_Borders;  // Renamed in 1.91.1 (August 2024) for consistency.
+// #endif // #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 
 // Flags for ImGui::PushItemFlag()
 // (Those are shared by all items)
@@ -1710,8 +1768,8 @@ public static final int
     ImGuiTreeNodeFlags_NoTreePushOnOpen     = 1<<3,                             // Don't do a TreePush() when open (e.g. for CollapsingHeader) = no extra indent nor pushing on ID stack
     ImGuiTreeNodeFlags_NoAutoOpenOnLog      = 1<<4,                             // Don't automatically and temporarily open node when Logging is active (by default logging will automatically open tree nodes)
     ImGuiTreeNodeFlags_DefaultOpen          = 1<<5,                             // Default node to be open
-    ImGuiTreeNodeFlags_OpenOnDoubleClick    = 1<<6,                             // Need double-click to open node
-    ImGuiTreeNodeFlags_OpenOnArrow          = 1<<7,                             // Only open when clicking on the arrow part. If ImGuiTreeNodeFlags_OpenOnDoubleClick is also set, single-click arrow or double-click all box to open.
+    ImGuiTreeNodeFlags_OpenOnDoubleClick    = 1<<6,                             // Open on double-click instead of simple click (default for multi-select unless any _OpenOnXXX behavior is set explicitly). Both behaviors may be combined.
+    ImGuiTreeNodeFlags_OpenOnArrow          = 1<<7,                             // Open when clicking on the arrow part (default for multi-select unless any _OpenOnXXX behavior is set explicitly). Both behaviors may be combined.
     ImGuiTreeNodeFlags_Leaf                 = 1<<8,                             // No collapsing, no arrow (use as a convenience for leaf nodes).
     ImGuiTreeNodeFlags_Bullet               = 1<<9,                             // Display a bullet instead of arrow. IMPORTANT: node can still be marked open/close if you don't set the _Leaf flag!
     ImGuiTreeNodeFlags_FramePadding         = 1<<10,                            // Use FramePadding (even for an unframed text node) to vertically align text baseline to regular widget height. Equivalent to calling AlignTextToFramePadding() before the node.
@@ -1819,7 +1877,7 @@ public static final int
     ImGuiFocusedFlags_RootWindow          = 1<<1,  // Test from root window (top most parent of the current hierarchy)
     ImGuiFocusedFlags_AnyWindow           = 1<<2,  // Return true if any window is focused. Important: If you are trying to tell how to dispatch your low-level inputs, do NOT use this. Use 'io.WantCaptureMouse' instead! Please read the FAQ!
     ImGuiFocusedFlags_NoPopupHierarchy    = 1<<3,  // Do not consider popup hierarchy (do not treat popup emitter as parent of popup) (when used with _ChildWindows or _RootWindow)
-    //ImGuiFocusedFlags_DockHierarchy               = 1 << 4,   // Consider docking hierarchy (treat dockspace host as parent of docked window) (when used with _ChildWindows or _RootWindow)
+    ImGuiFocusedFlags_DockHierarchy       = 1<<4,  // Consider docking hierarchy (treat dockspace host as parent of docked window) (when used with _ChildWindows or _RootWindow)
     ImGuiFocusedFlags_RootAndChildWindows = ImGuiFocusedFlags_RootWindow | ImGuiFocusedFlags_ChildWindows;
 
 // Flags for ImGui::IsItemHovered(), ImGui::IsWindowHovered()
@@ -1832,7 +1890,7 @@ public static final int
     ImGuiHoveredFlags_RootWindow                   = 1<<1,   // IsWindowHovered() only: Test from root window (top most parent of the current hierarchy)
     ImGuiHoveredFlags_AnyWindow                    = 1<<2,   // IsWindowHovered() only: Return true if any window is hovered
     ImGuiHoveredFlags_NoPopupHierarchy             = 1<<3,   // IsWindowHovered() only: Do not consider popup hierarchy (do not treat popup emitter as parent of popup) (when used with _ChildWindows or _RootWindow)
-    //ImGuiHoveredFlags_DockHierarchy               = 1 << 4,   // IsWindowHovered() only: Consider docking hierarchy (treat dockspace host as parent of docked window) (when used with _ChildWindows or _RootWindow)
+    ImGuiHoveredFlags_DockHierarchy                = 1<<4,   // IsWindowHovered() only: Consider docking hierarchy (treat dockspace host as parent of docked window) (when used with _ChildWindows or _RootWindow)
     ImGuiHoveredFlags_AllowWhenBlockedByPopup      = 1<<5,   // Return true even if a popup window is normally blocking access to this item/window
     //ImGuiHoveredFlags_AllowWhenBlockedByModal     = 1 << 6,   // Return true even if a modal popup window is normally blocking access to this item/window. FIXME-TODO: Unavailable yet.
     ImGuiHoveredFlags_AllowWhenBlockedByActiveItem = 1<<7,   // Return true even if an active item is blocking access to this item/window. Useful for Drag and Drop patterns.
@@ -1860,6 +1918,26 @@ public static final int
     ImGuiHoveredFlags_DelayShort                   = 1<<15,  // IsItemHovered() only: Return true after style.HoverDelayShort elapsed (~0.15 sec) (shared between items) + requires mouse to be stationary for style.HoverStationaryDelay (once per item).
     ImGuiHoveredFlags_DelayNormal                  = 1<<16,  // IsItemHovered() only: Return true after style.HoverDelayNormal elapsed (~0.40 sec) (shared between items) + requires mouse to be stationary for style.HoverStationaryDelay (once per item).
     ImGuiHoveredFlags_NoSharedDelay                = 1<<17;  // IsItemHovered() only: Disable shared delay system where moving from one item to the next keeps the previous timer for a short time (standard for tooltips with long delays)
+
+// Flags for ImGui::DockSpace(), shared/inherited by child nodes.
+// (Some flags can be applied to individual nodes directly)
+// FIXME-DOCK: Also see ImGuiDockNodeFlagsPrivate_ which may involve using the WIP and internal DockBuilder api.
+/** enum ImGuiDockNodeFlags_ */
+public static final int
+    ImGuiDockNodeFlags_None                     = 0,
+    ImGuiDockNodeFlags_KeepAliveOnly            = 1<<0,                                         //       // Don't display the dockspace node but keep it alive. Windows docked into this dockspace node won't be undocked.
+    //ImGuiDockNodeFlags_NoCentralNode              = 1 << 1,   //       // Disable Central Node (the node which can stay empty)
+    ImGuiDockNodeFlags_NoDockingOverCentralNode = 1<<2,                                         //       // Disable docking over the Central Node, which will be always kept empty.
+    ImGuiDockNodeFlags_PassthruCentralNode      = 1<<3,                                         //       // Enable passthru dockspace: 1) DockSpace() will render a ImGuiCol_WindowBg background covering everything excepted the Central Node when empty. Meaning the host window should probably use SetNextWindowBgAlpha(0.0f) prior to Begin() when using this. 2) When Central Node is empty: let inputs pass-through + won't display a DockingEmptyBg background. See demo for details.
+    ImGuiDockNodeFlags_NoDockingSplit           = 1<<4,                                         //       // Disable other windows/nodes from splitting this node.
+    ImGuiDockNodeFlags_NoResize                 = 1<<5,                                         // Saved // Disable resizing node using the splitter/separators. Useful with programmatically setup dockspaces.
+    ImGuiDockNodeFlags_AutoHideTabBar           = 1<<6,                                         //       // Tab bar will automatically hide when there is a single window in the dock node.
+    ImGuiDockNodeFlags_NoUndocking              = 1<<7,                                         //       // Disable undocking this node.
+
+// #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+    ImGuiDockNodeFlags_NoSplit                  = ImGuiDockNodeFlags_NoDockingSplit,            // Renamed in 1.90
+    ImGuiDockNodeFlags_NoDockingInCentralNode   = ImGuiDockNodeFlags_NoDockingOverCentralNode;  // Renamed in 1.90
+// #endif // #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 
 // Flags for ImGui::BeginDragDropSource(), ImGui::AcceptDragDropPayload()
 /** enum ImGuiDragDropFlags_ */
@@ -2186,27 +2264,41 @@ public static final int
 // Configuration flags stored in io.ConfigFlags. Set by user/application.
 /** enum ImGuiConfigFlags_ */
 public static final int
-    ImGuiConfigFlags_None                 = 0,
-    ImGuiConfigFlags_NavEnableKeyboard    = 1<<0,   // Master keyboard navigation enable flag. Enable full Tabbing + directional arrows + space/enter to activate.
-    ImGuiConfigFlags_NavEnableGamepad     = 1<<1,   // Master gamepad navigation enable flag. Backend also needs to set ImGuiBackendFlags_HasGamepad.
-    ImGuiConfigFlags_NavEnableSetMousePos = 1<<2,   // Instruct navigation to move the mouse cursor. May be useful on TV/console systems where moving a virtual mouse is awkward. Will update io.MousePos and set io.WantSetMousePos=true. If enabled you MUST honor io.WantSetMousePos requests in your backend, otherwise ImGui will react as if the mouse is jumping around back and forth.
-    ImGuiConfigFlags_NavNoCaptureKeyboard = 1<<3,   // Instruct navigation to not set the io.WantCaptureKeyboard flag when io.NavActive is set.
-    ImGuiConfigFlags_NoMouse              = 1<<4,   // Instruct dear imgui to disable mouse inputs and interactions.
-    ImGuiConfigFlags_NoMouseCursorChange  = 1<<5,   // Instruct backend to not alter mouse cursor shape and visibility. Use if the backend cursor changes are interfering with yours and you don't want to use SetMouseCursor() to change mouse cursor. You may want to honor requests from imgui by reading GetMouseCursor() yourself instead.
-    ImGuiConfigFlags_NoKeyboard           = 1<<6,   // Instruct dear imgui to disable keyboard inputs and interactions. This is done by ignoring keyboard events and clearing existing states.
+    ImGuiConfigFlags_None                    = 0,
+    ImGuiConfigFlags_NavEnableKeyboard       = 1<<0,   // Master keyboard navigation enable flag. Enable full Tabbing + directional arrows + space/enter to activate.
+    ImGuiConfigFlags_NavEnableGamepad        = 1<<1,   // Master gamepad navigation enable flag. Backend also needs to set ImGuiBackendFlags_HasGamepad.
+    ImGuiConfigFlags_NavEnableSetMousePos    = 1<<2,   // Instruct navigation to move the mouse cursor. May be useful on TV/console systems where moving a virtual mouse is awkward. Will update io.MousePos and set io.WantSetMousePos=true. If enabled you MUST honor io.WantSetMousePos requests in your backend, otherwise ImGui will react as if the mouse is jumping around back and forth.
+    ImGuiConfigFlags_NavNoCaptureKeyboard    = 1<<3,   // Instruct navigation to not set the io.WantCaptureKeyboard flag when io.NavActive is set.
+    ImGuiConfigFlags_NoMouse                 = 1<<4,   // Instruct dear imgui to disable mouse inputs and interactions.
+    ImGuiConfigFlags_NoMouseCursorChange     = 1<<5,   // Instruct backend to not alter mouse cursor shape and visibility. Use if the backend cursor changes are interfering with yours and you don't want to use SetMouseCursor() to change mouse cursor. You may want to honor requests from imgui by reading GetMouseCursor() yourself instead.
+    ImGuiConfigFlags_NoKeyboard              = 1<<6,   // Instruct dear imgui to disable keyboard inputs and interactions. This is done by ignoring keyboard events and clearing existing states.
+
+    // [BETA] Docking
+    ImGuiConfigFlags_DockingEnable           = 1<<7,   // Docking enable flags.
+
+    // [BETA] Viewports
+    // When using viewports it is recommended that your default value for ImGuiCol_WindowBg is opaque (Alpha=1.0) so transition to a viewport won't be noticeable.
+    ImGuiConfigFlags_ViewportsEnable         = 1<<10,  // Viewport enable flags (require both ImGuiBackendFlags_PlatformHasViewports + ImGuiBackendFlags_RendererHasViewports set by the respective backends)
+    ImGuiConfigFlags_DpiEnableScaleViewports = 1<<14,  // [BETA: Don't use] FIXME-DPI: Reposition and resize imgui windows when the DpiScale of a viewport changed (mostly useful for the main viewport hosting other window). Note that resizing the main window itself is up to your application.
+    ImGuiConfigFlags_DpiEnableScaleFonts     = 1<<15,  // [BETA: Don't use] FIXME-DPI: Request bitmap-scaled fonts to match DpiScale. This is a very low-quality workaround. The correct way to handle DPI is _currently_ to replace the atlas and/or fonts in the Platform_OnChangedViewport callback, but this is all early work in progress.
 
     // User storage (to allow your backend/engine to communicate to code that may be shared between multiple projects. Those flags are NOT used by core Dear ImGui)
-    ImGuiConfigFlags_IsSRGB               = 1<<20,  // Application is SRGB-aware.
-    ImGuiConfigFlags_IsTouchScreen        = 1<<21;  // Application is using a touch screen instead of a mouse.
+    ImGuiConfigFlags_IsSRGB                  = 1<<20,  // Application is SRGB-aware.
+    ImGuiConfigFlags_IsTouchScreen           = 1<<21;  // Application is using a touch screen instead of a mouse.
 
 // Backend capabilities flags stored in io.BackendFlags. Set by imgui_impl_xxx or custom backend.
 /** enum ImGuiBackendFlags_ */
 public static final int
-    ImGuiBackendFlags_None                 = 0,
-    ImGuiBackendFlags_HasGamepad           = 1<<0,  // Backend Platform supports gamepad and currently has one connected.
-    ImGuiBackendFlags_HasMouseCursors      = 1<<1,  // Backend Platform supports honoring GetMouseCursor() value to change the OS cursor shape.
-    ImGuiBackendFlags_HasSetMousePos       = 1<<2,  // Backend Platform supports io.WantSetMousePos requests to reposition the OS mouse position (only used if ImGuiConfigFlags_NavEnableSetMousePos is set).
-    ImGuiBackendFlags_RendererHasVtxOffset = 1<<3;  // Backend Renderer supports ImDrawCmd::VtxOffset. This enables output of large meshes (64K+ vertices) while still using 16-bit indices.
+    ImGuiBackendFlags_None                    = 0,
+    ImGuiBackendFlags_HasGamepad              = 1<<0,   // Backend Platform supports gamepad and currently has one connected.
+    ImGuiBackendFlags_HasMouseCursors         = 1<<1,   // Backend Platform supports honoring GetMouseCursor() value to change the OS cursor shape.
+    ImGuiBackendFlags_HasSetMousePos          = 1<<2,   // Backend Platform supports io.WantSetMousePos requests to reposition the OS mouse position (only used if ImGuiConfigFlags_NavEnableSetMousePos is set).
+    ImGuiBackendFlags_RendererHasVtxOffset    = 1<<3,   // Backend Renderer supports ImDrawCmd::VtxOffset. This enables output of large meshes (64K+ vertices) while still using 16-bit indices.
+
+    // [BETA] Viewports
+    ImGuiBackendFlags_PlatformHasViewports    = 1<<10,  // Backend Platform supports multiple viewports.
+    ImGuiBackendFlags_HasMouseHoveredViewport = 1<<11,  // Backend Platform supports calling io.AddMouseViewportEvent() with the viewport under the mouse. IF POSSIBLE, ignore viewports with the ImGuiViewportFlags_NoInputs flag (Win32 backend, GLFW 3.30+ backend can do this, SDL backend cannot). If this cannot be done, Dear ImGui needs to use a flawed heuristic to find the viewport under.
+    ImGuiBackendFlags_RendererHasViewports    = 1<<12;  // Backend Renderer supports multiple viewports.
 
 // Enumeration for PushStyleColor() / PopStyleColor()
 /** enum ImGuiCol_ */
@@ -2251,23 +2343,25 @@ public static final int
     ImGuiCol_TabDimmed = 37,                                               // Tab background, when tab-bar is unfocused & tab is unselected
     ImGuiCol_TabDimmedSelected = 38,                                       // Tab background, when tab-bar is unfocused & tab is selected
     ImGuiCol_TabDimmedSelectedOverline = 39,                               //..horizontal overline, when tab-bar is unfocused & tab is selected
-    ImGuiCol_PlotLines = 40,
-    ImGuiCol_PlotLinesHovered = 41,
-    ImGuiCol_PlotHistogram = 42,
-    ImGuiCol_PlotHistogramHovered = 43,
-    ImGuiCol_TableHeaderBg = 44,                                           // Table header background
-    ImGuiCol_TableBorderStrong = 45,                                       // Table outer and header borders (prefer using Alpha=1.0 here)
-    ImGuiCol_TableBorderLight = 46,                                        // Table inner borders (prefer using Alpha=1.0 here)
-    ImGuiCol_TableRowBg = 47,                                              // Table row background (even rows)
-    ImGuiCol_TableRowBgAlt = 48,                                           // Table row background (odd rows)
-    ImGuiCol_TextLink = 49,                                                // Hyperlink color
-    ImGuiCol_TextSelectedBg = 50,
-    ImGuiCol_DragDropTarget = 51,                                          // Rectangle highlighting a drop target
-    ImGuiCol_NavHighlight = 52,                                            // Gamepad/keyboard: current highlighted item
-    ImGuiCol_NavWindowingHighlight = 53,                                   // Highlight window when using CTRL+TAB
-    ImGuiCol_NavWindowingDimBg = 54,                                       // Darken/colorize entire screen behind the CTRL+TAB window list, when active
-    ImGuiCol_ModalWindowDimBg = 55,                                        // Darken/colorize entire screen behind a modal window, when one is active
-    ImGuiCol_COUNT = 56,
+    ImGuiCol_DockingPreview = 40,                                          // Preview overlay color when about to docking something
+    ImGuiCol_DockingEmptyBg = 41,                                          // Background color for empty node (e.g. CentralNode with no window docked into it)
+    ImGuiCol_PlotLines = 42,
+    ImGuiCol_PlotLinesHovered = 43,
+    ImGuiCol_PlotHistogram = 44,
+    ImGuiCol_PlotHistogramHovered = 45,
+    ImGuiCol_TableHeaderBg = 46,                                           // Table header background
+    ImGuiCol_TableBorderStrong = 47,                                       // Table outer and header borders (prefer using Alpha=1.0 here)
+    ImGuiCol_TableBorderLight = 48,                                        // Table inner borders (prefer using Alpha=1.0 here)
+    ImGuiCol_TableRowBg = 49,                                              // Table row background (even rows)
+    ImGuiCol_TableRowBgAlt = 50,                                           // Table row background (odd rows)
+    ImGuiCol_TextLink = 51,                                                // Hyperlink color
+    ImGuiCol_TextSelectedBg = 52,
+    ImGuiCol_DragDropTarget = 53,                                          // Rectangle highlighting a drop target
+    ImGuiCol_NavHighlight = 54,                                            // Gamepad/keyboard: current highlighted item
+    ImGuiCol_NavWindowingHighlight = 55,                                   // Highlight window when using CTRL+TAB
+    ImGuiCol_NavWindowingDimBg = 56,                                       // Darken/colorize entire screen behind the CTRL+TAB window list, when active
+    ImGuiCol_ModalWindowDimBg = 57,                                        // Darken/colorize entire screen behind a modal window, when one is active
+    ImGuiCol_COUNT = 58,
 
 // #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
     ImGuiCol_TabActive                 = ImGuiCol_TabSelected,        // [renamed in 1.90.9]
@@ -2319,7 +2413,8 @@ public static final int
     ImGuiStyleVar_SeparatorTextBorderSize = 30,      // float     SeparatorTextBorderSize
     ImGuiStyleVar_SeparatorTextAlign = 31,           // ImVec2    SeparatorTextAlign
     ImGuiStyleVar_SeparatorTextPadding = 32,         // ImVec2    SeparatorTextPadding
-    ImGuiStyleVar_COUNT = 33;
+    ImGuiStyleVar_DockingSeparatorSize = 33,         // float     DockingSeparatorSize
+    ImGuiStyleVar_COUNT = 34;
 
 // Flags for InvisibleButton() [extended in imgui_internal.h]
 /** enum ImGuiButtonFlags_ */
@@ -2531,7 +2626,7 @@ public static final int
     ImGuiTableColumnFlags_NoSort               = 1<<9,   // Disable ability to sort on this field (even if ImGuiTableFlags_Sortable is set on the table).
     ImGuiTableColumnFlags_NoSortAscending      = 1<<10,  // Disable ability to sort in the ascending direction.
     ImGuiTableColumnFlags_NoSortDescending     = 1<<11,  // Disable ability to sort in the descending direction.
-    ImGuiTableColumnFlags_NoHeaderLabel        = 1<<12,  // TableHeadersRow() will not submit horizontal label for this column. Convenient for some small columns. Name will still appear in context menu or in angled headers.
+    ImGuiTableColumnFlags_NoHeaderLabel        = 1<<12,  // TableHeadersRow() will submit an empty label for this column. Convenient for some small columns. Name will still appear in context menu or in angled headers. You may append into this cell by calling TableSetColumnIndex() right after the TableHeadersRow() call.
     ImGuiTableColumnFlags_NoHeaderWidth        = 1<<13,  // Disable header text width contribution to automatic column width.
     ImGuiTableColumnFlags_PreferSortAscending  = 1<<14,  // Make the initial sort direction Ascending when first sorting on this column (default).
     ImGuiTableColumnFlags_PreferSortDescending = 1<<15,  // Make the initial sort direction Descending when first sorting on this column.
@@ -2666,6 +2761,12 @@ public static native void ImVector_Destruct(Pointer vector);   // Destruct an Im
 // Targeting imgui\ImVector_ImFontGlyph.java
 
 
+// Targeting imgui\ImVector_ImGuiPlatformMonitor.java
+
+
+// Targeting imgui\ImVector_ImGuiViewportPtr.java
+
+
 // Targeting imgui\ImGuiStyle.java
 
 
@@ -2683,6 +2784,7 @@ public static native void ImGuiIO_AddMousePosEvent(ImGuiIO self, float x, float 
 public static native void ImGuiIO_AddMouseButtonEvent(ImGuiIO self, int button, @Cast("bool") boolean down);                                    // Queue a mouse button change
 public static native void ImGuiIO_AddMouseWheelEvent(ImGuiIO self, float wheel_x, float wheel_y);                              // Queue a mouse wheel update. wheel_y<0: scroll down, wheel_y>0: scroll up, wheel_x<0: scroll right, wheel_x>0: scroll left.
 public static native void ImGuiIO_AddMouseSourceEvent(ImGuiIO self, @Cast("ImGuiMouseSource") int source);                                  // Queue a mouse source change (Mouse/TouchScreen/Pen)
+public static native void ImGuiIO_AddMouseViewportEvent(ImGuiIO self, @Cast("ImGuiID") int id);                                             // Queue a mouse hovered viewport. Requires backend to set ImGuiBackendFlags_HasMouseHoveredViewport to call this (for multi-viewport support).
 public static native void ImGuiIO_AddFocusEvent(ImGuiIO self, @Cast("bool") boolean focused);                                                   // Queue a gain/loss of focus for the application (generally based on OS/platform focus of your window)
 public static native void ImGuiIO_AddInputCharacter(ImGuiIO self, @Cast("unsigned int") int c);                                             // Queue a new character input
 public static native void ImGuiIO_AddInputCharacterUTF16(ImGuiIO self, @Cast("ImWchar16") short c);                                           // Queue a new character input from a UTF-16 character, it can be a surrogate
@@ -2706,6 +2808,9 @@ public static native void ImGuiInputTextCallbackData_SelectAll(ImGuiInputTextCal
 public static native void ImGuiInputTextCallbackData_ClearSelection(ImGuiInputTextCallbackData self);
 public static native @Cast("bool") boolean ImGuiInputTextCallbackData_HasSelection(@Const ImGuiInputTextCallbackData self);
 // Targeting imgui\ImGuiSizeCallbackData.java
+
+
+// Targeting imgui\ImGuiWindowClass.java
 
 
 // Targeting imgui\ImGuiPayload.java
@@ -2809,7 +2914,7 @@ public static native void ImGuiListClipper_ForceDisplayRangeByIndices(ImGuiListC
 // Helpers: ImVec2/ImVec4 operators
 // - It is important that we are keeping those disabled by default so they don't leak in user space.
 // - This is in order to allow user enabling implicit cast operators between ImVec2/ImVec4 and their own types (using IM_VEC2_CLASS_EXTRA in imconfig.h)
-// - You can use '#define IMGUI_DEFINE_MATH_OPERATORS' to import our operators, provided as a courtesy.
+// - Add '#define IMGUI_DEFINE_MATH_OPERATORS' before including this file (or in imconfig.h) to access courtesy maths operators for ImVec2 and ImVec4.
 // #ifdef IMGUI_DEFINE_MATH_OPERATORS
 // #define IMGUI_DEFINE_MATH_OPERATORS_IMPLEMENTED
 // #endif // #ifdef IMGUI_DEFINE_MATH_OPERATORS
@@ -3112,6 +3217,7 @@ public static native void ImDrawList__TryMergeDrawCmds(ImDrawList self);
 public static native void ImDrawList__OnChangedClipRect(ImDrawList self);
 public static native void ImDrawList__OnChangedTextureID(ImDrawList self);
 public static native void ImDrawList__OnChangedVtxOffset(ImDrawList self);
+public static native void ImDrawList__SetTextureID(ImDrawList self, ImTextureID texture_id);
 public static native int ImDrawList__CalcCircleAutoSegmentCount(@Const ImDrawList self, float radius);
 public static native void ImDrawList__PathArcToFastEx(ImDrawList self, @ByVal ImVec2 center, float radius, int a_min_sample, int a_max_sample, int a_step);
 public static native void ImDrawList__PathArcToN(ImDrawList self, @ByVal ImVec2 center, float radius, float a_min, float a_max, int num_segments);
@@ -3262,16 +3368,35 @@ public static native @Cast("bool") boolean ImFont_IsGlyphRangeUnused(ImFont self
 // Flags stored in ImGuiViewport::Flags, giving indications to the platform backends.
 /** enum ImGuiViewportFlags_ */
 public static final int
-    ImGuiViewportFlags_None              = 0,
-    ImGuiViewportFlags_IsPlatformWindow  = 1<<0,  // Represent a Platform Window
-    ImGuiViewportFlags_IsPlatformMonitor = 1<<1,  // Represent a Platform Monitor (unused yet)
-    ImGuiViewportFlags_OwnedByApp        = 1<<2;  // Platform Window: is created/managed by the application (rather than a dear imgui backend)
+    ImGuiViewportFlags_None                = 0,
+    ImGuiViewportFlags_IsPlatformWindow    = 1<<0,   // Represent a Platform Window
+    ImGuiViewportFlags_IsPlatformMonitor   = 1<<1,   // Represent a Platform Monitor (unused yet)
+    ImGuiViewportFlags_OwnedByApp          = 1<<2,   // Platform Window: Is created/managed by the user application? (rather than our backend)
+    ImGuiViewportFlags_NoDecoration        = 1<<3,   // Platform Window: Disable platform decorations: title bar, borders, etc. (generally set all windows, but if ImGuiConfigFlags_ViewportsDecoration is set we only set this on popups/tooltips)
+    ImGuiViewportFlags_NoTaskBarIcon       = 1<<4,   // Platform Window: Disable platform task bar icon (generally set on popups/tooltips, or all windows if ImGuiConfigFlags_ViewportsNoTaskBarIcon is set)
+    ImGuiViewportFlags_NoFocusOnAppearing  = 1<<5,   // Platform Window: Don't take focus when created.
+    ImGuiViewportFlags_NoFocusOnClick      = 1<<6,   // Platform Window: Don't take focus when clicked on.
+    ImGuiViewportFlags_NoInputs            = 1<<7,   // Platform Window: Make mouse pass through so we can drag this window while peaking behind it.
+    ImGuiViewportFlags_NoRendererClear     = 1<<8,   // Platform Window: Renderer doesn't need to clear the framebuffer ahead (because we will fill it entirely).
+    ImGuiViewportFlags_NoAutoMerge         = 1<<9,   // Platform Window: Avoid merging this window into another host window. This can only be set via ImGuiWindowClass viewport flags override (because we need to now ahead if we are going to create a viewport in the first place!).
+    ImGuiViewportFlags_TopMost             = 1<<10,  // Platform Window: Display on top (for tooltips only).
+    ImGuiViewportFlags_CanHostOtherWindows = 1<<11,  // Viewport can host multiple imgui windows (secondary viewports are associated to a single window). // FIXME: In practice there's still probably code making the assumption that this is always and only on the MainViewport. Will fix once we add support for "no main viewport".
+
+    // Output status flags (from Platform)
+    ImGuiViewportFlags_IsMinimized         = 1<<12,  // Platform Window: Window is minimized, can skip render. When minimized we tend to avoid using the viewport pos/size for clipping window or testing if they are contained in the viewport.
+    ImGuiViewportFlags_IsFocused           = 1<<13;  // Platform Window: Window is focused (last call to Platform_GetWindowFocus() returned true)
 // Targeting imgui\ImGuiViewport.java
 
 
 // Helpers
 public static native @ByVal ImVec2 ImGuiViewport_GetCenter(@Const ImGuiViewport self);
 public static native @ByVal ImVec2 ImGuiViewport_GetWorkCenter(@Const ImGuiViewport self);
+// Targeting imgui\ImGuiPlatformIO.java
+
+
+// Targeting imgui\ImGuiPlatformMonitor.java
+
+
 // Targeting imgui\ImGuiPlatformImeData.java
 
 
@@ -3295,8 +3420,8 @@ public static native @ByVal ImVec2 ImGui_GetWindowContentRegionMax();           
 public static native @Cast("bool") boolean ImGui_BeginChildFrame(@Cast("ImGuiID") int id, @ByVal ImVec2 size);                                             // Implied window_flags = 0
 public static native @Cast("bool") boolean ImGui_BeginChildFrameEx(@Cast("ImGuiID") int id, @ByVal ImVec2 size, @Cast("ImGuiWindowFlags") int window_flags);
 public static native void ImGui_EndChildFrame();
-//static inline bool BeginChild(const char* str_id, const ImVec2& size_arg, bool border, ImGuiWindowFlags window_flags){ return BeginChild(str_id, size_arg, border ? ImGuiChildFlags_Border : ImGuiChildFlags_None, window_flags); } // Unnecessary as true == ImGuiChildFlags_Border
-//static inline bool BeginChild(ImGuiID id, const ImVec2& size_arg, bool border, ImGuiWindowFlags window_flags)        { return BeginChild(id, size_arg, border ? ImGuiChildFlags_Border : ImGuiChildFlags_None, window_flags);     } // Unnecessary as true == ImGuiChildFlags_Border
+//static inline bool BeginChild(const char* str_id, const ImVec2& size_arg, bool borders, ImGuiWindowFlags window_flags){ return BeginChild(str_id, size_arg, borders ? ImGuiChildFlags_Borders : ImGuiChildFlags_None, window_flags); } // Unnecessary as true == ImGuiChildFlags_Borders
+//static inline bool BeginChild(ImGuiID id, const ImVec2& size_arg, bool borders, ImGuiWindowFlags window_flags)        { return BeginChild(id, size_arg, borders ? ImGuiChildFlags_Borders : ImGuiChildFlags_None, window_flags);     } // Unnecessary as true == ImGuiChildFlags_Borders
 public static native void ImGui_ShowStackToolWindow(@Cast("bool*") BoolPointer p_open);
 public static native void ImGui_ShowStackToolWindow(@Cast("bool*") boolean[] p_open);
 // Targeting imgui\Old_callback_Pointer_int_PointerPointer.java
@@ -3344,13 +3469,13 @@ public static native void ImGui_SetItemAllowOverlap();                          
 // OBSOLETED in 1.89.4 (from March 2023)
 public static native void ImGui_PushAllowKeyboardFocus(@Cast("bool") boolean tab_stop);
 public static native void ImGui_PopAllowKeyboardFocus();
-// OBSOLETED in 1.89 (from August 2022)
-public static native @Cast("bool") boolean ImGui_ImageButtonImTextureID(ImTextureID user_texture_id, @ByVal ImVec2 size, @ByVal ImVec2 uv0, @ByVal ImVec2 uv1, int frame_padding, @ByVal ImVec4 bg_col, @ByVal ImVec4 tint_col); // Use new ImageButton() signature (explicit item id, regular FramePadding)
 // OBSOLETED in 1.87 (from February 2022 but more formally obsoleted April 2024)
 public static native @Cast("ImGuiKey") int ImGui_GetKeyIndex(@Cast("ImGuiKey") int key);                                                            // Map ImGuiKey_* values into legacy native key index. == io.KeyMap[key]. When using a 1.87+ backend using io.AddKeyEvent(), calling GetKeyIndex() with ANY ImGuiKey_XXXX values will return the same value!
 //static inline ImGuiKey GetKeyIndex(ImGuiKey key)                          { IM_ASSERT(key >= ImGuiKey_NamedKey_BEGIN && key < ImGuiKey_NamedKey_END); return key; }
 
 // Some of the older obsolete names along with their replacement (commented out so they are not reported in IDE)
+//-- OBSOLETED in 1.89 (from August 2022)
+//IMGUI_API bool      ImageButton(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& uv0 = ImVec2(0, 0), const ImVec2& uv1 = ImVec2(1, 1), int frame_padding = -1, const ImVec4& bg_col = ImVec4(0, 0, 0, 0), const ImVec4& tint_col = ImVec4(1, 1, 1, 1)); // --> Use new ImageButton() signature (explicit item id, regular FramePadding). Refer to code in 1.91 if you want to grab a copy of this version.
 //-- OBSOLETED in 1.88 (from May 2022)
 //static inline void  CaptureKeyboardFromApp(bool want_capture_keyboard = true)     { SetNextFrameWantCaptureKeyboard(want_capture_keyboard); } // Renamed as name was misleading + removed default value.
 //static inline void  CaptureMouseFromApp(bool want_capture_mouse = true)           { SetNextFrameWantCaptureMouse(want_capture_mouse); }       // Renamed as name was misleading + removed default value.

@@ -27,6 +27,12 @@
             <artifactId>javacpp</artifactId>
             <version>${javacpp.version}</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.bytedeco/javacpp -->
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>javacpp-platform</artifactId>
+            <version>${javacpp.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

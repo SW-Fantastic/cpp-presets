@@ -9,11 +9,7 @@ import org.bytedeco.javacpp.annotation.*;
 import static org.swdc.imgui.core.ImGUICore.*;
 
 
-//-----------------------------------------------------------------------------
-// [SECTION] Platform Dependent Interfaces
-//-----------------------------------------------------------------------------
-
-// (Optional) Support for IME (Input Method Editor) via the io.PlatformSetImeDataFn() function.
+// (Optional) Support for IME (Input Method Editor) via the platform_io.Platform_SetImeDataFn() function.
 @Properties(inherit = org.swdc.imgui.conf.ImGuiCoreConfigure.class)
 public class ImGuiPlatformImeData extends Pointer {
     static { Loader.load(); }

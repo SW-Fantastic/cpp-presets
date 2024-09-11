@@ -24,13 +24,16 @@ public class Test {
 
         ImGUIGLFW.glfwInit();
         ImGUIGLFW.glfwDefaultWindowHints();
+        ImGUIGLFW.glfwWindowHint(ImGUIGLFW.GLFW_VISIBLE,ImGUIGLFW.GLFW_FALSE);
 
         GLFWwindow window = ImGUIGLFW.glfwCreateWindow(1000,800,"Demo",null,null);
         ImGUIGLFW.glfwMakeContextCurrent(window);
         ImGUIGLFW.glfwSwapInterval(1);
         ImGUICore.ImGui_CreateContext(null);
         ImGuiIO imGuiIO = ImGUICore.ImGui_GetIO();
-        imGuiIO.ConfigFlags(imGuiIO.ConfigFlags() | ImGUICore.ImGuiConfigFlags_NavEnableGamepad | ImGUICore.ImGuiConfigFlags_NavEnableKeyboard);
+        imGuiIO.ConfigFlags(imGuiIO.ConfigFlags() | ImGUICore.ImGuiConfigFlags_NavEnableKeyboard | ImGUICore.ImGuiConfigFlags_DockingEnable | ImGUICore.ImGuiConfigFlags_ViewportsEnable);
+        imGuiIO.ConfigViewportsNoAutoMerge(true);
+
         ImGUICore.ImGui_StyleColorsDark(null);
 
         ImGUIGLFW.ImGui_ImplGlfw_InitForOpenGL(window,true);
@@ -48,7 +51,7 @@ public class Test {
         while (ImGUIGLFW.glfwWindowShouldClose(window) == 0) {
 
             if (!shown) {
-                ImGUIGLFW.glfwShowWindow(window);
+                //ImGUIGLFW.glfwHideWindow(window);
                 shown = true;
             }
 
@@ -67,6 +70,11 @@ public class Test {
             ImGUIGL.glViewport(0,0,pWidth.get(),pHeight.get());
             ImGUIGL.glClearColor(clear_color.x() * clear_color.w(), clear_color.y() * clear_color.w(), clear_color.z() * clear_color.w(), clear_color.w());
             ImGUIGL.glClear(ImGUIGL.GL_COLOR_BUFFER_BIT);
+
+            GLFWwindow cur = ImGUIGLFW.glfwGetCurrentContext();
+            ImGUICore.ImGui_UpdatePlatformWindows();
+            ImGUICore.ImGui_RenderPlatformWindowsDefault();
+            ImGUIGLFW.glfwMakeContextCurrent(cur);
 
             ImGUIGLFW.ImGui_ImplOpenGL3_RenderDrawData(ImGUICore.ImGui_GetDrawData());
             ImGUIGLFW.glfwSwapBuffers(window);
