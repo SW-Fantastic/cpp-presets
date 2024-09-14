@@ -24,13 +24,6 @@ public class DearButton extends DearComponent {
     @Override
     protected void update() {
 
-        ImGuiStyle style = ImGUICore.ImGui_GetStyle();
-        ImVec2 padding = style.WindowPadding();
-
-        ImVec2 size = getSize();
-        size.x(size.x() - padding.x() * 2);
-        size.y(size.y() - padding.y() * 2);
-
         int rollback = 0;
         if (background != null) {
             ImGUICore.ImGui_PushStyleColorImVec4(ImGUICore.ImGuiCol_Button,background.getColor());
@@ -45,7 +38,7 @@ public class DearButton extends DearComponent {
             rollback++;
         }
 
-        if(ImGUICore.ImGui_ButtonEx(text,size)) {
+        if(ImGUICore.ImGui_ButtonEx(text,getInnerSize())) {
             preformAsyncListener(clickEventListener);
         }
 

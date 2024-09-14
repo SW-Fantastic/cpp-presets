@@ -2,8 +2,8 @@ package org.swdc.dear;
 
 import org.swdc.dear.listeners.MouseEventListener;
 import org.swdc.imgui.core.ImGUICore;
+import org.swdc.imgui.core.imgui.ImGuiStyle;
 import org.swdc.imgui.core.imgui.ImVec2;
-import org.swdc.imgui.core.imgui.ImVec4;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -37,6 +37,10 @@ public class DearComponent implements Closeable {
     private MouseEventListener activeEventListener;
 
     private MouseEventListener deActiveEventListener;
+
+    private DearColor componentBackgroundColor;
+
+    private DearSizeBox sizeBox = new DearSizeBox();
 
     protected static synchronized String createId(Class compType) {
         Long val = componentId.get(compType);
@@ -90,11 +94,30 @@ public class DearComponent implements Closeable {
             compId = createId(this.getClass());
         }
 
-        refreshPos();
+        ImGuiStyle style = ImGUICore.ImGui_GetStyle();
+        style.WindowPadding().x(0);
+        style.WindowPadding().y(0);
+
+        refreshPos(false);
         ImGUICore.ImGui_SetCursorPos(pos);
-        refreshPos();
-        ImGUICore.ImGui_BeginChild(compId,size,ImGUICore.ImGuiChildFlags_None,ImGUICore.ImGuiWindowFlags_None);
+        refreshPos(false);
+        ImGUICore.ImGui_BeginChild(compId,size,ImGUICore.ImGuiChildFlags_Borders,ImGUICore.ImGuiWindowFlags_None);
+        int rollback = 0;
+        if (componentBackgroundColor != null) {
+            ImGUICore.ImGui_PushStyleColorImVec4(ImGUICore.ImGuiCol_ChildBg,componentBackgroundColor.getColor());
+            rollback ++;
+        }
+
+        refreshPos(true);
+        ImGUICore.ImGui_SetCursorPos(pos);
+        refreshPos(true);
+        ImGUICore.ImGui_BeginChild(compId,size,ImGUICore.ImGuiChildFlags_Borders,ImGUICore.ImGuiWindowFlags_None);
+
         update();
+
+        ImGUICore.ImGui_EndChild();
+
+        ImGUICore.ImGui_PopStyleColorEx(rollback);
 
         if (ImGUICore.ImGui_IsItemHovered(0)) {
             preformAsyncListener(hoverEventListener);
@@ -133,19 +156,19 @@ public class DearComponent implements Closeable {
     }
 
     public float getWidth() {
-        return width;
+        return width + sizeBox.paddingRight() + sizeBox.paddingLeft();
     }
 
     public void setWidth(float width) {
-        this.width = width;
+        this.width = width - sizeBox.paddingLeft() - sizeBox.paddingRight();
     }
 
     public float getHeight() {
-        return height;
+        return height + sizeBox.paddingTop() + sizeBox.paddingBottom();
     }
 
     public void setHeight(float height) {
-        this.height = height;
+        this.height = height - sizeBox.paddingTop() - sizeBox.paddingBottom();
     }
 
     public String getCompId() {
@@ -169,20 +192,33 @@ public class DearComponent implements Closeable {
         return null;
     }
 
-    private void refreshPos() {
-        pos.x(getX());
-        pos.y(getY());
-        size.x(getWidth());
-        size.y(getHeight());
+    private void refreshPos(boolean insets) {
+        if (insets) {
+            pos.x(sizeBox.paddingLeft());
+            pos.y(sizeBox.paddingTop());
+            size.x(getWidth() - sizeBox.paddingLeft() - sizeBox.paddingRight());
+            size.y(getHeight() - sizeBox.paddingTop() - sizeBox.paddingBottom());
+        } else {
+            pos.x(getX());
+            pos.y(getY());
+            size.x(getWidth());
+            size.y(getHeight());
+        }
+
     }
 
     protected ImVec2 getSize() {
-        refreshPos();
+        refreshPos(false);
+        return size;
+    }
+
+    protected ImVec2 getInnerSize() {
+        refreshPos(true);
         return size;
     }
 
     protected ImVec2 getPos() {
-        refreshPos();
+        refreshPos(false);
         return pos;
     }
 
@@ -215,6 +251,18 @@ public class DearComponent implements Closeable {
 
     public void setDeActiveEventListener(MouseEventListener deActiveEventListener) {
         this.deActiveEventListener = deActiveEventListener;
+    }
+
+    public void setComponentBackgroundColor(DearColor componentBackgroundColor) {
+        this.componentBackgroundColor = componentBackgroundColor;
+    }
+
+    public DearColor getComponentBackgroundColor() {
+        return componentBackgroundColor;
+    }
+
+    public DearSizeBox getSizeBox() {
+        return sizeBox;
     }
 
     @Override

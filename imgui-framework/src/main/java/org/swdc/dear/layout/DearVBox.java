@@ -33,20 +33,17 @@ public class DearVBox extends DearComponent {
 
     private void refreshSize() {
 
-        ImGuiStyle style = ImGUICore.ImGui_GetStyle();
-        ImVec2 padding = style.WindowPadding();
-
-        if (getHeight() == 0) {
+        if (getWidth() == 0) {
             float max = 0;
             for (DearComponent component : children) {
                 if (component.getWidth() > max) {
                     max = component.getWidth();
                 }
             }
-            setWidth(max + padding.x());
+            setWidth(max);
         } else {
             for (DearComponent comp : children) {
-                comp.setWidth(getWidth() - padding.x());
+                comp.setWidth(getWidth());
             }
         }
 
@@ -65,6 +62,7 @@ public class DearVBox extends DearComponent {
     protected void update() {
 
         refreshSize();
+
         if (justify == Justify.START) {
 
             float offset = 0;

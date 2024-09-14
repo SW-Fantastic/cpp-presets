@@ -3,6 +3,7 @@ package org.swdc.dear;
 import org.bytedeco.javacpp.BoolPointer;
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Pointer;
+import org.swdc.dear.widgets.DearTitleBar;
 import org.swdc.imgui.core.ImGUICore;
 import org.swdc.imgui.core.imgui.ImGuiStyle;
 import org.swdc.imgui.core.imgui.ImGuiViewport;
@@ -23,6 +24,8 @@ public class DearWindow {
 
     private DearComponent content;
 
+    private DearTitleBar titleBar;
+
     public DearWindow(DearApplication application, String text) {
 
         this.application = application;
@@ -38,6 +41,10 @@ public class DearWindow {
         this.sizes = new ImVec2(1);
         this.sizes.x(800);
         this.sizes.y(600);
+        this.titleBar = new DearTitleBar();
+        this.titleBar.setCloseRequestListener(() -> {
+            this.closeFlag.put(false);
+        });
 
         application.regWindow(this);
 
@@ -64,9 +71,15 @@ public class DearWindow {
             setWidth(sizeVec.x());
             setHeight(sizeVec.y() - padding.y());
 
-            content.setY(0);
+            titleBar.setX(0);
+            titleBar.setY(0);
+            titleBar.setWidth(sizeVec.x() - padding.x());
+            titleBar.setText(title.getString());
+            titleBar.doUpdate();
+
+            content.setY(titleBar.getHeight());
             content.setWidth(sizeVec.x());
-            content.setHeight(sizeVec.y() - padding.y());
+            content.setHeight(sizeVec.y() - padding.y() - titleBar.getHeight());
             content.doUpdate();
 
         }

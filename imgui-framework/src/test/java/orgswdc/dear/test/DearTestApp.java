@@ -3,9 +3,12 @@ package orgswdc.dear.test;
 import org.swdc.dear.DearApplication;
 import org.swdc.dear.DearColor;
 import org.swdc.dear.DearWindow;
+import org.swdc.dear.layout.DearBorderPane;
 import org.swdc.dear.layout.DearHBox;
 import org.swdc.dear.layout.DearVBox;
+import org.swdc.dear.layout.Justify;
 import org.swdc.dear.widgets.DearButton;
+import org.swdc.dear.widgets.DearCheckBox;
 import org.swdc.dear.widgets.DearLabel;
 
 import java.io.File;
@@ -59,6 +62,40 @@ public class DearTestApp extends DearApplication {
         box.addChild(lblWorld);
         box.addChild(vBox);
 
+        DearBorderPane borderPane = new DearBorderPane();
+
+        DearButton top = new DearButton();
+        top.setText("Top label");
+        top.setWidth(120);
+        top.setHeight(60);
+        borderPane.setTop(top);
+
+        DearLabel left = new DearLabel();
+        left.setText("Left label");
+        left.setWidth(80);
+        left.setHeight(40);
+        borderPane.setLeft(left);
+
+        DearLabel right = new DearLabel();
+        right.setText("Right");
+        right.setHeight(40);
+        right.setWidth(60);
+        borderPane.setRight(right);
+
+        DearLabel center = new DearLabel();
+        center.setText("Center");
+        center.setWidth(120);
+        center.setHeight(40);
+        borderPane.setCenter(center);
+
+        DearCheckBox cbx = new DearCheckBox("CheckBox");
+        cbx.setWidth(120);
+        cbx.setHeight(60);
+        borderPane.setBottom(cbx);
+
+        box.addChild(borderPane);
+        box.setComponentBackgroundColor(new DearColor("#FFF"));
+        box.setJustify(Justify.START);
         window = new DearWindow(this,"主窗口3");
         window.setContent(box);
         window.show();

@@ -33,9 +33,6 @@ public class DearHBox extends DearComponent {
 
     private void refreshSize() {
 
-        ImGuiStyle style = ImGUICore.ImGui_GetStyle();
-        ImVec2 padding = style.WindowPadding();
-
         if (getHeight() == 0) {
             float max = 0;
             for (DearComponent component : children) {
@@ -43,10 +40,10 @@ public class DearHBox extends DearComponent {
                     max = component.getHeight();
                 }
             }
-            setHeight(max + padding.y());
+            setHeight(max);
         } else {
             for (DearComponent comp : children) {
-                comp.setHeight(getHeight() - padding.y());
+                comp.setHeight(getHeight());
             }
         }
 
@@ -65,12 +62,14 @@ public class DearHBox extends DearComponent {
 
         refreshSize();
 
+        ImGuiStyle style = ImGUICore.ImGui_GetStyle();
+
         if (justify == Justify.START) {
             float posOffset = 0;
             for (int idx = 0; idx < children.size(); idx ++) {
 
                 DearComponent comp = children.get(idx);
-                comp.setX( posOffset);
+                comp.setX(posOffset);
                 if (alignment == Alignment.BEGIN) {
                     comp.setY(0);
                 } else if (alignment == Alignment.CENTER) {
@@ -118,7 +117,7 @@ public class DearHBox extends DearComponent {
                 } else if (alignment == Alignment.CENTER) {
                     comp.setY((getHeight() - comp.getHeight()) / 2f);
                 } else if (alignment == Alignment.END) {
-                    comp.setY(getHeight() - comp.getHeight());
+                    comp.setY( getHeight() - comp.getHeight());
                 }
                 posOffset = posOffset + comp.getWidth() + spacing;
                 comp.doUpdate();
@@ -159,9 +158,9 @@ public class DearHBox extends DearComponent {
                 if (alignment == Alignment.BEGIN) {
                     comp.setY(0);
                 } else if (alignment == Alignment.CENTER) {
-                    comp.setY((getHeight() - comp.getHeight()) / 2f);
+                    comp.setY( (getHeight() - comp.getHeight()) / 2f);
                 } else if (alignment == Alignment.END) {
-                    comp.setY(getHeight() - comp.getHeight());
+                    comp.setY( getHeight() - comp.getHeight());
                 }
                 posOffset = posOffset + comp.getWidth() + spacing;
                 comp.doUpdate();
@@ -179,6 +178,13 @@ public class DearHBox extends DearComponent {
         this.justify = justify;
     }
 
+    public void setAlignment(Alignment alignment) {
+        this.alignment = alignment;
+    }
+
+    public Alignment getAlignment() {
+        return alignment;
+    }
 
     private float getTotalWidth() {
         float totalWidth = 0;
