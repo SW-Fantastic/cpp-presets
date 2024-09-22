@@ -88,7 +88,7 @@ public class DearHBox extends DearComponent {
 
                 DearComponent comp = children.get(idx);
                 posOffset = posOffset + comp.getWidth();
-                comp.setX(getWidth() - posOffset);
+                comp.setX(getInnerWidth() - posOffset);
                 posOffset = posOffset + spacing;
                 if (alignment == Alignment.BEGIN) {
                     comp.setY(0);
@@ -106,7 +106,7 @@ public class DearHBox extends DearComponent {
             float specTotal = (children.size() - 1) * spacing;
             float totalWidth = getTotalWidth();
 
-            float begin = (getWidth() - specTotal - totalWidth) / 2.0f;
+            float begin = (getInnerWidth() - specTotal - totalWidth) / 2.0f;
             float posOffset = 0;
             for (int idx = 0; idx < children.size(); idx ++) {
 
@@ -126,7 +126,7 @@ public class DearHBox extends DearComponent {
 
         } else if (justify == Justify.SPACE) {
 
-            float space = getWidth() / children.size();
+            float space = getInnerWidth() / children.size();
             float posOffset = 0;
             for (int idx = 0; idx < children.size(); idx ++) {
 
@@ -147,7 +147,7 @@ public class DearHBox extends DearComponent {
         } else if (justify == Justify.BETWEEN) {
 
             float totalWidth = getTotalWidth();
-            float width = getWidth();
+            float width = getInnerWidth();
 
             float spacing = (width - totalWidth) / (children.size() - 1);
             float posOffset = 0;

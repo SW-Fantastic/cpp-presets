@@ -26,6 +26,8 @@ public class DearWindow {
 
     private DearTitleBar titleBar;
 
+    private ImVec2 absolutePos;
+
     public DearWindow(DearApplication application, String text) {
 
         this.application = application;
@@ -61,25 +63,27 @@ public class DearWindow {
 
         if (content != null) {
 
-
             ImGuiViewport viewport = ImGUICore.ImGui_GetWindowViewport();
             ImVec2 sizeVec = viewport.Size();
 
-            ImGuiStyle style = ImGUICore.ImGui_GetStyle();
-            ImVec2 padding = style.WindowPadding();
-
             setWidth(sizeVec.x());
-            setHeight(sizeVec.y() - padding.y());
+            setHeight(sizeVec.y());
 
             titleBar.setX(0);
             titleBar.setY(0);
-            titleBar.setWidth(sizeVec.x() - padding.x());
+            titleBar.setWidth(sizeVec.x());
             titleBar.setText(title.getString());
+            titleBar.setComponentBackgroundColor(new DearColor("#FFF"));
             titleBar.doUpdate();
+
+            if (absolutePos != null && absolutePos.isNull()) {
+                absolutePos.close();
+            }
+            absolutePos = ImGUICore.ImGui_GetCursorScreenPos();
 
             content.setY(titleBar.getHeight());
             content.setWidth(sizeVec.x());
-            content.setHeight(sizeVec.y() - padding.y() - titleBar.getHeight());
+            content.setHeight(sizeVec.y() - titleBar.getHeight());
             content.doUpdate();
 
         }
@@ -125,4 +129,7 @@ public class DearWindow {
         sizes.y(height);
     }
 
+    public ImVec2 getAbsolutePos() {
+        return absolutePos;
+    }
 }

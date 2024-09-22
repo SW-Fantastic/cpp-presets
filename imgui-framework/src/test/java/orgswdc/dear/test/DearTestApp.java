@@ -3,13 +3,16 @@ package orgswdc.dear.test;
 import org.swdc.dear.DearApplication;
 import org.swdc.dear.DearColor;
 import org.swdc.dear.DearWindow;
+import org.swdc.dear.icons.Fontawsome5;
 import org.swdc.dear.layout.DearBorderPane;
 import org.swdc.dear.layout.DearHBox;
 import org.swdc.dear.layout.DearVBox;
 import org.swdc.dear.layout.Justify;
 import org.swdc.dear.widgets.DearButton;
 import org.swdc.dear.widgets.DearCheckBox;
+import org.swdc.dear.widgets.DearField;
 import org.swdc.dear.widgets.DearLabel;
+import org.swdc.imgui.core.ImGUICore;
 
 import java.io.File;
 
@@ -42,6 +45,8 @@ public class DearTestApp extends DearApplication {
 
         DearButton vbxBtn = new DearButton();
         vbxBtn.setText("Button");
+        vbxBtn.setBorder(true);
+        vbxBtn.setBorderColor(new DearColor("#F00"));
         vbxBtn.setHeight(60);
         vbxBtn.setWidth(120);
         vbxBtn.setBackground(new DearColor("#4B8FFF"));
@@ -50,6 +55,13 @@ public class DearTestApp extends DearApplication {
             System.err.println("clicked");
         });
         vBox.addChild(vbxBtn);
+
+        DearField field = new DearField();
+        field.setWidth(120);
+        field.setBorderColor(new DearColor("#CECECE"));
+        field.setHeight(40);
+        field.setBorder(true);
+        vBox.addChild(field);
 
         DearLabel vbxLB = new DearLabel();
         vbxLB.setText("Hello world 2");
@@ -88,7 +100,7 @@ public class DearTestApp extends DearApplication {
         center.setHeight(40);
         borderPane.setCenter(center);
 
-        DearCheckBox cbx = new DearCheckBox("CheckBox");
+        DearCheckBox cbx = new DearCheckBox(   "CheckBox " + Fontawsome5.getFontIcon("power-off"));
         cbx.setWidth(120);
         cbx.setHeight(60);
         borderPane.setBottom(cbx);
@@ -99,6 +111,7 @@ public class DearTestApp extends DearApplication {
         window = new DearWindow(this,"主窗口3");
         window.setContent(box);
         window.show();
+
     }
 
     public static void main(String[] args) {

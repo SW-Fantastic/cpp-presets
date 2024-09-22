@@ -2,8 +2,10 @@ package org.swdc.dear.widgets;
 
 import org.swdc.dear.DearColor;
 import org.swdc.dear.DearComponent;
+import org.swdc.dear.DearSizeBox;
 import org.swdc.dear.listeners.MouseEventListener;
 import org.swdc.imgui.core.ImGUICore;
+import org.swdc.imgui.core.imgui.ImDrawList;
 import org.swdc.imgui.core.imgui.ImGuiStyle;
 import org.swdc.imgui.core.imgui.ImVec2;
 
@@ -21,6 +23,10 @@ public class DearButton extends DearComponent {
 
     private DearColor textColor;
 
+    private DearColor hoverColor;
+
+    private DearColor textHoverColor;
+
     @Override
     protected void update() {
 
@@ -33,10 +39,20 @@ public class DearButton extends DearComponent {
             ImGUICore.ImGui_PushStyleColorImVec4(ImGUICore.ImGuiCol_Text,textColor.getColor());
             rollback++;
         }
+        if (hovering && textHoverColor != null) {
+            ImGUICore.ImGui_PushStyleColorImVec4(ImGUICore.ImGuiCol_Text,textHoverColor.getColor());
+            rollback++;
+        }
         if (activeColor != null) {
             ImGUICore.ImGui_PushStyleColorImVec4(ImGUICore.ImGuiCol_ButtonActive,activeColor.getColor());
             rollback++;
         }
+
+        if (hoverColor != null) {
+            ImGUICore.ImGui_PushStyleColorImVec4(ImGUICore.ImGuiCol_ButtonHovered,hoverColor.getColor());
+            rollback++;
+        }
+
 
         if(ImGUICore.ImGui_ButtonEx(text,getInnerSize())) {
             preformAsyncListener(clickEventListener);
@@ -63,6 +79,9 @@ public class DearButton extends DearComponent {
     }
 
     public void setBackground(DearColor background) {
+        if(this.background != null) {
+            this.background.close();
+        }
         this.background = background;
     }
 
@@ -71,11 +90,33 @@ public class DearButton extends DearComponent {
     }
 
     public void setTextColor(DearColor textColor) {
+        if (this.textColor != null) {
+            this.textColor.close();
+        }
         this.textColor = textColor;
     }
 
     public DearColor getTextColor() {
         return textColor;
+    }
+
+    public void setHoverColor(DearColor hoverColor) {
+        if (this.hoverColor != null) {
+            this.hoverColor.close();
+        }
+        this.hoverColor = hoverColor;
+    }
+
+    public DearColor getHoverColor() {
+        return hoverColor;
+    }
+
+    public DearColor getTextHoverColor() {
+        return textHoverColor;
+    }
+
+    public void setTextHoverColor(DearColor textHoverColor) {
+        this.textHoverColor = textHoverColor;
     }
 
     public void setActiveColor(DearColor activeColor) {
@@ -101,6 +142,16 @@ public class DearButton extends DearComponent {
         if (background != null) {
             background.close();
             background = null;
+        }
+
+        if (hoverColor != null) {
+            hoverColor.close();
+            hoverColor = null;
+        }
+
+        if (textHoverColor != null) {
+            textHoverColor.close();
+            textHoverColor = null;
         }
 
     }

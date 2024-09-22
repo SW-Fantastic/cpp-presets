@@ -1,7 +1,8 @@
 package org.swdc.dear.widgets;
 
+import org.swdc.dear.DearColor;
 import org.swdc.dear.DearComponent;
-import org.swdc.dear.DearWindow;
+import org.swdc.dear.icons.Fontawsome5;
 import org.swdc.dear.layout.Alignment;
 import org.swdc.dear.layout.DearHBox;
 import org.swdc.dear.layout.Justify;
@@ -16,6 +17,8 @@ public class DearTitleBar extends DearComponent {
 
     private DearButton close;
 
+    private DearColor textColor;
+
     private MouseEventListener closeRequestListener;
 
     public DearTitleBar() {
@@ -29,10 +32,12 @@ public class DearTitleBar extends DearComponent {
         this.close = new DearButton();
         this.close.setWidth(48);
         this.close.setHeight(48);
-        this.close.setText("X");
+        this.close.setText(Fontawsome5.getFontIcon("times"));
+        this.close.setTextHoverColor(new DearColor("#FFF"));
 
         this.layout.addChild(text);
         this.layout.addChild(this.close);
+        this.layout.getPaddings().left(12);
         this.layout.setHeight(48);
     }
 
@@ -71,6 +76,22 @@ public class DearTitleBar extends DearComponent {
 
     public void setCloseRequestListener(MouseEventListener closeRequestListener) {
         close.setClickEventListener(closeRequestListener);
+    }
+
+    @Override
+    public void setComponentBackgroundColor(DearColor componentBackgroundColor) {
+        super.setComponentBackgroundColor(componentBackgroundColor);
+        close.setBackground(componentBackgroundColor);
+    }
+
+    public void setTextColor(DearColor textColor) {
+        this.textColor = textColor;
+        this.close.setTextColor(textColor);
+        this.text.setTextColor(textColor);
+    }
+
+    public DearColor getTextColor() {
+        return textColor;
     }
 
     public MouseEventListener getCloseRequestListener() {

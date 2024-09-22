@@ -1,21 +1,25 @@
 package org.swdc.dear.imgui;
 
-
+/*
 import org.bytedeco.javacpp.BoolPointer;
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.IntPointer;
+import org.bytedeco.javacpp.Pointer;
 import org.swdc.imgui.core.ImGUICore;
 import org.swdc.imgui.core.ImGUIGL;
 import org.swdc.imgui.core.ImGUIGLFW;
 import org.swdc.imgui.core.glfw.GLFWerrorfun;
 import org.swdc.imgui.core.glfw.GLFWwindow;
 import org.swdc.imgui.core.imgui.*;
+*/
+import java.io.InputStream;
 
 public class Test {
 
+
     public static void main(String[] args) {
 
-        ImGUIGLFW.glfwSetErrorCallback(new GLFWerrorfun() {
+        /*ImGUIGLFW.glfwSetErrorCallback(new GLFWerrorfun() {
             @Override
             public void call(int arg0, BytePointer arg1) {
                 System.err.println("Err  - " + arg1.getString());
@@ -87,7 +91,7 @@ public class Test {
         ImGUICore.ImGui_DestroyContext(null);
 
         ImGUIGLFW.glfwDestroyWindow(window);
-        ImGUIGLFW.glfwTerminate();
+        ImGUIGLFW.glfwTerminate();*/
     }
 
 }

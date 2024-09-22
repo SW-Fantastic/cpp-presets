@@ -1,5 +1,6 @@
 package org.swdc.dear;
 
+import org.swdc.dear.listeners.ChangedListener;
 import org.swdc.dear.listeners.MouseEventListener;
 import org.swdc.imgui.core.ImGUICore;
 import org.swdc.imgui.core.imgui.ImGuiStyle;
@@ -32,6 +33,8 @@ public class DearComponent implements Closeable {
 
     private ImVec2 size = new ImVec2(1);
 
+    private ImVec2 absolutePos = new ImVec2(1);
+
     private MouseEventListener hoverEventListener;
 
     private MouseEventListener activeEventListener;
@@ -40,7 +43,15 @@ public class DearComponent implements Closeable {
 
     private DearColor componentBackgroundColor;
 
-    private DearSizeBox sizeBox = new DearSizeBox();
+    private DearSizeBox paddingSizeBox = new DearSizeBox();
+
+    private DearColor borderColor;
+
+    private boolean border;
+
+    private float borderSize = 1f;
+
+    protected boolean hovering = false;
 
     protected static synchronized String createId(Class compType) {
         Long val = componentId.get(compType);
@@ -101,30 +112,39 @@ public class DearComponent implements Closeable {
         refreshPos(false);
         ImGUICore.ImGui_SetCursorPos(pos);
         refreshPos(false);
-        ImGUICore.ImGui_BeginChild(compId,size,ImGUICore.ImGuiChildFlags_Borders,ImGUICore.ImGuiWindowFlags_None);
+        ImGUICore.ImGui_BeginChild(compId,size,ImGUICore.ImGuiChildFlags_None,ImGUICore.ImGuiWindowFlags_None);
+
         int rollback = 0;
+        int styleRollback = 0;
         if (componentBackgroundColor != null) {
             ImGUICore.ImGui_PushStyleColorImVec4(ImGUICore.ImGuiCol_ChildBg,componentBackgroundColor.getColor());
             rollback ++;
         }
 
+
+        if (borderColor != null && border) {
+            ImGUICore.ImGui_PushStyleColorImVec4(ImGUICore.ImGuiCol_Border,borderColor.getColor());
+            rollback ++;
+            ImGUICore.ImGui_PushStyleVar(ImGUICore.ImGuiStyleVar_FrameBorderSize,borderSize);
+            styleRollback ++;
+        }
+
         refreshPos(true);
         ImGUICore.ImGui_SetCursorPos(pos);
         refreshPos(true);
-        ImGUICore.ImGui_BeginChild(compId,size,ImGUICore.ImGuiChildFlags_Borders,ImGUICore.ImGuiWindowFlags_None);
 
+        ImGUICore.ImGui_BeginChild(compId,size,ImGUICore.ImGuiChildFlags_None,ImGUICore.ImGuiWindowFlags_None);
         update();
 
         ImGUICore.ImGui_EndChild();
-
         ImGUICore.ImGui_PopStyleColorEx(rollback);
+        ImGUICore.ImGui_PopStyleVarEx(styleRollback);
 
         if (ImGUICore.ImGui_IsItemHovered(0)) {
+            hovering = true;
             preformAsyncListener(hoverEventListener);
-        }
-
-        if (ImGUICore.ImGui_IsItemHovered(0)) {
-            preformAsyncListener(hoverEventListener);
+        } else {
+            hovering = false;
         }
 
         if (ImGUICore.ImGui_IsItemActive()) {
@@ -156,19 +176,27 @@ public class DearComponent implements Closeable {
     }
 
     public float getWidth() {
-        return width + sizeBox.paddingRight() + sizeBox.paddingLeft();
+        return width + paddingSizeBox.right() + paddingSizeBox.left();
+    }
+
+    public float getInnerWidth() {
+        return width;
+    }
+
+    public float getInnerHeight() {
+        return height;
     }
 
     public void setWidth(float width) {
-        this.width = width - sizeBox.paddingLeft() - sizeBox.paddingRight();
+        this.width = width - paddingSizeBox.left() - paddingSizeBox.right();
     }
 
     public float getHeight() {
-        return height + sizeBox.paddingTop() + sizeBox.paddingBottom();
+        return height + paddingSizeBox.top() + paddingSizeBox.bottom();
     }
 
     public void setHeight(float height) {
-        this.height = height - sizeBox.paddingTop() - sizeBox.paddingBottom();
+        this.height = height - paddingSizeBox.top() - paddingSizeBox.bottom();
     }
 
     public String getCompId() {
@@ -194,10 +222,10 @@ public class DearComponent implements Closeable {
 
     private void refreshPos(boolean insets) {
         if (insets) {
-            pos.x(sizeBox.paddingLeft());
-            pos.y(sizeBox.paddingTop());
-            size.x(getWidth() - sizeBox.paddingLeft() - sizeBox.paddingRight());
-            size.y(getHeight() - sizeBox.paddingTop() - sizeBox.paddingBottom());
+            pos.x(paddingSizeBox.left());
+            pos.y(paddingSizeBox.top());
+            size.x(getWidth() - paddingSizeBox.left() - paddingSizeBox.right());
+            size.y(getHeight() - paddingSizeBox.top() - paddingSizeBox.bottom());
         } else {
             pos.x(getX());
             pos.y(getY());
@@ -217,6 +245,12 @@ public class DearComponent implements Closeable {
         return size;
     }
 
+    protected ImVec2 getInnerPos() {
+        refreshPos(true);
+        return pos;
+    }
+
+
     protected ImVec2 getPos() {
         refreshPos(false);
         return pos;
@@ -227,6 +261,13 @@ public class DearComponent implements Closeable {
             return;
         }
         Thread.ofVirtual().start(listener::accept);
+    }
+
+    protected <T> void preformAsyncListener(ChangedListener<T> listener, T val) {
+        if (listener == null){
+            return;
+        }
+        Thread.ofVirtual().start(() -> listener.onChanged(val));
     }
 
     public MouseEventListener getHoverEventListener() {
@@ -254,6 +295,9 @@ public class DearComponent implements Closeable {
     }
 
     public void setComponentBackgroundColor(DearColor componentBackgroundColor) {
+        if (this.componentBackgroundColor != null) {
+            this.componentBackgroundColor.close();
+        }
         this.componentBackgroundColor = componentBackgroundColor;
     }
 
@@ -261,8 +305,58 @@ public class DearComponent implements Closeable {
         return componentBackgroundColor;
     }
 
-    public DearSizeBox getSizeBox() {
-        return sizeBox;
+    public DearSizeBox getPaddings() {
+        return paddingSizeBox;
+    }
+
+    public void setPaddings(float padding) {
+        paddingSizeBox.top(padding)
+                .left(padding)
+                .right(padding)
+                .bottom(padding);
+    }
+
+    public ImVec2 getAbsolutePos() {
+
+        float x = 0;
+        float y = 0;
+        if (getParent() != null) {
+            x = parent.getAbsolutePos().x() + this.x + this.paddingSizeBox.left();
+            y = parent.getAbsolutePos().y() + this.y + this.paddingSizeBox.top();
+        } else {
+            ImVec2 abs = getOwner().getAbsolutePos();
+            x = abs.x() + this.x + this.paddingSizeBox.left();
+            y = abs.y() + this.y + this.paddingSizeBox.top();
+        }
+
+        absolutePos.x(x);
+        absolutePos.y(y);
+
+        return absolutePos;
+    }
+
+    public DearColor getBorderColor() {
+        return borderColor;
+    }
+
+    public void setBorderColor(DearColor borderColor) {
+        this.borderColor = borderColor;
+    }
+
+    public void setBorder(boolean border) {
+        this.border = border;
+    }
+
+    public boolean isBorder() {
+        return border;
+    }
+
+    public float getBorderSize() {
+        return borderSize;
+    }
+
+    public void setBorderSize(float borderSize) {
+        this.borderSize = borderSize;
     }
 
     @Override

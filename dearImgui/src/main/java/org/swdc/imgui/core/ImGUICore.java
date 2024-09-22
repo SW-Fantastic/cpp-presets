@@ -3590,4 +3590,16 @@ public static native @Cast("ImGuiKey") int ImGui_GetKeyIndex(@Cast("ImGuiKey") i
 // #endif
 
 
+// Parsed from ext/ext_data.h
+
+// #ifndef _H_IM_DATA_
+// #define _H_IM_DATA_
+
+// #include "cimgui.h"
+// #include "stdlib.h"
+
+public static native @Cast("ImWchar*") IntPointer Ext_CreateFontRange(int begin, int end);
+
+// #endif
+
 }

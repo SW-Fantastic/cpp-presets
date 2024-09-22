@@ -3,6 +3,9 @@ package org.swdc.dear.widgets;
 import org.bytedeco.javacpp.BoolPointer;
 import org.bytedeco.javacpp.BytePointer;
 import org.swdc.dear.DearComponent;
+import org.swdc.dear.DearSizeBox;
+import org.swdc.dear.listeners.ChangedListener;
+import org.swdc.dear.listeners.MouseEventListener;
 import org.swdc.imgui.core.ImGUICore;
 import org.swdc.imgui.core.imgui.ImGuiStyle;
 import org.swdc.imgui.core.imgui.ImVec2;
@@ -13,7 +16,11 @@ public class DearCheckBox extends DearComponent {
 
     private BytePointer text;
 
-    private float height;
+    private float size;
+
+    private ChangedListener<Boolean> stateChanged;
+
+    private MouseEventListener clickListener;
 
     public DearCheckBox(String label) {
 
@@ -24,20 +31,21 @@ public class DearCheckBox extends DearComponent {
 
     @Override
     protected void update() {
-        ImGUICore.ImGui_Checkbox(text,checked);
+        boolean val = checked.get();
+        if(ImGUICore.ImGui_Checkbox(text,checked)) {
+            if (stateChanged != null && val != checked.get()) {
+                preformAsyncListener(stateChanged,checked.get());
+            }
+            preformAsyncListener(clickListener);
+        }
     }
 
-    @Override
-    public float getHeight() {
-        ImVec2 size = ImGUICore.ImGui_CalcTextSize(text);
-        this.height = size.y();
-        size.close();
-        return height + height / 2f;
+    public void setBoxSize(float size) {
+        this.size = size;
     }
 
-    @Override
-    public void setHeight(float height) {
-        return;
+    public float getBoxSize() {
+        return size;
     }
 
     public void setText(BytePointer text) {
@@ -54,5 +62,21 @@ public class DearCheckBox extends DearComponent {
 
     public void setChecked(boolean val) {
         checked.put(val);
+    }
+
+    public ChangedListener<Boolean> getStateChanged() {
+        return stateChanged;
+    }
+
+    public void setStateChanged(ChangedListener<Boolean> stateChanged) {
+        this.stateChanged = stateChanged;
+    }
+
+    public void setClickListener(MouseEventListener clickListener) {
+        this.clickListener = clickListener;
+    }
+
+    public MouseEventListener getClickListener() {
+        return clickListener;
     }
 }

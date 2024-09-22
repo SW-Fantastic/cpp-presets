@@ -1,7 +1,10 @@
 package org.swdc.dear;
 
+import org.bytedeco.javacpp.BoolPointer;
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.IntPointer;
+import org.bytedeco.javacpp.Pointer;
+import org.swdc.dear.icons.Fontawsome5;
 import org.swdc.imgui.core.ImGUICore;
 import org.swdc.imgui.core.ImGUIGL;
 import org.swdc.imgui.core.ImGUIGLFW;
@@ -62,15 +65,14 @@ public class DearApplication {
         imGuiIO.ConfigViewportsNoTaskBarIcon(false);
         ImGUICore.ImGui_StyleColorsLight(null);
 
+        // 计算高分辨率下的字号。
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice device = ge.getDefaultScreenDevice();
+        GraphicsConfiguration configuration = device.getDefaultConfiguration();
+        AffineTransform transform = configuration.getDefaultTransform();
 
         if (defaultFont != null) {
             try {
-
-                // 计算高分辨率下的字号。
-                GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-                GraphicsDevice device = ge.getDefaultScreenDevice();
-                GraphicsConfiguration configuration = device.getDefaultConfiguration();
-                AffineTransform transform = configuration.getDefaultTransform();
 
                 ImFontAtlas atlas = imGuiIO.Fonts();
                 ImGUICore.ImFontAtlas_AddFontFromFileTTF(
@@ -86,7 +88,11 @@ public class DearApplication {
                 ImGUIGLFW.glfwTerminate();
                 throw new RuntimeException("Can not load font.");
             }
+        } else {
+            ImGUICore.ImFontAtlas_AddFontDefault(imGuiIO.Fonts(),null);
         }
+
+        Fontawsome5.loadFonts(imGuiIO,transform.getScaleX());
 
         ImGUIGLFW.ImGui_ImplGlfw_InitForOpenGL(window,true);
         ImGUIGLFW.ImGui_ImplOpenGL3_Init();

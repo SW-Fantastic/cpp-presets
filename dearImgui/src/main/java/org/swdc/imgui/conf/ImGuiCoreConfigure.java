@@ -10,7 +10,7 @@ import org.bytedeco.javacpp.tools.InfoMapper;
         @Platform(
                 value = "windows-x86_64",
                 includepath = { "platforms/DearImGUI" },
-                include = { "cimgui.h" },
+                include = { "cimgui.h", "ext/ext_data.h" },
                 linkpath = "platforms/DearImGUI/binary/windows-x86_64",
                 link = "DearImGUI"
         ),
@@ -18,7 +18,7 @@ import org.bytedeco.javacpp.tools.InfoMapper;
                 compiler = "cpp11",
                 value = "macosx-x86_64",
                 includepath = { "platforms/DearImGUI" },
-                include = { "cimgui.h" },
+                include = { "cimgui.h","ext/ext_data.h"  },
                 linkpath = "platforms/DearImGUI/binary/macos-x64",
                 link = "DearImGUI"
         )
