@@ -156,6 +156,7 @@ public class DearComponent implements Closeable {
         }
 
         ImGUICore.ImGui_EndChild();
+        style.close();
 
     }
 

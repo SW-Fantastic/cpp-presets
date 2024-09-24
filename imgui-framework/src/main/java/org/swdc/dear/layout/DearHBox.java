@@ -62,8 +62,6 @@ public class DearHBox extends DearComponent {
 
         refreshSize();
 
-        ImGuiStyle style = ImGUICore.ImGui_GetStyle();
-
         if (justify == Justify.START) {
             float posOffset = 0;
             for (int idx = 0; idx < children.size(); idx ++) {

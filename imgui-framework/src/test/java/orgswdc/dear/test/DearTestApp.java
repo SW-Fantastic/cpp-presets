@@ -8,10 +8,7 @@ import org.swdc.dear.layout.DearBorderPane;
 import org.swdc.dear.layout.DearHBox;
 import org.swdc.dear.layout.DearVBox;
 import org.swdc.dear.layout.Justify;
-import org.swdc.dear.widgets.DearButton;
-import org.swdc.dear.widgets.DearCheckBox;
-import org.swdc.dear.widgets.DearField;
-import org.swdc.dear.widgets.DearLabel;
+import org.swdc.dear.widgets.*;
 import org.swdc.imgui.core.ImGUICore;
 
 import java.io.File;
@@ -58,10 +55,26 @@ public class DearTestApp extends DearApplication {
 
         DearField field = new DearField();
         field.setWidth(120);
-        field.setBorderColor(new DearColor("#CECECE"));
+        field.setBorderColor(new DearColor("#999"));
         field.setHeight(40);
         field.setBorder(true);
         vBox.addChild(field);
+
+        DearTextArea area = new DearTextArea();
+        area.setBorder(true);
+        area.setWidth(120);
+        area.setHeight(80);
+        area.setBorderColor(new DearColor("#999"));
+        vBox.addChild(area);
+
+        DearComboBox comb = new DearComboBox();
+        comb.setWidth(120);
+        comb.setHeight(38);
+        comb.getPaddings().top(6).bottom(6);
+        comb.setItemPadding(18);
+        comb.setBorder(true);
+        comb.setBorderColor(new DearColor("#999"));
+        vBox.addChild(comb);
 
         DearLabel vbxLB = new DearLabel();
         vbxLB.setText("Hello world 2");

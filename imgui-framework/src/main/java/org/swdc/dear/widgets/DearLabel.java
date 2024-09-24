@@ -32,7 +32,7 @@ public class DearLabel extends DearComponent {
 
         ImGUICore.ImGui_Text(text);
         ImGUICore.ImGui_PopStyleColorEx(rollback);
-
+        size.close();
     }
 
     public String getText() {

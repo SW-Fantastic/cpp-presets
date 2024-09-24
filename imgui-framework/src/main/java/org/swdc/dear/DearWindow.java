@@ -86,6 +86,8 @@ public class DearWindow {
             content.setHeight(sizeVec.y() - titleBar.getHeight());
             content.doUpdate();
 
+            sizeVec.close();
+            viewport.close();
         }
 
         ImGUICore.ImGui_End();

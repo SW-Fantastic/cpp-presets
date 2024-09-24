@@ -105,6 +105,9 @@ public class DearApplication {
 
         boolean initialized = false;
 
+        IntPointer pWidth = new IntPointer(1);
+        IntPointer pHeight = new IntPointer(1);
+
         do {
 
             ImGUIGLFW.ImGui_ImplOpenGL3_NewFrame();
@@ -132,8 +135,6 @@ public class DearApplication {
 
             ImGUICore.ImGui_Render();
 
-            IntPointer pWidth = new IntPointer(1);
-            IntPointer pHeight = new IntPointer(1);
             ImGUIGLFW.glfwGetFramebufferSize(window,pWidth,pHeight);
             ImGUIGL.glViewport(0,0,pWidth.get(),pHeight.get());
             ImGUIGL.glClearColor(clear_color.x() * clear_color.w(), clear_color.y() * clear_color.w(), clear_color.z() * clear_color.w(), clear_color.w());
@@ -144,9 +145,12 @@ public class DearApplication {
             ImGUICore.ImGui_RenderPlatformWindowsDefault();
             ImGUIGLFW.glfwMakeContextCurrent(cur);
 
-            ImGUIGLFW.ImGui_ImplOpenGL3_RenderDrawData(ImGUICore.ImGui_GetDrawData());
+            ImDrawData drawData = ImGUICore.ImGui_GetDrawData();
+
+            ImGUIGLFW.ImGui_ImplOpenGL3_RenderDrawData(drawData);
             ImGUIGLFW.glfwSwapBuffers(window);
 
+            drawData.close();
 
         } while (ImGUIGLFW.glfwWindowShouldClose(window) == 0);
 

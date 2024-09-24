@@ -116,10 +116,16 @@ public class DearButton extends DearComponent {
     }
 
     public void setTextHoverColor(DearColor textHoverColor) {
+        if (this.textHoverColor != null) {
+            this.textHoverColor.close();
+        }
         this.textHoverColor = textHoverColor;
     }
 
     public void setActiveColor(DearColor activeColor) {
+        if (this.activeColor != null) {
+            this.activeColor.close();
+        }
         this.activeColor = activeColor;
     }
 

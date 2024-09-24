@@ -107,7 +107,7 @@ public class DearColor implements Closeable {
     }
 
 
-    public ImVec4 getColor() {
+    public synchronized ImVec4 getColor() {
         if (color == null) {
             color = new ImVec4(1);
         }
