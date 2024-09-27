@@ -6,6 +6,8 @@ target/
 *.dll
 *.so
 *.dylib
+*.lib
+*.a
 
 ### IntelliJ IDEA ###
 .idea/modules.xml

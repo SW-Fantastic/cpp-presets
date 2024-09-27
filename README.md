@@ -4,7 +4,7 @@ my java-cpp preset projects，will not publish on maven center，
 Please clone and build it yourself if you want to have a try。
 
 基于JavaCPP技术的Presets，各类本地类库通过JavaCPP使得我们可以在Java语言中使用
-它们，本项目不定期维护和更新，不会上传到公共仓库，想要使用的话请自行clone。
+它们，本项目不定期维护和更新，不会上传到公共仓库，想要使用的话请自行clone或者到Release下载发行版。
 
 ## 关于发布
 
@@ -39,6 +39,9 @@ use Live2d。
 </dependency>
 ```
 
+我也会尽可能的在项目里面添加全部的必要资源，如果你在Platforms里面无法找到必要的二进制库，那么通常是我把它压缩了，
+解压其中的zip或者7z包或许就能找到。
+
 ## 子项目列表（sub-project list）
 
 1. Live2D Core & Live2D Java SDK（YES，**JAVA SDK，NOT ANDROID**）
@@ -52,7 +55,7 @@ use Live2d。
 3. MariaDB Embedded & MariaDB Embedded JDBC（Embedded Mariadb java version）
    - Build with Mariadb version 11.6
    - Has pre-built binary with (windows-x64, linux-x64)
-     本库提供了预构建的Windows，linux的64位二进制文件，直接install到本地仓库即可使用。
+     本库提供了预构建的Windows，linux的64位二进制文件。
    - this library has dependency with repository `our-commons`，Please build and install
      it before you do build of this one，本库依赖了另一个`our-commons`库。
    - `our-commons` [Click here for this repository](https://github.com/SW-Fantastic/our-commons)
