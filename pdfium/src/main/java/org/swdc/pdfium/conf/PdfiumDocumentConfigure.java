@@ -19,6 +19,13 @@ import org.bytedeco.javacpp.tools.InfoMapper;
                 include = "fpdf_doc.h",
                 linkpath = "platforms/Pdfium/dll/macosx",
                 link = "pdfium"
+        ),
+        @Platform(
+                value = "linux-x86_64",
+                includepath = { "platforms/Pdfium/include" },
+                include = "fpdf_doc.h",
+                linkpath = "platforms/Pdfium/dll/linux",
+                link = "pdfium"
         )
 },
         inherit = PdfiumViewConfigure.class,

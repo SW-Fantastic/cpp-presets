@@ -3,6 +3,10 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+*.dll
+*.so
+*.dylib
+
 ### IntelliJ IDEA ###
 .idea/modules.xml
 .idea/jarRepositories.xml
@@ -39,3 +43,4 @@ build/
 
 platforms/Live2d/dll
 platforms/Live2d/lib
+/Release/

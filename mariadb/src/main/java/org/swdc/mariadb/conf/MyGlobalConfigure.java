@@ -15,6 +15,13 @@ import org.bytedeco.javacpp.tools.InfoMapper;
                 linkpath = "platforms/Mariadb/dll/windows/x86_64",
                 link = "libmysqld"
         ),
+        @Platform(
+                value = "linux-x86_64",
+                includepath = { "platforms/Mariadb/include","platforms/Mariadb/ext" },
+                include = {"my_global.h" , "mysql_time.h", "my_list.h", "my_alloc.h", "ext_mysql_data.h"},
+                linkpath = "platforms/Mariadb/dll/linux/x86_64",
+                link = "mariadbd"
+        ),
 },
         target = "org.swdc.mariadb.core.global",
         global = "org.swdc.mariadb.core.MyGlobal"

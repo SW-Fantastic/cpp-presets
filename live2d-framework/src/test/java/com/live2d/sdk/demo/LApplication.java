@@ -4,9 +4,12 @@ import com.jogamp.nativewindow.WindowClosingProtocol;
 import com.jogamp.newt.awt.NewtCanvasAWT;
 import com.jogamp.newt.opengl.GLWindow;
 import com.jogamp.opengl.*;
+import com.jogamp.opengl.awt.GLJPanel;
 import com.jogamp.opengl.util.FPSAnimator;
 import org.bytedeco.javacpp.Loader;
 import org.swdc.live2d.core.Live2dCore;
+
+import javax.swing.*;
 
 
 public class LApplication {
@@ -55,19 +58,19 @@ public class LApplication {
 
         Loader.load(Live2dCore.class);
 
-        /*JFrame frame = new JFrame();
+        JFrame frame = new JFrame();
         frame.setSize(600,1000);
         GLJPanel canvas = new GLJPanel();
         frame.add(canvas);
         canvas.addGLEventListener(new GLListener(canvas));
 
         frame.setVisible(true);
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);*/
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-        GLWindow window = GLWindow.create(new GLCapabilities(null));
+        /*GLWindow window = GLWindow.create(new GLCapabilities(null));
         window.addGLEventListener(new GLListener(window));
         window.setSize(800,1000);
-        window.setVisible(true);
+        window.setVisible(true);*/
 
     }
 

@@ -21,7 +21,14 @@ import org.bytedeco.javacpp.tools.InfoMapper;
                 include = { "Live2DCubismCore.h","csmBasicType.h" ,"csmAllocator.h", },
                 linkpath = "platforms/Live2d/dll/macos",
                 link = "Live2DCubismCore"
-        )
+        ),
+        @Platform(
+                value = "linux-x86_64",
+                includepath = { "platforms/Live2d/include", "platforms/Live2d/ext" },
+                include = { "Live2DCubismCore.h","csmBasicType.h" ,"csmAllocator.h", },
+                linkpath = "platforms/Live2d/dll/linux/x86_64",
+                link = "Live2DCubismCore"
+        ),
 },
         target = "org.swdc.live2d.core.Live2dCore",
         global = "org.swdc.live2d.core.Live2dCore"

@@ -22,6 +22,14 @@ import org.bytedeco.javacpp.tools.InfoMapper;
                 linkpath = "platforms/Pdfium/dll/macosx",
                 link = "pdfium",
                 preload = "pdfium"
+        ),
+        @Platform(
+                value = "linux-x86_64",
+                includepath = { "platforms/Pdfium/include" },
+                include = "fpdfview.h",
+                linkpath = "platforms/Pdfium/dll/linux",
+                link = "pdfium",
+                preload = "pdfium"
         )
 },
         target = "org.swdc.pdfium.core.view",
