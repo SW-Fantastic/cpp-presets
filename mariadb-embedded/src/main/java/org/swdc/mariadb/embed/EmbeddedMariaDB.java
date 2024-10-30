@@ -42,6 +42,8 @@ public class EmbeddedMariaDB {
 
     private String timeZoneId = "+0:00";
 
+    private volatile static boolean systemClosed = false;
+
     private List<CloseableSource> activeConnections = new ArrayList<>();
 
     private EmbeddedMariaDB(File dataDir, File baseDir) {
@@ -239,7 +241,7 @@ public class EmbeddedMariaDB {
 
     public MySQLDBConnection connect(String name) {
 
-        if (!initialized) {
+        if (!initialized || systemClosed) {
             throw new RuntimeException("please initialize mariadb first");
         }
 
@@ -305,7 +307,11 @@ public class EmbeddedMariaDB {
 
     }
 
-    public void initSystemData() {
+    public synchronized void initSystemData() {
+
+        if (systemClosed) {
+            return;
+        }
 
         MySQLDBConnection exist = connect("mysql");
         if (exist != null) {
@@ -420,8 +426,13 @@ public class EmbeddedMariaDB {
         return instance;
     }
 
+    public boolean isEnvironmentClosed() {
+        return systemClosed;
+    }
+
 
     public synchronized static void shutdownEnvironment() {
+        systemClosed = true;
         MariaDB.mysql_thread_init();
         if (instance != null && instance.initialized) {
             for (CloseableSource connections : instance.activeConnections) {

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="http://java.sun.com/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://java.sun.com/xml/ns/persistence
+    http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
+             version="2.0">
+    <!-- 持久化单元块 -->
+    <persistence-unit name="default-test" transaction-type="RESOURCE_LOCAL">
+        <!-- 数据库连接信息
+                 使用hibernate提供的 在hibernate的源码包下project/etc/hibernate.properties
+         -->
+    </persistence-unit>
+
+</persistence>

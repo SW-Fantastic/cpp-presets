@@ -16,6 +16,8 @@ public class MyQueryResult extends MyResult {
 
     protected int type;
 
+    protected int lasLoadColumn = 0;
+
     public MyQueryResult(MyStatement connection, IMySQLResultSet rs) {
         this(connection,rs,TYPE_FORWARD_ONLY);
     }
@@ -38,66 +40,81 @@ public class MyQueryResult extends MyResult {
 
     @Override
     public boolean wasNull() throws SQLException {
-        return resultSet == null;
+        if (lasLoadColumn - 1 < 0) {
+            return true;
+        }
+        return resultSet.isNull(lasLoadColumn - 1);
     }
 
     @Override
     public String getString(int columnIndex) throws SQLException {
+        lasLoadColumn = columnIndex;
         return resultSet.getString(columnIndex - 1);
     }
 
     @Override
     public boolean getBoolean(int columnIndex) throws SQLException {
+        lasLoadColumn = columnIndex;
         return resultSet.getBoolean(columnIndex - 1);
     }
 
     @Override
     public byte getByte(int columnIndex) throws SQLException {
+        lasLoadColumn = columnIndex;
         return resultSet.getByte(columnIndex - 1);
     }
 
     @Override
     public short getShort(int columnIndex) throws SQLException {
+        lasLoadColumn = columnIndex;
         return resultSet.getShort(columnIndex - 1);
     }
 
     @Override
     public int getInt(int columnIndex) throws SQLException {
+        lasLoadColumn = columnIndex;
         return resultSet.getInt(columnIndex - 1);
     }
 
     @Override
     public long getLong(int columnIndex) throws SQLException {
+        lasLoadColumn = columnIndex;
         return resultSet.getLong(columnIndex - 1);
     }
 
     @Override
     public float getFloat(int columnIndex) throws SQLException {
+        lasLoadColumn = columnIndex;
         return resultSet.getFloat(columnIndex - 1);
     }
 
     @Override
     public double getDouble(int columnIndex) throws SQLException {
+        lasLoadColumn = columnIndex;
         return resultSet.getDouble(columnIndex - 1);
     }
 
     @Override
     public byte[] getBytes(int columnIndex) throws SQLException {
+        lasLoadColumn = columnIndex;
         return resultSet.getBlob(columnIndex - 1);
     }
 
     @Override
     public Date getDate(int columnIndex) throws SQLException {
+        lasLoadColumn = columnIndex;
         return resultSet.getDate(columnIndex - 1);
     }
 
     @Override
     public Time getTime(int columnIndex) throws SQLException {
+        lasLoadColumn = columnIndex;
         return resultSet.getTime(columnIndex - 1);
     }
 
     @Override
     public Timestamp getTimestamp(int columnIndex) throws SQLException {
+        lasLoadColumn = columnIndex;
         Long val = resultSet.getTimestamp(columnIndex - 1);
         if (val == null) {
             return null;
@@ -110,11 +127,13 @@ public class MyQueryResult extends MyResult {
 
     @Override
     public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
+        lasLoadColumn = columnIndex;
         return resultSet.getDecimal(columnIndex - 1);
     }
 
     @Override
     public Object getObject(int columnIndex) throws SQLException {
+        lasLoadColumn = columnIndex;
         return resultSet.getObject(columnIndex - 1);
     }
 

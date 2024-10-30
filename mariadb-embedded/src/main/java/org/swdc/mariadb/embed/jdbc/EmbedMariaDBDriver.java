@@ -14,6 +14,13 @@ public class EmbedMariaDBDriver implements Driver {
 
     private EmbeddedMariaDB mariaDB;
 
+    static {
+        try {
+            DriverManager.registerDriver(new EmbedMariaDBDriver());
+        } catch (SQLException e) {
+        }
+    }
+
     @Override
     public Connection connect(String url, Properties info) throws SQLException {
         Configure configure = new Configure(url);
@@ -52,6 +59,10 @@ public class EmbedMariaDBDriver implements Driver {
 
         if (!mariaDB.initialize()) {
             throw new SQLException("failed to initialize this mariaDB library");
+        }
+
+        if (mariaDB.isEnvironmentClosed()) {
+            return null;
         }
 
         mariaDB.initSystemData();

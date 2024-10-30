@@ -67,6 +67,19 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
     }
 
     @Override
+    public boolean isNull(int col) throws SQLException{
+        long length = currentRowLength.get(col);
+        if (length == 0) {
+            return true;
+        }
+        byte[] data = new byte[(int)length];
+        BytePointer pointer = new BytePointer(currentRow.get(col));
+        pointer.get(data);
+        String text = new String(data);
+        return text.equals("null");
+    }
+
+    @Override
     public boolean next() throws SQLException {
         validate();
         return seek(currentRowNum + 1);

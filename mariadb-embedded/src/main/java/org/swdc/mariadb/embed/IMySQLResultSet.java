@@ -25,6 +25,8 @@ public interface IMySQLResultSet extends Closeable {
         return false;
     }
 
+    boolean isNull(int col) throws SQLException;
+
     boolean next() throws SQLException;
 
     boolean previous() throws SQLException;

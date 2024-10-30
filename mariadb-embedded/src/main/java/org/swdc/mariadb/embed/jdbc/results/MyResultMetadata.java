@@ -20,7 +20,7 @@ public class MyResultMetadata implements ResultSetMetaData {
 
     @Override
     public boolean isAutoIncrement(int column) throws SQLException {
-        return metadata.isAutoIncrease(column);
+        return metadata.isAutoIncrease(column - 1);
     }
 
     @Override
@@ -40,12 +40,12 @@ public class MyResultMetadata implements ResultSetMetaData {
 
     @Override
     public int isNullable(int column) throws SQLException {
-        return metadata.isNotNull(column) ? columnNoNulls : columnNullable;
+        return metadata.isNotNull(column - 1) ? columnNoNulls : columnNullable;
     }
 
     @Override
     public boolean isSigned(int column) throws SQLException {
-        return !metadata.isUnsigned(column);
+        return !metadata.isUnsigned(column - 1);
     }
 
     @Override
@@ -55,12 +55,12 @@ public class MyResultMetadata implements ResultSetMetaData {
 
     @Override
     public String getColumnLabel(int column) throws SQLException {
-        return metadata.getColumnLabel(column);
+        return metadata.getColumnLabel(column - 1);
     }
 
     @Override
     public String getColumnName(int column) throws SQLException {
-        return metadata.getColumnName(column);
+        return metadata.getColumnName(column - 1);
     }
 
     @Override
@@ -70,32 +70,32 @@ public class MyResultMetadata implements ResultSetMetaData {
 
     @Override
     public int getPrecision(int column) throws SQLException {
-        return metadata.getPrecision(column);
+        return metadata.getPrecision(column - 1);
     }
 
     @Override
     public int getScale(int column) throws SQLException {
-        return metadata.getDecimals(column);
+        return metadata.getDecimals(column - 1);
     }
 
     @Override
     public String getTableName(int column) throws SQLException {
-        return metadata.getTableName(column);
+        return metadata.getTableName(column - 1);
     }
 
     @Override
     public String getCatalogName(int column) throws SQLException {
-        return metadata.getCategoryName(column);
+        return metadata.getCategoryName(column - 1);
     }
 
     @Override
     public int getColumnType(int column) throws SQLException {
-        return metadata.getJDBCColumnType(column);
+        return metadata.getJDBCColumnType(column - 1);
     }
 
     @Override
     public String getColumnTypeName(int column) throws SQLException {
-        return metadata.getTypeName(column);
+        return metadata.getTypeName(column - 1);
     }
 
     @Override

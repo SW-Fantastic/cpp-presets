@@ -36,7 +36,6 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
 
     private MySQLResultMetadata metadata;
 
-    private CLongPointer clength;
     private CLongPointer[] lengths;
 
     private BytePointer[] errors;
@@ -131,6 +130,9 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 MYSQL_BIND bind = bindAndBuffer.getPointer(i);
                 bind.buffer().close();
                 bind.close();
+                errors[i].close();
+                lengths[i].close();
+                isNulls[i].close();
             }
             MariaDB.mysql_free_result(res);
             throw new RuntimeException("failed to bind result , errno : " + MariaDB.mysql_stmt_errno(stmt));
@@ -138,6 +140,14 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
 
         state = MariaDB.mysql_stmt_store_result(stmt);
         if (state != 0) {
+            for (int i = 0; i < metadata.getFieldCount(); i++) {
+                MYSQL_BIND bind = bindAndBuffer.getPointer(i);
+                bind.buffer().close();
+                bind.close();
+                errors[i].close();
+                lengths[i].close();
+                isNulls[i].close();
+            }
             MariaDB.mysql_free_result(res);
             throw new RuntimeException("failed to store a result set , errno : " + MariaDB.mysql_stmt_errno(stmt));
         }
@@ -203,7 +213,9 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 // 读取该字段数据。
                 MariaDB.mysql_stmt_fetch_column(stmt,bind,i,0);
             } else {
-                buf[i].close();
+                if (buf[i] != null && !buf[i].isNull()) {
+                    buf[i].close();
+                }
                 buf[i] = null;
                 bind.buffer(new Pointer());
                 bind.buffer_length(0);
@@ -212,6 +224,11 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
         }
 
         return true;
+    }
+
+    @Override
+    public boolean isNull(int col) {
+        return isNulls[col].get() == 1;
     }
 
     @Override
@@ -313,22 +330,25 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_BLOB
         )) {
             if (lengths[column].get() <= 0) {
-                return null;
+                return 0;
             }
             return new BytePointer(buf[column]).get();
         }
-        return null;
+        return 0;
     }
 
     @Override
     public Short getShort(int column) throws SQLException {
         MYSQL_FIELD field = metadata.getField(column);
+        if (isNull(column)) {
+            return 0;
+        }
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_SHORT
         )) {
             if (lengths[column].get() <= 0) {
-                return null;
+                return 0;
             }
             return new ShortPointer(buf[column]).get();
         }
@@ -337,20 +357,23 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_TINY
         )) {
             Byte val = getByte(column);
-            return val != null ? Short.valueOf(val) : null;
+            return val != null ? Short.valueOf(val) : 0;
         }
-        return null;
+        return 0;
     }
 
     @Override
     public Long getLong(int column) throws SQLException {
         MYSQL_FIELD field = metadata.getField(column);
+        if (isNull(column)) {
+            return 0L;
+        }
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_LONGLONG
         )) {
             if (lengths[column].get() <= 0) {
-                return null;
+                return 0L;
             }
             return new LongPointer(buf[column]).get();
         } else if (accept(
@@ -362,15 +385,18 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
         )) {
 
             Integer val = getInt(column);
-            return val != null ? Long.valueOf(val) : null;
+            return val != null ? Long.valueOf(val) : 0;
         }
 
-        return null;
+        return 0L;
     }
 
     @Override
     public Integer getInt(int column) throws SQLException {
         MYSQL_FIELD field = metadata.getField(column);
+        if (isNull(column)) {
+            return 0;
+        }
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_INT24,
@@ -386,14 +412,17 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_SHORT
         )) {
             Short val = getShort(column);
-            return val != null ? Integer.valueOf(val) : null;
+            return val != null ? Integer.valueOf(val) : 0;
         }
-        return null;
+        return 0;
     }
 
     @Override
     public Float getFloat(int column) throws SQLException {
         MYSQL_FIELD field = metadata.getField(column);
+        if (isNull(column)) {
+            return 0F;
+        }
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_FLOAT
@@ -423,7 +452,9 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
     @Override
     public Double getDouble(int column) throws SQLException {
         MYSQL_FIELD field = metadata.getField(column);
-
+        if (isNull(column)) {
+            return 0d;
+        }
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_DOUBLE

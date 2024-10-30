@@ -38,7 +38,6 @@ public class MariaDBJDBCTest {
         connection.close();*/
 
 
-
         Properties properties = new Properties();
         properties.setProperty("hibernate.connection.url", "jdbc:mysql://dbForTest?basedir=./mysqlData&datadir=./mysqlData/data&autocreate=true");
         properties.setProperty("hibernate.connection.driver_class", EmbedMariaDBDriver.class.getName());
@@ -50,7 +49,7 @@ public class MariaDBJDBCTest {
                 EntUser.class
         ));
 
-        EntityManagerFactory entityFactory = Persistence.createEntityManagerFactory("default", properties);
+        EntityManagerFactory entityFactory = Persistence.createEntityManagerFactory("default-test", properties);
 
         EntityManager em = entityFactory.createEntityManager();
 
