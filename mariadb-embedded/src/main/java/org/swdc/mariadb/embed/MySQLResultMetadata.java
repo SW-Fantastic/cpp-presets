@@ -396,9 +396,7 @@ public class MySQLResultMetadata {
         if (IMySQLResultSet.accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_TIME,
-                MyCom.enum_field_types.MYSQL_TYPE_TIME2,
-                MyCom.enum_field_types.MYSQL_TYPE_DATETIME,
-                MyCom.enum_field_types.MYSQL_TYPE_DATETIME2
+                MyCom.enum_field_types.MYSQL_TYPE_TIME2
         )) {
             return "TIME";
         }

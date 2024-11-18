@@ -17,6 +17,7 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.*;
 
 public class MySQLPreparedStatement extends MySQLStatement {
@@ -445,7 +446,10 @@ public class MySQLPreparedStatement extends MySQLStatement {
 
         MYSQL_TIME time = new MYSQL_TIME(p);
 
-        LocalTime localDate = date.toLocalTime();
+        LocalTime localDate = date.toInstant()
+                .atZone(ZoneId.of("UTC"))
+                .toLocalTime();
+
         time.hour(localDate.getHour());
         time.minute(localDate.getMinute());
         time.second(localDate.getSecond());
@@ -473,7 +477,9 @@ public class MySQLPreparedStatement extends MySQLStatement {
         );
         Pointer.memset(time,0,leng);
 
-        LocalDateTime localDate = ts.toLocalDateTime();
+        LocalDateTime localDate = ts.toInstant()
+                .atZone(ZoneId.of("UTC"))
+                .toLocalDateTime();
 
         time.year(localDate.getYear());
         time.month(localDate.getMonth().getValue());

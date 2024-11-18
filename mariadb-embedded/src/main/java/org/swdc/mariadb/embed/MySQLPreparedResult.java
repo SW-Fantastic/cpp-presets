@@ -281,6 +281,9 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
     @Override
     public Date getDate(int column) throws SQLException {
         MYSQL_FIELD field = metadata.getField(column);
+        if (isNull(column)) {
+            return null;
+        }
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_DATE,
@@ -303,6 +306,9 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
     @Override
     public Time getTime(int column) throws SQLException {
         MYSQL_FIELD field = metadata.getField(column);
+        if (isNull(column)) {
+            return null;
+        }
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_DATE,
@@ -323,6 +329,9 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
 
     @Override
     public Byte getByte(int column) throws SQLException {
+        if (isNull(column)) {
+            return null;
+        }
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
@@ -481,6 +490,9 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
 
     @Override
     public BigDecimal getDecimal(int column) throws SQLException {
+        if (isNull(column)) {
+            return null;
+        }
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
@@ -502,6 +514,9 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
 
     @Override
     public String getString(int column) throws SQLException {
+        if (isNull(column)) {
+            return null;
+        }
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
                 field.type(),
@@ -530,6 +545,9 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
 
     @Override
     public byte[] getBlob(int column) throws SQLException {
+        if (isNull(column)) {
+            return null;
+        }
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_BLOB)) {
             if (lengths[column].get() <= 0) {
@@ -546,6 +564,9 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
     @Override
     public Long getTimestamp(int column) throws SQLException {
         MYSQL_FIELD field = metadata.getField(column);
+        if (isNull(column)) {
+            return null;
+        }
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_TIMESTAMP,
@@ -568,7 +589,7 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
             }
             MYSQL_TIME time = new MYSQL_TIME(buf[column]);
             LocalDateTime dateTime = LocalDateTime.of(
-                    time.year(),time.month() + 1,time.day() + 1,time.hour(),time.minute(),time.second()
+                    time.year(),time.month() ,time.day(),time.hour(),time.minute(),time.second()
             );
             ZoneOffset offset = ZoneOffset.UTC;
 
@@ -580,7 +601,9 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
     @Override
     public Boolean getBoolean(int column) throws SQLException {
         MYSQL_FIELD field = metadata.getField(column);
-
+        if (isNull(column)) {
+            return false;
+        }
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_BIT,
