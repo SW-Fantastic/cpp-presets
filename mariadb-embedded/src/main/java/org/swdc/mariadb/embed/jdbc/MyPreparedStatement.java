@@ -642,5 +642,8 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
         setCharacterStream(parameterIndex - 1,reader);
     }
 
-
+    @Override
+    public void close() throws SQLException {
+        this.statement.close();
+    }
 }

@@ -144,11 +144,14 @@ public class MySQLPreparedStatement extends MySQLStatement {
             throw new SQLException("no such parameter : " + index);
         }
 
-        int size = str.getBytes(StandardCharsets.UTF_8).length;
+        byte [] strBytes = str.getBytes(StandardCharsets.UTF_8);
+        int size = strBytes.length;
         BytePointer p = new BytePointer(
-                Pointer.malloc(size)
+                Pointer.malloc(size + 4)
         );
+        Pointer.memset(p,0,size);
         p.putString(str);
+
         if (buf[index] != null && !buf[index].isNull()) {
             buf[index].close();
         }
@@ -156,7 +159,13 @@ public class MySQLPreparedStatement extends MySQLStatement {
         buf[index] = p;
 
         MYSQL_BIND bind = binds.getPointer(index);
-        bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_BLOB);
+        if (size <= 65535) {
+            bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_BLOB);
+        } else if (size <= 16777215) {
+            bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_MEDIUM_BLOB);
+        } else {
+            bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_LONG_BLOB);
+        }
         bind.buffer_length(size);
         bind.buffer(p);
 
