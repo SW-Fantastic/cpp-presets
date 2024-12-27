@@ -24,14 +24,14 @@ public class PDFFont implements Closeable {
 
     public String getFontName() {
 
-        long size = PdfiumEdit.FPDFFont_GetFontName(font,(byte[]) null,0);
+        long size = PdfiumEdit.FPDFFont_GetFamilyName(font,(byte[]) null,0);
         if (size == 2) {
             return "";
         }
 
         byte[] data = new byte[(int)size - 16];
         BytePointer buf = new BytePointer(Pointer.malloc(size));
-        PdfiumEdit.FPDFFont_GetFontName(
+        PdfiumEdit.FPDFFont_GetFamilyName(
                 font,
                 buf,
                 size

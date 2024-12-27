@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>pdfium4j</artifactId>
-    <version>1.0</version>
+    <version>1.0.1</version>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
@@ -22,7 +22,7 @@
         <dependency>
             <groupId>org.swdc</groupId>
             <artifactId>pdfium</artifactId>
-            <version>1.0</version>
+            <version>1.1</version>
         </dependency>
         <dependency>
             <groupId>org.bytedeco</groupId>

@@ -96,12 +96,13 @@ public class PDFDocument implements Closeable {
         valid();
 
         long size = PdfiumDocument.FPDF_GetMetaText(document,type.name(),null,0);
-        if (size == 2) {
+        if (size < 2) {
             return "";
         }
 
-        byte[] data = new byte[(int)size - 16];
+        byte[] data = new byte[(int)size - 2];
         BytePointer buf = new BytePointer(Pointer.malloc(size));
+        Pointer.memset(buf, 0, data.length);
         PdfiumDocument.FPDF_GetMetaText(
                 document,
                 type.name(),

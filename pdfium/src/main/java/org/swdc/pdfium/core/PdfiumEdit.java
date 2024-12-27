@@ -205,6 +205,8 @@ public static native @Cast("FPDF_BOOL") int FPDF_MovePages(fpdf_document_t__ doc
 //
 // Ownership is transferred to the caller. Call FPDFPageObj_Destroy() to free
 // it.
+// Note that when removing a |page_object| of type FPDF_PAGEOBJ_TEXT, all
+// FPDF_TEXTPAGE handles for |page| are no longer valid.
  public static native @Cast("FPDF_BOOL") int FPDFPage_RemoveObject(fpdf_page_t__ page, fpdf_pageobject_t__ page_object);
 
 // Get number of page objects inside |page|.
@@ -264,6 +266,38 @@ public static native @Cast("FPDF_BOOL") int FPDF_MovePages(fpdf_document_t__ doc
 // error.
  public static native int FPDFPageObj_GetType(fpdf_pageobject_t__ page_object);
 
+// Experimental API.
+// Gets active state for |page_object| within page.
+//
+//   page_object - handle to a page object.
+//   active      - pointer to variable that will receive if the page object is
+//                 active. This is a required parameter. Not filled if FALSE
+//                 is returned.
+//
+// For page objects where |active| is filled with FALSE, the |page_object| is
+// treated as if it wasn't in the document even though it is still held
+// internally.
+//
+// Returns TRUE if the operation succeeded, FALSE if it failed.
+ public static native @Cast("FPDF_BOOL") int FPDFPageObj_GetIsActive(fpdf_pageobject_t__ page_object, @Cast("FPDF_BOOL*") IntPointer active);
+public static native @Cast("FPDF_BOOL") int FPDFPageObj_GetIsActive(fpdf_pageobject_t__ page_object, @Cast("FPDF_BOOL*") IntBuffer active);
+public static native @Cast("FPDF_BOOL") int FPDFPageObj_GetIsActive(fpdf_pageobject_t__ page_object, @Cast("FPDF_BOOL*") int[] active);
+
+// Experimental API.
+// Sets if |page_object| is active within page.
+//
+//   page_object - handle to a page object.
+//   active      - a boolean specifying if the object is active.
+//
+// Returns TRUE on success.
+//
+// Page objects all start in the active state by default, and remain in that
+// state unless this function is called.
+//
+// When |active| is false, this makes the |page_object| be treated as if it
+// wasn't in the document even though it is still held internally.
+ public static native @Cast("FPDF_BOOL") int FPDFPageObj_SetIsActive(fpdf_pageobject_t__ page_object, @Cast("FPDF_BOOL") int active);
+
 // Transform |page_object| by the given matrix.
 //
 //   page_object - handle to a page object.
@@ -287,6 +321,20 @@ public static native @Cast("FPDF_BOOL") int FPDF_MovePages(fpdf_document_t__ doc
                       double f);
 
 // Experimental API.
+// Transform |page_object| by the given matrix.
+//
+//   page_object - handle to a page object.
+//   matrix      - the transform matrix.
+//
+// Returns TRUE on success.
+//
+// This can be used to scale, rotate, shear and translate the |page_object|.
+// It is an improved version of FPDFPageObj_Transform() that does not do
+// unnecessary double to float conversions, and only uses 1 parameter for the
+// matrix. It also returns whether the operation succeeded or not.
+ public static native @Cast("FPDF_BOOL") int FPDFPageObj_TransformF(fpdf_pageobject_t__ page_object, @Const FS_MATRIX matrix);
+
+// Experimental API.
 // Get the transform matrix of a page object.
 //
 //   page_object - handle to a page object.
@@ -296,6 +344,11 @@ public static native @Cast("FPDF_BOOL") int FPDF_MovePages(fpdf_document_t__ doc
 //   |a c e|
 //   |b d f|
 // and used to scale, rotate, shear and translate the page object.
+//
+// For page objects outside form objects, the matrix values are relative to the
+// page that contains it.
+// For page objects inside form objects, the matrix values are relative to the
+// form that contains it.
 //
 // Returns TRUE on success.
  public static native @Cast("FPDF_BOOL") int FPDFPageObj_GetMatrix(fpdf_pageobject_t__ page_object, FS_MATRIX matrix);
@@ -342,6 +395,14 @@ public static native @Cast("FPDF_BOOL") int FPDF_MovePages(fpdf_document_t__ doc
 //
 // Returns a handle to a new image object.
  public static native fpdf_pageobject_t__ FPDFPageObj_NewImageObj(fpdf_document_t__ document);
+
+// Experimental API.
+// Get the marked content ID for the object.
+//
+//   page_object - handle to a page object.
+//
+// Returns the page object's marked content ID, or -1 on error.
+ public static native int FPDFPageObj_GetMarkedContentID(fpdf_pageobject_t__ page_object);
 
 // Experimental API.
 // Get number of content marks in |page_object|.
@@ -392,16 +453,25 @@ public static native fpdf_pageobjectmark_t__ FPDFPageObj_AddMark(fpdf_pageobject
 //
 //   mark       - handle to a content mark.
 //   buffer     - buffer for holding the returned name in UTF-16LE. This is only
-//                modified if |buflen| is longer than the length of the name.
+//                modified if |buflen| is large enough to store the name.
 //                Optional, pass null to just retrieve the size of the buffer
 //                needed.
-//   buflen     - length of the buffer.
+//   buflen     - length of the buffer in bytes.
 //   out_buflen - pointer to variable that will receive the minimum buffer size
-//                to contain the name. Not filled if FALSE is returned.
+//                in bytes to contain the name. This is a required parameter.
+//                Not filled if FALSE is returned.
 //
 // Returns TRUE if the operation succeeded, FALSE if it failed.
  public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_GetName(fpdf_pageobjectmark_t__ mark,
-                        Pointer buffer,
+                        @Cast("unsigned short*") ShortPointer buffer,
+                        @Cast("unsigned long") long buflen,
+                        @Cast("unsigned long*") CLongPointer out_buflen);
+public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_GetName(fpdf_pageobjectmark_t__ mark,
+                        @Cast("unsigned short*") ShortBuffer buffer,
+                        @Cast("unsigned long") long buflen,
+                        @Cast("unsigned long*") CLongPointer out_buflen);
+public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_GetName(fpdf_pageobjectmark_t__ mark,
+                        @Cast("unsigned short*") short[] buffer,
                         @Cast("unsigned long") long buflen,
                         @Cast("unsigned long*") CLongPointer out_buflen);
 
@@ -420,17 +490,28 @@ public static native fpdf_pageobjectmark_t__ FPDFPageObj_AddMark(fpdf_pageobject
 //   mark       - handle to a content mark.
 //   index      - index of the property.
 //   buffer     - buffer for holding the returned key in UTF-16LE. This is only
-//                modified if |buflen| is longer than the length of the key.
+//                modified if |buflen| is large enough to store the key.
 //                Optional, pass null to just retrieve the size of the buffer
 //                needed.
-//   buflen     - length of the buffer.
+//   buflen     - length of the buffer in bytes.
 //   out_buflen - pointer to variable that will receive the minimum buffer size
-//                to contain the key. Not filled if FALSE is returned.
+//                in bytes to contain the name. This is a required parameter.
+//                Not filled if FALSE is returned.
 //
 // Returns TRUE if the operation was successful, FALSE otherwise.
  public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_GetParamKey(fpdf_pageobjectmark_t__ mark,
                             @Cast("unsigned long") long index,
-                            Pointer buffer,
+                            @Cast("unsigned short*") ShortPointer buffer,
+                            @Cast("unsigned long") long buflen,
+                            @Cast("unsigned long*") CLongPointer out_buflen);
+public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_GetParamKey(fpdf_pageobjectmark_t__ mark,
+                            @Cast("unsigned long") long index,
+                            @Cast("unsigned short*") ShortBuffer buffer,
+                            @Cast("unsigned long") long buflen,
+                            @Cast("unsigned long*") CLongPointer out_buflen);
+public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_GetParamKey(fpdf_pageobjectmark_t__ mark,
+                            @Cast("unsigned long") long index,
+                            @Cast("unsigned short*") short[] buffer,
                             @Cast("unsigned long") long buflen,
                             @Cast("unsigned long*") CLongPointer out_buflen);
 
@@ -482,23 +563,43 @@ public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_GetParamIntValue(fpd
 //   mark       - handle to a content mark.
 //   key        - string key of the property.
 //   buffer     - buffer for holding the returned value in UTF-16LE. This is
-//                only modified if |buflen| is longer than the length of the
-//                value.
+//                only modified if |buflen| is large enough to store the value.
 //                Optional, pass null to just retrieve the size of the buffer
 //                needed.
-//   buflen     - length of the buffer.
+//   buflen     - length of the buffer in bytes.
 //   out_buflen - pointer to variable that will receive the minimum buffer size
-//                to contain the value. Not filled if FALSE is returned.
+//                in bytes to contain the name. This is a required parameter.
+//                Not filled if FALSE is returned.
 //
 // Returns TRUE if the key maps to a string/blob value, FALSE otherwise.
  public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_GetParamStringValue(fpdf_pageobjectmark_t__ mark,
                                     @Cast("const char*") BytePointer key,
-                                    Pointer buffer,
+                                    @Cast("unsigned short*") ShortPointer buffer,
                                     @Cast("unsigned long") long buflen,
                                     @Cast("unsigned long*") CLongPointer out_buflen);
 public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_GetParamStringValue(fpdf_pageobjectmark_t__ mark,
                                     String key,
-                                    Pointer buffer,
+                                    @Cast("unsigned short*") ShortBuffer buffer,
+                                    @Cast("unsigned long") long buflen,
+                                    @Cast("unsigned long*") CLongPointer out_buflen);
+public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_GetParamStringValue(fpdf_pageobjectmark_t__ mark,
+                                    @Cast("const char*") BytePointer key,
+                                    @Cast("unsigned short*") short[] buffer,
+                                    @Cast("unsigned long") long buflen,
+                                    @Cast("unsigned long*") CLongPointer out_buflen);
+public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_GetParamStringValue(fpdf_pageobjectmark_t__ mark,
+                                    String key,
+                                    @Cast("unsigned short*") ShortPointer buffer,
+                                    @Cast("unsigned long") long buflen,
+                                    @Cast("unsigned long*") CLongPointer out_buflen);
+public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_GetParamStringValue(fpdf_pageobjectmark_t__ mark,
+                                    @Cast("const char*") BytePointer key,
+                                    @Cast("unsigned short*") ShortBuffer buffer,
+                                    @Cast("unsigned long") long buflen,
+                                    @Cast("unsigned long*") CLongPointer out_buflen);
+public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_GetParamStringValue(fpdf_pageobjectmark_t__ mark,
+                                    String key,
+                                    @Cast("unsigned short*") short[] buffer,
                                     @Cast("unsigned long") long buflen,
                                     @Cast("unsigned long*") CLongPointer out_buflen);
 
@@ -508,22 +609,43 @@ public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_GetParamStringValue(
 //   mark       - handle to a content mark.
 //   key        - string key of the property.
 //   buffer     - buffer for holding the returned value. This is only modified
-//                if |buflen| is at least as long as the length of the value.
+//                if |buflen| is large enough to store the value.
 //                Optional, pass null to just retrieve the size of the buffer
 //                needed.
-//   buflen     - length of the buffer.
+//   buflen     - length of the buffer in bytes.
 //   out_buflen - pointer to variable that will receive the minimum buffer size
-//                to contain the value. Not filled if FALSE is returned.
+//                in bytes to contain the name. This is a required parameter.
+//                Not filled if FALSE is returned.
 //
 // Returns TRUE if the key maps to a string/blob value, FALSE otherwise.
  public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_GetParamBlobValue(fpdf_pageobjectmark_t__ mark,
                                   @Cast("const char*") BytePointer key,
-                                  Pointer buffer,
+                                  @Cast("unsigned char*") BytePointer buffer,
                                   @Cast("unsigned long") long buflen,
                                   @Cast("unsigned long*") CLongPointer out_buflen);
 public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_GetParamBlobValue(fpdf_pageobjectmark_t__ mark,
                                   String key,
-                                  Pointer buffer,
+                                  @Cast("unsigned char*") ByteBuffer buffer,
+                                  @Cast("unsigned long") long buflen,
+                                  @Cast("unsigned long*") CLongPointer out_buflen);
+public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_GetParamBlobValue(fpdf_pageobjectmark_t__ mark,
+                                  @Cast("const char*") BytePointer key,
+                                  @Cast("unsigned char*") byte[] buffer,
+                                  @Cast("unsigned long") long buflen,
+                                  @Cast("unsigned long*") CLongPointer out_buflen);
+public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_GetParamBlobValue(fpdf_pageobjectmark_t__ mark,
+                                  String key,
+                                  @Cast("unsigned char*") BytePointer buffer,
+                                  @Cast("unsigned long") long buflen,
+                                  @Cast("unsigned long*") CLongPointer out_buflen);
+public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_GetParamBlobValue(fpdf_pageobjectmark_t__ mark,
+                                  @Cast("const char*") BytePointer key,
+                                  @Cast("unsigned char*") ByteBuffer buffer,
+                                  @Cast("unsigned long") long buflen,
+                                  @Cast("unsigned long*") CLongPointer out_buflen);
+public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_GetParamBlobValue(fpdf_pageobjectmark_t__ mark,
+                                  String key,
+                                  @Cast("unsigned char*") byte[] buffer,
                                   @Cast("unsigned long") long buflen,
                                   @Cast("unsigned long*") CLongPointer out_buflen);
 
@@ -590,13 +712,37 @@ public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_SetStringParam(fpdf_
                              fpdf_pageobject_t__ page_object,
                              fpdf_pageobjectmark_t__ mark,
                              @Cast("const char*") BytePointer key,
-                             Pointer value,
+                             @Cast("const unsigned char*") BytePointer value,
                              @Cast("unsigned long") long value_len);
 public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_SetBlobParam(fpdf_document_t__ document,
                              fpdf_pageobject_t__ page_object,
                              fpdf_pageobjectmark_t__ mark,
                              String key,
-                             Pointer value,
+                             @Cast("const unsigned char*") ByteBuffer value,
+                             @Cast("unsigned long") long value_len);
+public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_SetBlobParam(fpdf_document_t__ document,
+                             fpdf_pageobject_t__ page_object,
+                             fpdf_pageobjectmark_t__ mark,
+                             @Cast("const char*") BytePointer key,
+                             @Cast("const unsigned char*") byte[] value,
+                             @Cast("unsigned long") long value_len);
+public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_SetBlobParam(fpdf_document_t__ document,
+                             fpdf_pageobject_t__ page_object,
+                             fpdf_pageobjectmark_t__ mark,
+                             String key,
+                             @Cast("const unsigned char*") BytePointer value,
+                             @Cast("unsigned long") long value_len);
+public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_SetBlobParam(fpdf_document_t__ document,
+                             fpdf_pageobject_t__ page_object,
+                             fpdf_pageobjectmark_t__ mark,
+                             @Cast("const char*") BytePointer key,
+                             @Cast("const unsigned char*") ByteBuffer value,
+                             @Cast("unsigned long") long value_len);
+public static native @Cast("FPDF_BOOL") int FPDFPageObjMark_SetBlobParam(fpdf_document_t__ document,
+                             fpdf_pageobject_t__ page_object,
+                             fpdf_pageobjectmark_t__ mark,
+                             String key,
+                             @Cast("const unsigned char*") byte[] value,
                              @Cast("unsigned long") long value_len);
 
 // Experimental API.
@@ -815,6 +961,40 @@ public static native @Cast("FPDF_BOOL") int FPDFImageObj_GetImagePixelSize(fpdf_
 public static native @Cast("FPDF_BOOL") int FPDFImageObj_GetImagePixelSize(fpdf_pageobject_t__ image_object,
                                @Cast("unsigned int*") int[] width,
                                @Cast("unsigned int*") int[] height);
+
+// Experimental API.
+// Get ICC profile decoded data of |image_object|. If the |image_object| is not
+// an image object or if it does not have an image, then the return value will
+// be false. It also returns false if the |image_object| has no ICC profile.
+// |buffer| is only modified if ICC profile exists and |buflen| is longer than
+// the length of the ICC profile decoded data.
+//
+//   image_object - handle to an image object; must not be NULL.
+//   page         - handle to the page containing |image_object|; must not be
+//                  NULL. Required for retrieving the image's colorspace.
+//   buffer       - Buffer to receive ICC profile data; may be NULL if querying
+//                  required size via |out_buflen|.
+//   buflen       - Length of the buffer in bytes. Ignored if |buffer| is NULL.
+//   out_buflen   - Pointer to receive the ICC profile data size in bytes; must
+//                  not be NULL. Will be set if this API returns true.
+//
+// Returns true if |out_buflen| is not null and an ICC profile exists for the
+// given |image_object|.
+ public static native @Cast("FPDF_BOOL") int FPDFImageObj_GetIccProfileDataDecoded(fpdf_pageobject_t__ image_object,
+                                      fpdf_page_t__ page,
+                                      @Cast("uint8_t*") BytePointer buffer,
+                                      @Cast("size_t") long buflen,
+                                      @Cast("size_t*") SizeTPointer out_buflen);
+public static native @Cast("FPDF_BOOL") int FPDFImageObj_GetIccProfileDataDecoded(fpdf_pageobject_t__ image_object,
+                                      fpdf_page_t__ page,
+                                      @Cast("uint8_t*") ByteBuffer buffer,
+                                      @Cast("size_t") long buflen,
+                                      @Cast("size_t*") SizeTPointer out_buflen);
+public static native @Cast("FPDF_BOOL") int FPDFImageObj_GetIccProfileDataDecoded(fpdf_pageobject_t__ image_object,
+                                      fpdf_page_t__ page,
+                                      @Cast("uint8_t*") byte[] buffer,
+                                      @Cast("size_t") long buflen,
+                                      @Cast("size_t*") SizeTPointer out_buflen);
 
 // Create a new path object at an initial position.
 //
@@ -1268,16 +1448,16 @@ public static native @Cast("FPDF_BOOL") int FPDFText_SetCharcodes(fpdf_pageobjec
                       @Cast("size_t") long count);
 
 // Returns a font object loaded from a stream of data. The font is loaded
-// into the document.
+// into the document. Various font data structures, such as the ToUnicode data,
+// are auto-generated based on the inputs.
 //
-// document   - handle to the document.
-// data       - the stream of data, which will be copied by the font object.
-// size       - size of the stream, in bytes.
-// font_type  - FPDF_FONT_TYPE1 or FPDF_FONT_TRUETYPE depending on the font
-// type.
-// cid        - a boolean specifying if the font is a CID font or not.
+// document  - handle to the document.
+// data      - the stream of font data, which will be copied by the font object.
+// size      - the size of the font data, in bytes.
+// font_type - FPDF_FONT_TYPE1 or FPDF_FONT_TRUETYPE depending on the font type.
+// cid       - a boolean specifying if the font is a CID font or not.
 //
-// The loaded font can be closed using FPDFFont_Close.
+// The loaded font can be closed using FPDFFont_Close().
 //
 // Returns NULL on failure
  public static native fpdf_font_t__ FPDFText_LoadFont(fpdf_document_t__ document,
@@ -1304,11 +1484,64 @@ public static native fpdf_font_t__ FPDFText_LoadFont(fpdf_document_t__ document,
 // document   - handle to the document.
 // font       - string containing the font name, without spaces.
 //
-// The loaded font can be closed using FPDFFont_Close.
+// The loaded font can be closed using FPDFFont_Close().
 //
 // Returns NULL on failure.
  public static native fpdf_font_t__ FPDFText_LoadStandardFont(fpdf_document_t__ document, @Cast("const char*") BytePointer font);
 public static native fpdf_font_t__ FPDFText_LoadStandardFont(fpdf_document_t__ document, String font);
+
+// Experimental API.
+// Returns a font object loaded from a stream of data for a type 2 CID font. The
+// font is loaded into the document. Unlike FPDFText_LoadFont(), the ToUnicode
+// data and the CIDToGIDMap data are caller provided, instead of auto-generated.
+//
+// document                 - handle to the document.
+// font_data                - the stream of font data, which will be copied by
+//                            the font object.
+// font_data_size           - the size of the font data, in bytes.
+// to_unicode_cmap          - the ToUnicode data.
+// cid_to_gid_map_data      - the stream of CIDToGIDMap data.
+// cid_to_gid_map_data_size - the size of the CIDToGIDMap data, in bytes.
+//
+// The loaded font can be closed using FPDFFont_Close().
+//
+// Returns NULL on failure.
+ public static native fpdf_font_t__ FPDFText_LoadCidType2Font(fpdf_document_t__ document,
+                          @Cast("const uint8_t*") BytePointer font_data,
+                          @Cast("uint32_t") int font_data_size,
+                          @Cast("const char*") BytePointer to_unicode_cmap,
+                          @Cast("const uint8_t*") BytePointer cid_to_gid_map_data,
+                          @Cast("uint32_t") int cid_to_gid_map_data_size);
+public static native fpdf_font_t__ FPDFText_LoadCidType2Font(fpdf_document_t__ document,
+                          @Cast("const uint8_t*") ByteBuffer font_data,
+                          @Cast("uint32_t") int font_data_size,
+                          String to_unicode_cmap,
+                          @Cast("const uint8_t*") ByteBuffer cid_to_gid_map_data,
+                          @Cast("uint32_t") int cid_to_gid_map_data_size);
+public static native fpdf_font_t__ FPDFText_LoadCidType2Font(fpdf_document_t__ document,
+                          @Cast("const uint8_t*") byte[] font_data,
+                          @Cast("uint32_t") int font_data_size,
+                          @Cast("const char*") BytePointer to_unicode_cmap,
+                          @Cast("const uint8_t*") byte[] cid_to_gid_map_data,
+                          @Cast("uint32_t") int cid_to_gid_map_data_size);
+public static native fpdf_font_t__ FPDFText_LoadCidType2Font(fpdf_document_t__ document,
+                          @Cast("const uint8_t*") BytePointer font_data,
+                          @Cast("uint32_t") int font_data_size,
+                          String to_unicode_cmap,
+                          @Cast("const uint8_t*") BytePointer cid_to_gid_map_data,
+                          @Cast("uint32_t") int cid_to_gid_map_data_size);
+public static native fpdf_font_t__ FPDFText_LoadCidType2Font(fpdf_document_t__ document,
+                          @Cast("const uint8_t*") ByteBuffer font_data,
+                          @Cast("uint32_t") int font_data_size,
+                          @Cast("const char*") BytePointer to_unicode_cmap,
+                          @Cast("const uint8_t*") ByteBuffer cid_to_gid_map_data,
+                          @Cast("uint32_t") int cid_to_gid_map_data_size);
+public static native fpdf_font_t__ FPDFText_LoadCidType2Font(fpdf_document_t__ document,
+                          @Cast("const uint8_t*") byte[] font_data,
+                          @Cast("uint32_t") int font_data_size,
+                          String to_unicode_cmap,
+                          @Cast("const uint8_t*") byte[] cid_to_gid_map_data,
+                          @Cast("uint32_t") int cid_to_gid_map_data_size);
 
 // Get the font size of a text object.
 //
@@ -1409,21 +1642,51 @@ public static native @Cast("unsigned long") long FPDFTextObj_GetText(fpdf_pageob
  public static native fpdf_font_t__ FPDFTextObj_GetFont(fpdf_pageobject_t__ text);
 
 // Experimental API.
-// Get the font name of a font.
+// Get the base name of a font.
+//
+// font   - the handle to the font object.
+// buffer - the address of a buffer that receives the base font name.
+// length - the size, in bytes, of |buffer|.
+//
+// Returns the number of bytes in the base name (including the trailing NUL
+// character) on success, 0 on error. The base name is typically the font's
+// PostScript name. See descriptions of "BaseFont" in ISO 32000-1:2008 spec.
+//
+// Regardless of the platform, the |buffer| is always in UTF-8 encoding.
+// If |length| is less than the returned length, or |buffer| is NULL, |buffer|
+// will not be modified.
+ public static native @Cast("size_t") long FPDFFont_GetBaseFontName(fpdf_font_t__ font,
+                                                          @Cast("char*") BytePointer buffer,
+                                                          @Cast("size_t") long length);
+public static native @Cast("size_t") long FPDFFont_GetBaseFontName(fpdf_font_t__ font,
+                                                          @Cast("char*") ByteBuffer buffer,
+                                                          @Cast("size_t") long length);
+public static native @Cast("size_t") long FPDFFont_GetBaseFontName(fpdf_font_t__ font,
+                                                          @Cast("char*") byte[] buffer,
+                                                          @Cast("size_t") long length);
+
+// Experimental API.
+// Get the family name of a font.
 //
 // font   - the handle to the font object.
 // buffer - the address of a buffer that receives the font name.
 // length - the size, in bytes, of |buffer|.
 //
-// Returns the number of bytes in the font name (including the trailing NUL
+// Returns the number of bytes in the family name (including the trailing NUL
 // character) on success, 0 on error.
 //
 // Regardless of the platform, the |buffer| is always in UTF-8 encoding.
 // If |length| is less than the returned length, or |buffer| is NULL, |buffer|
 // will not be modified.
- public static native @Cast("unsigned long") long FPDFFont_GetFontName(fpdf_font_t__ font, @Cast("char*") BytePointer buffer, @Cast("unsigned long") long length);
-public static native @Cast("unsigned long") long FPDFFont_GetFontName(fpdf_font_t__ font, @Cast("char*") ByteBuffer buffer, @Cast("unsigned long") long length);
-public static native @Cast("unsigned long") long FPDFFont_GetFontName(fpdf_font_t__ font, @Cast("char*") byte[] buffer, @Cast("unsigned long") long length);
+ public static native @Cast("size_t") long FPDFFont_GetFamilyName(fpdf_font_t__ font,
+                                                        @Cast("char*") BytePointer buffer,
+                                                        @Cast("size_t") long length);
+public static native @Cast("size_t") long FPDFFont_GetFamilyName(fpdf_font_t__ font,
+                                                        @Cast("char*") ByteBuffer buffer,
+                                                        @Cast("size_t") long length);
+public static native @Cast("size_t") long FPDFFont_GetFamilyName(fpdf_font_t__ font,
+                                                        @Cast("char*") byte[] buffer,
+                                                        @Cast("size_t") long length);
 
 // Experimental API.
 // Get the decoded data from the |font| object.

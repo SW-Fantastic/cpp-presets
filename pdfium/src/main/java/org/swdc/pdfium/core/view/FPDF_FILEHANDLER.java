@@ -9,12 +9,10 @@ import org.bytedeco.javacpp.annotation.*;
 import static org.swdc.pdfium.core.PdfiumView.*;
 
 
-/*
- * Structure for file reading or writing (I/O).
- *
- * Note: This is a handler and should be implemented by callers,
- * and is only used from XFA.
- */
+// Structure for file reading or writing (I/O).
+//
+// Note: This is a handler and should be implemented by callers,
+// and is only used from XFA.
 @Properties(inherit = org.swdc.pdfium.conf.PdfiumViewConfigure.class)
 public class FPDF_FILEHANDLER extends Pointer {
     static { Loader.load(); }
@@ -33,20 +31,16 @@ public class FPDF_FILEHANDLER extends Pointer {
         return new FPDF_FILEHANDLER((Pointer)this).offsetAddress(i);
     }
 
-  /*
-   * User-defined data.
-   * Note: Callers can use this field to track controls.
-   */
+  // User-defined data.
+  // Note: Callers can use this field to track controls.
   public native Pointer clientData(); public native FPDF_FILEHANDLER clientData(Pointer setter);
 
-  /*
-   * Callback function to release the current file stream object.
-   *
-   * Parameters:
-   *       clientData   -  Pointer to user-defined data.
-   * Returns:
-   *       None.
-   */
+  // Callback function to release the current file stream object.
+  //
+  // Parameters:
+  //       clientData   -  Pointer to user-defined data.
+  // Returns:
+  //       None.
   public static class Release_Pointer extends FunctionPointer {
       static { Loader.load(); }
       /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */
@@ -57,14 +51,12 @@ public class FPDF_FILEHANDLER extends Pointer {
   }
   public native Release_Pointer Release(); public native FPDF_FILEHANDLER Release(Release_Pointer setter);
 
-  /*
-   * Callback function to retrieve the current file stream size.
-   *
-   * Parameters:
-   *       clientData   -  Pointer to user-defined data.
-   * Returns:
-   *       Size of file stream.
-   */
+  // Callback function to retrieve the current file stream size.
+  //
+  // Parameters:
+  //       clientData   -  Pointer to user-defined data.
+  // Returns:
+  //       Size of file stream.
   public static class GetSize_Pointer extends FunctionPointer {
       static { Loader.load(); }
       /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */
@@ -75,21 +67,19 @@ public class FPDF_FILEHANDLER extends Pointer {
   }
   public native GetSize_Pointer GetSize(); public native FPDF_FILEHANDLER GetSize(GetSize_Pointer setter);
 
-  /*
-   * Callback function to read data from the current file stream.
-   *
-   * Parameters:
-   *       clientData   -  Pointer to user-defined data.
-   *       offset       -  Offset position starts from the beginning of file
-   *                       stream. This parameter indicates reading position.
-   *       buffer       -  Memory buffer to store data which are read from
-   *                       file stream. This parameter should not be NULL.
-   *       size         -  Size of data which should be read from file stream,
-   *                       in bytes. The buffer indicated by |buffer| must be
-   *                       large enough to store specified data.
-   * Returns:
-   *       0 for success, other value for failure.
-   */
+  // Callback function to read data from the current file stream.
+  //
+  // Parameters:
+  //       clientData   -  Pointer to user-defined data.
+  //       offset       -  Offset position starts from the beginning of file
+  //                       stream. This parameter indicates reading position.
+  //       buffer       -  Memory buffer to store data which are read from
+  //                       file stream. This parameter should not be NULL.
+  //       size         -  Size of data which should be read from file stream,
+  //                       in bytes. The buffer indicated by |buffer| must be
+  //                       large enough to store specified data.
+  // Returns:
+  //       0 for success, other value for failure.
   public static class ReadBlock_Pointer_long_Pointer_long extends FunctionPointer {
       static { Loader.load(); }
       /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */
@@ -103,20 +93,18 @@ public class FPDF_FILEHANDLER extends Pointer {
   }
   public native ReadBlock_Pointer_long_Pointer_long ReadBlock(); public native FPDF_FILEHANDLER ReadBlock(ReadBlock_Pointer_long_Pointer_long setter);
 
-  /*
-   * Callback function to write data into the current file stream.
-   *
-   * Parameters:
-   *       clientData   -  Pointer to user-defined data.
-   *       offset       -  Offset position starts from the beginning of file
-   *                       stream. This parameter indicates writing position.
-   *       buffer       -  Memory buffer contains data which is written into
-   *                       file stream. This parameter should not be NULL.
-   *       size         -  Size of data which should be written into file
-   *                       stream, in bytes.
-   * Returns:
-   *       0 for success, other value for failure.
-   */
+  // Callback function to write data into the current file stream.
+  //
+  // Parameters:
+  //       clientData   -  Pointer to user-defined data.
+  //       offset       -  Offset position starts from the beginning of file
+  //                       stream. This parameter indicates writing position.
+  //       buffer       -  Memory buffer contains data which is written into
+  //                       file stream. This parameter should not be NULL.
+  //       size         -  Size of data which should be written into file
+  //                       stream, in bytes.
+  // Returns:
+  //       0 for success, other value for failure.
   public static class WriteBlock_Pointer_long_Pointer_long extends FunctionPointer {
       static { Loader.load(); }
       /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */
@@ -129,14 +117,12 @@ public class FPDF_FILEHANDLER extends Pointer {
                               @Cast("FPDF_DWORD") long size);
   }
   public native WriteBlock_Pointer_long_Pointer_long WriteBlock(); public native FPDF_FILEHANDLER WriteBlock(WriteBlock_Pointer_long_Pointer_long setter);
-  /*
-   * Callback function to flush all internal accessing buffers.
-   *
-   * Parameters:
-   *       clientData   -  Pointer to user-defined data.
-   * Returns:
-   *       0 for success, other value for failure.
-   */
+  // Callback function to flush all internal accessing buffers.
+  //
+  // Parameters:
+  //       clientData   -  Pointer to user-defined data.
+  // Returns:
+  //       0 for success, other value for failure.
   public static class Flush_Pointer extends FunctionPointer {
       static { Loader.load(); }
       /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */
@@ -147,18 +133,16 @@ public class FPDF_FILEHANDLER extends Pointer {
   }
   public native Flush_Pointer Flush(); public native FPDF_FILEHANDLER Flush(Flush_Pointer setter);
 
-  /*
-   * Callback function to change file size.
-   *
-   * Description:
-   *       This function is called under writing mode usually. Implementer
-   *       can determine whether to realize it based on application requests.
-   * Parameters:
-   *       clientData   -  Pointer to user-defined data.
-   *       size         -  New size of file stream, in bytes.
-   * Returns:
-   *       0 for success, other value for failure.
-   */
+  // Callback function to change file size.
+  //
+  // Description:
+  //       This function is called under writing mode usually. Implementer
+  //       can determine whether to realize it based on application requests.
+  // Parameters:
+  //       clientData   -  Pointer to user-defined data.
+  //       size         -  New size of file stream, in bytes.
+  // Returns:
+  //       0 for success, other value for failure.
   public static class Truncate_Pointer_long extends FunctionPointer {
       static { Loader.load(); }
       /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */

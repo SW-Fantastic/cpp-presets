@@ -147,6 +147,9 @@ public static final int
 // Targeting view\fpdf_structelement_attr_t__.java
 
 
+// Targeting view\fpdf_structelement_attr_value_t__.java
+
+
 // Targeting view\fpdf_structtree_t__.java
 
 
@@ -731,7 +734,8 @@ public static final int FPDF_CONVERT_FILL_TO_STROKE = 0x20;
 //          flags       -   0 for normal display, or combination of flags
 //                          defined above.
 // Return value:
-//          None.
+//          Returns true if the page is rendered successfully, false otherwise.
+
 
 // #endif
 
@@ -1064,7 +1068,7 @@ public static final int FPDFBitmap_BGRA = 4;
 //          color       -   A 32-bit value specifing the color, in 8888 ARGB
 //                          format.
 // Return value:
-//          None.
+//          Returns whether the operation succeeded or not.
 // Comments:
 //          This function sets the color and (optionally) alpha value in the
 //          specified region of the bitmap.
@@ -1074,12 +1078,12 @@ public static final int FPDFBitmap_BGRA = 4;
 //          background will be replaced by the source color and the alpha.
 //
 //          If the alpha channel is not used, the alpha parameter is ignored.
- public static native void FPDFBitmap_FillRect(fpdf_bitmap_t__ bitmap,
-                                                   int left,
-                                                   int top,
-                                                   int width,
-                                                   int height,
-                                                   @Cast("FPDF_DWORD") long color);
+ public static native @Cast("FPDF_BOOL") int FPDFBitmap_FillRect(fpdf_bitmap_t__ bitmap,
+                                                        int left,
+                                                        int top,
+                                                        int width,
+                                                        int height,
+                                                        @Cast("FPDF_DWORD") long color);
 
 // Function: FPDFBitmap_GetBuffer
 //          Get data buffer of a bitmap.
@@ -1199,14 +1203,14 @@ public static final int FPDFBitmap_BGRA = 4;
 //          document    -   Handle to the loaded document.
 //          key         -   Name of the key in the viewer pref dictionary,
 //                          encoded in UTF-8.
-//          buffer      -   A string to write the contents of the key to.
+//          buffer      -   Caller-allocate buffer to receive the key, or NULL
+//                      -   to query the required length.
 //          length      -   Length of the buffer.
 // Return value:
 //          The number of bytes in the contents, including the NULL terminator.
 //          Thus if the return value is 0, then that indicates an error, such
-//          as when |document| is invalid or |buffer| is NULL. If |length| is
-//          less than the returned length, or |buffer| is NULL, |buffer| will
-//          not be modified.
+//          as when |document| is invalid. If |length| is less than the required
+//          length, or |buffer| is NULL, |buffer| will not be modified.
  public static native @Cast("unsigned long") long FPDF_VIEWERREF_GetName(fpdf_document_t__ document,
                        @Cast("const char*") BytePointer key,
                        @Cast("char*") BytePointer buffer,
@@ -1360,6 +1364,9 @@ public static native fpdf_dest_t__ FPDF_GetNamedDestByName(fpdf_document_t__ doc
 //          Use is optional, but allows external creation of isolates
 //          matching the ones PDFium will make when none is provided
 //          via |FPDF_LIBRARY_CONFIG::m_pIsolate|.
+//
+//          Can only be called when the library is in an uninitialized or
+//          destroyed state.
  
 // #endif  // PDF_ENABLE_V8
 
