@@ -121,32 +121,68 @@ public class PDFPage implements Closeable {
     }
 
 
+    /**
+     * 获取PDF页面的高度。
+     *
+     * @return 返回PDF页面的高度（以点为单位）。
+     * @throws RuntimeException 如果页面对象无效，则抛出运行时异常。
+     */
     public double getHeight() {
         valid();
         return PdfiumView.FPDF_GetPageHeight(page);
     }
 
+    /**
+     * 获取PDF页面的宽度。
+     *
+     * @return 返回PDF页面的宽度（以点为单位）。
+     * @throws RuntimeException 如果页面对象无效，则抛出运行时异常。
+     */
     public double getWidth() {
         valid();
         return PdfiumView.FPDF_GetPageWidth(page);
     }
 
+    /**
+     * 获取PDF页面的高度（浮点型）。
+     *
+     * @return 返回PDF页面的高度（以浮点型表示，单位为点）。
+     * @throws RuntimeException 如果页面对象无效，则抛出运行时异常。
+     */
     public float getHeightF() {
         valid();
         return PdfiumView.FPDF_GetPageHeightF(page);
     }
 
+    /**
+     * 获取PDF页面的宽度（浮点型）。
+     *
+     * @return 返回PDF页面的宽度（以浮点型表示，单位为点）。
+     * @throws RuntimeException 如果页面对象无效，则抛出运行时异常。
+     */
     public float getWidthF() {
         valid();
         return PdfiumView.FPDF_GetPageWidthF(page);
     }
 
+    /**
+     * 获取PDF页面的旋转角度。
+     *
+     * @return 返回PDFPageRotate枚举值，表示页面的旋转角度。
+     * @throws RuntimeException 如果页面对象无效，则抛出运行时异常。
+     */
     public PDFPageRotate getPageRotate() {
         valid();
         int val = PdfiumEdit.FPDFPage_GetRotation(page);
         return PDFPageRotate.of(val);
     }
 
+    /**
+     * 设置PDF页面的旋转角度。
+     *
+     * @param rotate PDFPageRotate枚举值，表示要设置的旋转角度。
+     * @throws RuntimeException 如果页面对象无效，则抛出运行时异常。
+     */
     public void setPageRotate(PDFPageRotate rotate) {
         valid();
         if (rotate == null) {
@@ -155,6 +191,12 @@ public class PDFPage implements Closeable {
         PdfiumEdit.FPDFPage_SetRotation(page,rotate.getValue());
     }
 
+    /**
+     * 获取PDF页面标签。
+     *
+     * @return 返回页面的标签字符串，如果页面没有标签则返回空字符串。
+     * @throws RuntimeException 如果页面对象无效，则抛出运行时异常。
+     */
     public String getLabel() {
         valid();
 
@@ -219,15 +261,36 @@ public class PDFPage implements Closeable {
     }
 
 
+    /**
+     * 加载字体文件并返回对应的PDFFont对象。
+     *
+     * @param font 要加载的字体文件
+     * @return 返回加载的PDFFont对象
+     * @throws IOException 如果在读取字体文件时发生I/O错误，则抛出此异常
+     */
     public PDFFont loadFont(File font) throws IOException {
         return document.loadFont(font);
     }
 
+    /**
+     * 获取当前页面上的对象数量。
+     *
+     * @return 返回当前页面上的对象数量。
+     * @throws RuntimeException 如果页面对象无效，则抛出运行时异常。
+     */
     public int getObjectCount() {
         valid();
         return PdfiumEdit.FPDFPage_CountObjects(page);
     }
 
+    /**
+     * 获取指定索引处的页面对象。
+     *
+     * @param index 要获取的页面对象的索引
+     * @param <T> 页面对象的类型，必须是PDFPageObject的子类
+     * @return 返回指定索引处的页面对象，如果索引超出范围或对象不存在则返回null
+     * @throws RuntimeException 如果页面对象无效，则抛出运行时异常
+     */
     public <T extends PDFPageObject> T getObject(int index) {
 
         if (index < 0 || index > getObjectCount()) {
@@ -259,6 +322,14 @@ public class PDFPage implements Closeable {
 
     }
 
+    /**
+     * 在PDF页面上创建一个文本对象。
+     *
+     * @param font    要使用的字体对象
+     * @param fontSize 字体大小
+     * @return 返回创建的PDFTextObject对象，如果创建失败则返回null
+     * @throws RuntimeException 如果页面对象无效，则抛出运行时异常
+     */
     public PDFTextObject createText(PDFFont font, float fontSize) {
 
         valid();
@@ -274,6 +345,14 @@ public class PDFPage implements Closeable {
         return new PDFTextObject(obj,null);
     }
 
+    /**
+     * 生成PDF页面的内容。
+     *
+     * 此方法调用Pdfium库的FPDFPage_GenerateContent函数来生成页面的内容。
+     *
+     * @return 如果内容生成成功，则返回true；否则返回false。
+     * @throws RuntimeException 如果页面对象无效，则抛出运行时异常。
+     */
     public boolean generateContent() {
 
         valid();
@@ -281,6 +360,12 @@ public class PDFPage implements Closeable {
 
     }
 
+    /**
+     * 在PDF页面上创建一个新的图像对象。
+     *
+     * @return 返回创建的PDFImageObject对象，如果创建失败则返回null。
+     * @throws RuntimeException 如果页面对象无效，则抛出运行时异常。
+     */
     public PDFImageObject createImage() {
 
         valid();
@@ -295,6 +380,12 @@ public class PDFPage implements Closeable {
         return new PDFImageObject(obj,null);
     }
 
+    /**
+     * 向PDF页面添加对象。
+     *
+     * @param object 要添加到页面的对象
+     * @throws RuntimeException 如果页面对象无效，则抛出运行时异常
+     */
     public void addObject(PDFPageObject object) {
 
         valid();
@@ -304,6 +395,13 @@ public class PDFPage implements Closeable {
     }
 
 
+    /**
+     * 从PDF页面中移除对象。
+     *
+     * @param object 要从页面中移除的对象
+     * @return 如果对象成功移除，则返回true；否则返回false
+     * @throws RuntimeException 如果页面对象无效，则抛出运行时异常
+     */
     public boolean removeObject(PDFPageObject object) {
 
         valid();
@@ -326,12 +424,25 @@ public class PDFPage implements Closeable {
         return page;
     }
 
+    /**
+     * 验证页面对象是否有效。
+     *
+     * 如果页面对象为空或已被关闭，则抛出运行时异常，提示页面已关闭。
+     *
+     * @throws RuntimeException 如果页面对象无效，则抛出此异常
+     */
     private void valid () {
         if (page == null || page.isNull()) {
             throw new RuntimeException("page has closed.");
         }
     }
 
+    /**
+     * 关闭PDF页面并释放相关资源。
+     *
+     * 如果页面对象不为空且未关闭，则关闭该页面并从文档中移除相应的页面引用，
+     * 同时将内部页面对象指针置为空。
+     */
     @Override
     public void close() {
         if (page != null && !page.isNull()) {

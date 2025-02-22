@@ -17,6 +17,7 @@
         <module>mariadb-embedded</module>
         <module>dearImgui</module>
         <module>imgui-framework</module>
+        <module>llama</module>
     </modules>
 
     <properties>

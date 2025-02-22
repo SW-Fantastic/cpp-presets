@@ -17,12 +17,24 @@ public class PDFBookmark implements AutoCloseable {
 
     private fpdf_bookmark_t__ bookmark;
 
+    /**
+     * PDFBookmark 构造函数。
+     *
+     * @param document PDF文档对象，该书签所属的PDF文档
+     * @param bookmark Pdfium库中的书签对象
+     */
     PDFBookmark(PDFDocument document, fpdf_bookmark_t__ bookmark) {
         this.document = document;
         this.bookmark = bookmark;
     }
 
 
+    /**
+     * 获取书签的标题。
+     *
+     * @return 返回书签的标题字符串，如果无法获取标题则返回空字符串。
+     * @throws RuntimeException 如果书签对象无效，则抛出运行时异常。
+     */
     public String getTitle() {
 
         valid();
@@ -40,6 +52,12 @@ public class PDFBookmark implements AutoCloseable {
         return new String(data, StandardCharsets.UTF_16LE);
     }
 
+    /**
+     * 获取当前书签的所有子书签。
+     *
+     * @return 返回包含所有子书签的列表，如果当前书签没有子书签，则返回一个空列表。
+     * @throws RuntimeException 如果书签对象无效，则抛出运行时异常。
+     */
     public List<PDFBookmark> getChildren() {
 
         valid();
@@ -72,6 +90,14 @@ public class PDFBookmark implements AutoCloseable {
 
     }
 
+    /**
+     * 获取书签指向的页面。
+     *
+     * 如果书签指向一个具体的页面，则返回该页面的PDFPage对象；否则返回null。
+     *
+     * @return 返回书签指向的PDFPage对象，如果不指向任何页面则返回null。
+     * @throws RuntimeException 如果书签对象无效，则抛出运行时异常。
+     */
     public PDFPage getPage() {
 
         valid();
@@ -94,12 +120,25 @@ public class PDFBookmark implements AutoCloseable {
         return null;
     }
 
+    /**
+     * 验证书签对象是否有效。
+     *
+     * 如果书签对象为空或已被关闭，则抛出运行时异常，提示书签已关闭。
+     *
+     * @throws RuntimeException 如果书签对象无效，则抛出此异常
+     */
     private void valid() {
         if (bookmark == null || bookmark.isNull()) {
             throw new RuntimeException("bookmark has closed");
         }
     }
 
+    /**
+     * 关闭书签对象，释放相关资源。
+     *
+     * 如果书签对象不为空且未关闭，则关闭书签对象并释放相关资源，
+     * 同时将内部书签对象指针置为空。
+     */
     @Override
     public void close() {
         if (bookmark != null && !bookmark.isNull()) {

@@ -1,6 +1,5 @@
 package com.live2d.sdk.demo;
 
-import com.jogamp.nativewindow.WindowClosingProtocol;
 import com.jogamp.newt.awt.NewtCanvasAWT;
 import com.jogamp.newt.opengl.GLWindow;
 import com.jogamp.opengl.*;
@@ -10,6 +9,8 @@ import org.bytedeco.javacpp.Loader;
 import org.swdc.live2d.core.Live2dCore;
 
 import javax.swing.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 
 public class LApplication {
@@ -33,6 +34,7 @@ public class LApplication {
             delegate.onSurfaceChanged();
             delegate.run();
             animator.start();
+
         }
 
         @Override
@@ -52,6 +54,21 @@ public class LApplication {
             delegate.run();
         }
 
+        public void mouseDown(float x, float y) {
+            LAppDelegate delegate = LAppDelegate.getInstance(this.drawable);
+            delegate.onTouchBegan(x,y);
+        }
+
+        public void mouseMove(float x, float y) {
+            LAppDelegate delegate = LAppDelegate.getInstance(this.drawable);
+            delegate.onTouchMoved(x,y);
+        }
+
+        public void mouseUp(float x, float y) {
+            LAppDelegate delegate = LAppDelegate.getInstance(this.drawable);
+            delegate.onTouchEnd(x,y);
+        }
+
     }
 
     public static void main(String[] args) throws InterruptedException {
@@ -60,17 +77,30 @@ public class LApplication {
 
         JFrame frame = new JFrame();
         frame.setSize(600,1000);
+
         GLJPanel canvas = new GLJPanel();
+        GLListener listener = new GLListener(canvas);
+        canvas.addGLEventListener(listener);
+        canvas.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                listener.mouseDown(e.getX(), e.getY());
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                listener.mouseUp(e.getX(), e.getY());
+            }
+
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                listener.mouseMove(e.getX(), e.getY());
+            }
+        });
         frame.add(canvas);
-        canvas.addGLEventListener(new GLListener(canvas));
 
         frame.setVisible(true);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-
-        /*GLWindow window = GLWindow.create(new GLCapabilities(null));
-        window.addGLEventListener(new GLListener(window));
-        window.setSize(800,1000);
-        window.setVisible(true);*/
 
     }
 

@@ -59,6 +59,9 @@ use Live2d。
    - this library has dependency with repository `our-commons`，Please build and install
      it before you do build of this one，本库依赖了另一个`our-commons`库。
    - `our-commons` [Click here for this repository](https://github.com/SW-Fantastic/our-commons)
-4. DearImGui（Library only，no frame at this time）
+4. DearImGui（Library only，no frameworks at this time）
    - Build with DearImGUI Docking branch version 1.91.1
    - Has pre-built binary with (windows-x64)，目前只有Windows，macos没有更新。
+5. LLama.cpp (Library only, no frameworks at this time / not release yet)
+   - Build with llama.cpp version b4730.
+   - Has pre-built binary with (windows-x64 cpu only)
