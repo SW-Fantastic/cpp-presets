@@ -16,7 +16,7 @@
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javacpp.version>1.5.10</javacpp.version>
-        <build.skip>true</build.skip>
+        <build.skip>false</build.skip>
     </properties>
 
     <dependencies>

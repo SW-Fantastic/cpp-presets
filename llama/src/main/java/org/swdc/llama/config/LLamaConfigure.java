@@ -39,6 +39,8 @@ public class LLamaConfigure implements InfoMapper {
                 "llama_split_mode"
         ).skip());
 
+        infoMap.put(new Info("llama_context_t").cppTypes("llama_context*"));
+
     }
 
 }
