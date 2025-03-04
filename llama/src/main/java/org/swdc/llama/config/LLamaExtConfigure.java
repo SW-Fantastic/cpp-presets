@@ -9,13 +9,15 @@ import org.bytedeco.javacpp.tools.InfoMapper;
         @Platform(
                 value = "windows-x86_64",
                 includepath = { "platforms/llamaCpp/ext" },
-                include = {"llama_std_support.h"}
+                include = {"llama_std_support.h"},
+                linkpath = "platforms/llamaCpp/dll/windows/x86_64",
+                link = {"llama", "ggml-base"}
         )
 },
-        target = "org.swdc.llama.core.MessageVector",
-        global = "org.swdc.llama.core.MessageVector"
+        target = "org.swdc.llama.core.LLamaExt",
+        global = "org.swdc.llama.core.LLamaExt"
 )
-public class MessageVectorConfigure implements InfoMapper {
+public class LLamaExtConfigure implements InfoMapper {
     @Override
     public void map(InfoMap infoMap) {
 

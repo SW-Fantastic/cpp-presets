@@ -26,7 +26,6 @@ public class LLamaConfigure implements InfoMapper {
 
         infoMap.put(new Info("LLAMA_API").cppText("#define LLAMA_API"));
         infoMap.put(new Info(
-
                 "llama_vocab_type",
                 "llama_vocab_pre_type",
                 "llama_rope_type",
@@ -34,9 +33,9 @@ public class LLamaConfigure implements InfoMapper {
                 "llama_token_attr",
                 "llama_ftype",
                 "llama_rope_scaling_type",
-                "llama_pooling_type",
                 "llama_attention_type",
-                "llama_split_mode"
+                "llama_split_mode",
+                "llama_pooling_type"
         ).skip());
 
         infoMap.put(new Info("llama_context_t").cppTypes("llama_context*"));

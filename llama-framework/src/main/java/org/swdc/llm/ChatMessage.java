@@ -1,4 +1,6 @@
-package org.swdc.llama.ext;
+package org.swdc.llm;
+
+import org.swdc.llm.prompts.PromptRole;
 
 public class ChatMessage {
 

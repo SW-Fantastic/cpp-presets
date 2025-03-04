@@ -1,4 +1,7 @@
-package org.swdc.llama.ext;
+package org.swdc.llm.prompts;
+
+import org.swdc.llm.ChatMessage;
+import org.swdc.llm.ChatPrompt;
 
 public interface DeepSeekPrompts {
 

@@ -1,4 +1,7 @@
-package org.swdc.llama.ext;
+package org.swdc.llm.prompts;
+
+import org.swdc.llm.ChatMessage;
+import org.swdc.llm.ChatPrompt;
 
 /**
  * 这个是LLama.cpp的llama-chat.cpp中的llm_chat_detect_template
@@ -9,6 +12,24 @@ package org.swdc.llama.ext;
  *
  */
 public interface Prompts {
+
+
+    /**
+     * 该Prompt可能有问题。
+     */
+    ChatPrompt RwKVWorld = (messages, addAss) -> {
+        StringBuilder result = new StringBuilder();
+        for (ChatMessage message : messages) {
+            PromptRole role = message.getRole();
+            String text = message.getContent();
+            if (role.equals(PromptRole.USER)) {
+                result.append(String.format("User: %s\n\nAssistant: \n\n",text));
+            } else {
+                result.append(String.format("%s\n\n",text));
+            }
+        }
+        return result.toString();
+    };
 
 
     /**
@@ -26,6 +47,9 @@ public interface Prompts {
             }
             return ChatMLPrompts.ChatML;
         }
+        if (prompt.contains("<|assistant|>") && prompt.contains("<|end|>")) {
+            return ChatMLPrompts.PhiV3;
+        }
         if (prompt.contains("### Instruction:") && prompt.contains("<|EOT|>")) {
             return DeepSeekPrompts.DeepSeek;
         }
@@ -34,6 +58,15 @@ public interface Prompts {
         }
         if (prompt.contains("<｜Assistant｜>") && prompt.contains("<｜User｜>") && prompt.contains("<｜end▁of▁sentence｜>")) {
             return DeepSeekPrompts.DeepSeekV3;
+        }
+        if (prompt.contains("[gMASK]<sop>")) {
+            return GLMPrompts.ChatGLMV4;
+        }
+        if (prompt.contains("[gMASK]sop")) {
+            return GLMPrompts.ChatGLMV3;
+        }
+        if (prompt.contains("rwkv-world")) {
+            return RwKVWorld;
         }
         if(prompt.contains("mistral") || prompt.contains("[INST]")) {
             if (prompt.contains("[SYSTEM_PROMPT]")) {

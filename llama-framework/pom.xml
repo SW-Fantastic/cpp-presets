@@ -3,28 +3,26 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.swdc</groupId>
+        <artifactId>cpp-presets</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
 
-    <groupId>org.swdc</groupId>
-    <artifactId>cpp-presets</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
-    <modules>
-        <module>live2d</module>
-        <module>live2d-framework</module>
-        <module>pdfium</module>
-        <module>pdfium4j</module>
-        <module>mariadb</module>
-        <module>mariadb-embedded</module>
-        <module>dearImgui</module>
-        <module>imgui-framework</module>
-        <module>llama</module>
-        <module>llama-framework</module>
-    </modules>
+    <artifactId>llama-framework</artifactId>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.swdc</groupId>
+            <artifactId>llama</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 
 </project>

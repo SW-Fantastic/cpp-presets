@@ -1,4 +1,4 @@
-package org.swdc.llama.ext;
+package org.swdc.llm;
 
 import java.util.List;
 

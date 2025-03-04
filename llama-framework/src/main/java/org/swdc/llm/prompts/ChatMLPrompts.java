@@ -1,4 +1,7 @@
-package org.swdc.llama.ext;
+package org.swdc.llm.prompts;
+
+import org.swdc.llm.ChatMessage;
+import org.swdc.llm.ChatPrompt;
 
 public interface ChatMLPrompts {
 
@@ -41,6 +44,27 @@ public interface ChatMLPrompts {
             result.append(text);
         }
 
+        return result.toString();
+    };
+
+
+    ChatPrompt PhiV3 = (list, addAss) -> {
+        StringBuilder result = new StringBuilder();
+        for (ChatMessage message: list) {
+            PromptRole role = message.getRole();
+            String text = message.getContent();
+            if (role.equals(PromptRole.USER)) {
+                text = String.format("<|user|>%s<|end|>\n", text);
+                if (addAss) {
+                    text += "<|assistant|>\n";
+                }
+            } else if (role.equals(PromptRole.ASSISTANT)) {
+                text = String.format("<|assistant|>%s<|end|>\n", text);
+            } else if (role.equals(PromptRole.SYSTEM)) {
+                text = String.format("<|system|>%s<|end|>\n", text);
+            }
+            result.append(text);
+        }
         return result.toString();
     };
 

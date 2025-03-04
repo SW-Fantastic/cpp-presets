@@ -62,6 +62,6 @@ use Live2d。
 4. DearImGui（Library only，no frameworks at this time）
    - Build with DearImGUI Docking branch version 1.91.1
    - Has pre-built binary with (windows-x64)，目前只有Windows，macos没有更新。
-5. LLama.cpp (Library only, no frameworks at this time / not release yet)
+5. LLama.cpp (framework is developing, not release yet)
    - Build with llama.cpp version b4730.
    - Has pre-built binary with (windows-x64 cpu only)
