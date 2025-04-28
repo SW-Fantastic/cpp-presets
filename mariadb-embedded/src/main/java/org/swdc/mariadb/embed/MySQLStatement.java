@@ -16,9 +16,11 @@ public class MySQLStatement implements CloseableSource {
 
     protected CloseableListener closeableListener;
 
+    protected String timeZoneId;
 
-    protected MySQLStatement( MYSQL mysqlConnection) {
+    protected MySQLStatement( MYSQL mysqlConnection, String timeZoneId) {
         this.connection = mysqlConnection;
+        this.timeZoneId = timeZoneId;
     }
 
     public MySQLResultSet executeQuery(String sql) throws SQLException {
@@ -93,6 +95,10 @@ public class MySQLStatement implements CloseableSource {
         this.closeableListener = listener;
     }
 
+    protected String getTimeZoneId() {
+        return timeZoneId;
+    }
+
     @Override
     public synchronized boolean closeBySource() {
         if (!activeResults.isEmpty()) {
@@ -104,4 +110,6 @@ public class MySQLStatement implements CloseableSource {
         }
         return false;
     }
+
+
 }

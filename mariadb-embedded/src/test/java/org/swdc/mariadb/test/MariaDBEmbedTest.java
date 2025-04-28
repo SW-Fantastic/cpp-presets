@@ -6,6 +6,9 @@ import org.swdc.mariadb.embed.*;
 
 import java.io.File;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 
 public class MariaDBEmbedTest {
@@ -32,7 +35,7 @@ public class MariaDBEmbedTest {
         }
 
         String myCustomDB = "dbForTest";
-        MySQLDBConnection customDB = mariaDB.connect(myCustomDB);
+        MySQLDBConnection customDB = mariaDB.connect(myCustomDB,"+08:00");
         if (customDB == null) {
             return;
         } else {
@@ -66,7 +69,7 @@ public class MariaDBEmbedTest {
         Thread thread = new Thread(() -> {
             try {
                 String myCustomDB = "dbForTest";
-                MySQLDBConnection customDB = mariaDB.connect(myCustomDB);
+                MySQLDBConnection customDB = mariaDB.connect(myCustomDB, "+08:00");
                 for (int i = 0; i < 5 ; i ++) {
                     System.err.println("");
                     MySQLStatement statement=customDB.createStatement();

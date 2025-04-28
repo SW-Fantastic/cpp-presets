@@ -25,6 +25,9 @@ public class Configure {
     @QueryNames({"basedir", "base-dir", "baseDir"})
     private String baseDir;
 
+    @QueryNames({"timeZone"})
+    private String timeZone;
+
     public Configure(String url) {
 
         url = url.substring(EmbedMariaDBDriver.PREFIX.length());
@@ -97,5 +100,13 @@ public class Configure {
 
     public boolean isAutoCreate() {
         return autoCreate;
+    }
+
+    public String getTimeZone() {
+        return timeZone;
+    }
+
+    public void setTimeZone(String timeZone) {
+        this.timeZone = timeZone;
     }
 }

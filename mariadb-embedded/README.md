@@ -35,7 +35,8 @@
 这个库的使用方法与普通的JDBC驱动类似，你可以通过以下方式来连接MariaDB Embedded Server：
 
 ```properties
-hibernate.connection.url=jdbc:mysql://databaseName?basedir=./data&datadir=./data&autocreate=true
+hibernate.connection.url=jdbc:mysql://databaseName?basedir=./data&datadir=./data&autocreate=true&timeZone=+08:00
 ```
 databaseName指定了数据库名为`databaseName`，这个名字可以根据需要进行修改， 
-basedir与datadir指定了Mariadb的数据目录的位置， autocreate表示是否在数据库不存在时自动创建。
+basedir与datadir指定了Mariadb的数据目录的位置， autocreate表示是否在数据库不存在时自动创建,
+timeZone必须指定，必须使用两位数的小时和分钟作为Offset，否则日期和时间会出现严重错误。

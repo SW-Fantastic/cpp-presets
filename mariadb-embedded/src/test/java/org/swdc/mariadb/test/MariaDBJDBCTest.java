@@ -39,7 +39,7 @@ public class MariaDBJDBCTest {
 
 
         Properties properties = new Properties();
-        properties.setProperty("hibernate.connection.url", "jdbc:mysql://dbForTest?basedir=./mysqlData&datadir=./mysqlData/data&autocreate=true");
+        properties.setProperty("hibernate.connection.url", "jdbc:mysql://dbForTest?basedir=./mysqlData&datadir=./mysqlData/data&autocreate=true&timeZone=+08:00");
         properties.setProperty("hibernate.connection.driver_class", EmbedMariaDBDriver.class.getName());
         properties.setProperty("hibernate.dialect", org.hibernate.dialect.MariaDBDialect.class.getName());
         properties.setProperty("hibernate.show_sql", "true");

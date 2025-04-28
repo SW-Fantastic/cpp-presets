@@ -44,10 +44,13 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
 
     private Pointer[] buf;
 
-    public MySQLPreparedResult(MYSQL_RES res, MYSQL_STMT stmt) {
+    private String zoneId;
+
+    public MySQLPreparedResult(MYSQL_RES res, MYSQL_STMT stmt,String timeZoneId) {
         this.res = res;
         this.stmt = stmt;
         this.metadata = new MySQLResultMetadata(res);
+        this.zoneId = timeZoneId;
 
         this.bindAndBuffer = new MYSQL_BIND(Pointer.malloc(
                 (long) Pointer.sizeof(MYSQL_BIND.class) * res.field_count()
@@ -591,9 +594,7 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
             LocalDateTime dateTime = LocalDateTime.of(
                     time.year(),time.month() ,time.day(),time.hour(),time.minute(),time.second()
             );
-            ZoneOffset offset = ZoneOffset.UTC;
-
-            return dateTime.atOffset(offset).toEpochSecond();
+            return dateTime.atOffset(ZoneOffset.UTC).toEpochSecond();
         }
         return null;
     }

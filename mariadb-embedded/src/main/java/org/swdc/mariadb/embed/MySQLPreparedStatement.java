@@ -48,8 +48,8 @@ public class MySQLPreparedStatement extends MySQLStatement {
 
     private CLongPointer lengths;
 
-    protected MySQLPreparedStatement(MYSQL mysqlConnection, String sql) {
-        super(mysqlConnection);
+    protected MySQLPreparedStatement(MYSQL mysqlConnection, String sql, String timeZoneId) {
+        super(mysqlConnection,timeZoneId);
         this.sql = sql;
         this.stmt = MariaDB.mysql_stmt_init(mysqlConnection);
         if( stmt == null || stmt.isNull() || MariaDB.mysql_stmt_prepare(stmt,sql,sql.length()) != 0) {
@@ -487,7 +487,7 @@ public class MySQLPreparedStatement extends MySQLStatement {
         Pointer.memset(time,0,leng);
 
         LocalDateTime localDate = ts.toInstant()
-                .atZone(ZoneId.of("UTC"))
+                .atZone(ZoneId.of(getTimeZoneId()))
                 .toLocalDateTime();
 
         time.year(localDate.getYear());
@@ -497,6 +497,7 @@ public class MySQLPreparedStatement extends MySQLStatement {
         time.hour(localDate.getHour());
         time.minute(localDate.getMinute());
         time.second(localDate.getSecond());
+        time.second_part(0);
         time.time_type(MyGlobal.enum_mysql_timestamp_type.MYSQL_TIMESTAMP_DATETIME);
 
         MYSQL_BIND bind = new MYSQL_BIND(binds.getPointer(index));
@@ -658,7 +659,7 @@ public class MySQLPreparedStatement extends MySQLStatement {
             return null;
         }
 
-        return new MySQLPreparedResult(res,stmt);
+        return new MySQLPreparedResult(res,stmt,getTimeZoneId());
 
     }
 

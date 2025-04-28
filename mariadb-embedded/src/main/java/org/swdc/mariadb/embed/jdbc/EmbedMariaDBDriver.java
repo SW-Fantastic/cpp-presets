@@ -67,12 +67,12 @@ public class EmbedMariaDBDriver implements Driver {
 
         mariaDB.initSystemData();
 
-        MySQLDBConnection connection = mariaDB.connect(configure.getDbName());
+        MySQLDBConnection connection = mariaDB.connect(configure.getDbName(),configure.getTimeZone());
         if (connection != null) {
             return new MyConnection(connection);
         } else {
             if (configure.isAutoCreate() && mariaDB.createDatabase(configure.getDbName(),null,null)) {
-                connection = mariaDB.connect(configure.getDbName());
+                connection = mariaDB.connect(configure.getDbName(),configure.getTimeZone());
                 if (connection != null) {
                     return new MyConnection(connection);
                 }

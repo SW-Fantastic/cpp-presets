@@ -12,6 +12,7 @@ import org.swdc.mariadb.embed.jdbc.MyThreadHolder;
 
 import java.io.File;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,7 +41,7 @@ public class EmbeddedMariaDB {
      */
     private File baseDir;
 
-    private String timeZoneId = "+0:00";
+    private String timeZoneId = "+8:00";
 
     private volatile static boolean systemClosed = false;
 
@@ -95,7 +96,6 @@ public class EmbeddedMariaDB {
                             "--datadir=" + dataDir.toPath().normalize().toAbsolutePath(),
                             "--console",  // 输出到控制台而不是文件，否则system.err会被重定向
                             "--skip-grant-tables",
-                            "--default-time-zone=" + getTimeZoneId(),
                     };
                     PointerPointer argvPointer = argvPointer(argv);
 
@@ -187,9 +187,21 @@ public class EmbeddedMariaDB {
         MariaDB.mysql_close(mysql);
     }
 
+    public boolean setupTimeZone(MYSQL mysql, String timeZoneId) {
+
+        if (mysql == null) {
+            return false;
+        }
+
+        String setup = "SET time_zone = '" + timeZoneId + "'";
+        int state = MariaDB.mysql_real_query(mysql,setup,setup.length());
+        return state == 0;
+
+    }
+
     public boolean createDatabase(String name, String charset, String coll) {
 
-        MySQLDBConnection exist = connect(name);
+        MySQLDBConnection exist = connect(name,timeZoneId);
         if (exist != null) {
             return true;
         }
@@ -239,7 +251,7 @@ public class EmbeddedMariaDB {
         return results;
     }
 
-    public MySQLDBConnection connect(String name) {
+    public MySQLDBConnection connect(String name, String timeZoneId) {
 
         if (!initialized || systemClosed) {
             throw new RuntimeException("please initialize mariadb first");
@@ -263,9 +275,11 @@ public class EmbeddedMariaDB {
 
         MariaDB.mysql_set_character_set(mysql, "utf8");
 
-        MySQLDBConnection connection = new MySQLDBConnection(mysql);
+        MySQLDBConnection connection = new MySQLDBConnection(mysql,timeZoneId);
         activeConnections.add(connection);
         connection.setCloseListener(activeConnections::remove);
+        setupTimeZone(mysql,timeZoneId);
+
         return connection;
     }
 
@@ -297,9 +311,9 @@ public class EmbeddedMariaDB {
                 continue;
             }
             BytePointer cp = new BytePointer(
-                    Pointer.malloc( str.length() * Pointer.sizeof(BytePointer.class))
+                    Pointer.malloc((long) str.length() * Pointer.sizeof(BytePointer.class))
             );
-            cp.putString(str);
+            cp.putString(str, StandardCharsets.UTF_8);
             MyGlobal.ext_char_list_insert(argvPointer,cp,idx);
         }
 
@@ -313,7 +327,7 @@ public class EmbeddedMariaDB {
             return;
         }
 
-        MySQLDBConnection exist = connect("mysql");
+        MySQLDBConnection exist = connect("mysql",timeZoneId);
         if (exist != null) {
             return;
         }

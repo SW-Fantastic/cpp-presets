@@ -22,8 +22,11 @@ public class MySQLDBConnection implements CloseableSource {
 
     private CloseableListener closeableListener;
 
-    protected MySQLDBConnection(MYSQL db) {
+    private String timeZoneId;
+
+    protected MySQLDBConnection(MYSQL db, String timeZoneId) {
         this.mariaDB = db;
+        this.timeZoneId = timeZoneId;
     }
 
     public void valid() {
@@ -110,7 +113,7 @@ public class MySQLDBConnection implements CloseableSource {
     public boolean isAutoCommit() throws SQLException {
         valid();
 
-        MySQLStatement statement = new MySQLStatement(mariaDB);
+        MySQLStatement statement = new MySQLStatement(mariaDB,getTimeZoneId());
         MySQLResultSet rs = statement.executeQuery("SELECT @@autocommit");
         if (rs != null && rs.next()) {
             boolean result = rs.getLong(0) == '1';
@@ -139,7 +142,7 @@ public class MySQLDBConnection implements CloseableSource {
     public MySQLStatement createStatement() {
 
         valid();
-        MySQLStatement statement = new MySQLStatement(mariaDB);
+        MySQLStatement statement = new MySQLStatement(mariaDB,getTimeZoneId());
         activeStatements.add(statement);
         statement.setCloseListener(activeStatements::remove);
         return statement;
@@ -151,7 +154,7 @@ public class MySQLDBConnection implements CloseableSource {
 
         valid();
 
-        MySQLStatement statement = new MySQLStatement(mariaDB);
+        MySQLStatement statement = new MySQLStatement(mariaDB,getTimeZoneId());
         MySQLResultSet rs = statement.executeQuery("SELECT @@tx_isolation");
         if (rs != null && rs.next()) {
             String txType = rs.getString(0);
@@ -192,7 +195,7 @@ public class MySQLDBConnection implements CloseableSource {
             default:
                 throw new SQLException("Unsupported transaction isolation level");
         }
-        MySQLStatement statement = new MySQLStatement(mariaDB);
+        MySQLStatement statement = new MySQLStatement(mariaDB,getTimeZoneId());
         if(!statement.execute(query)) {
             throw new SQLException("Failed to change transaction isolation level.");
         }
@@ -200,7 +203,7 @@ public class MySQLDBConnection implements CloseableSource {
 
     public MySQLPreparedStatement preparedStatement(String sql) {
         valid();
-        return new MySQLPreparedStatement(mariaDB,sql);
+        return new MySQLPreparedStatement(mariaDB,sql,getTimeZoneId());
     }
 
     public boolean rollback() {
@@ -243,5 +246,9 @@ public class MySQLDBConnection implements CloseableSource {
 
        return false;
 
+    }
+
+    public String getTimeZoneId() {
+        return timeZoneId;
     }
 }
