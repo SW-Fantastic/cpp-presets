@@ -41,7 +41,7 @@ public class EmbeddedMariaDB {
      */
     private File baseDir;
 
-    private String timeZoneId = "+8:00";
+    private String timeZoneId = "+00:00";
 
     private volatile static boolean systemClosed = false;
 
