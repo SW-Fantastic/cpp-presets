@@ -15,6 +15,7 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -38,6 +39,7 @@ public class MariaDBJDBCTest {
         connection.close();*/
 
 
+        System.err.println(ZonedDateTime.now().getOffset().toString());
         Properties properties = new Properties();
         properties.setProperty("hibernate.connection.url", "jdbc:mysql://dbForTest?basedir=./mysqlData&datadir=./mysqlData/data&autocreate=true&timeZone=+08:00");
         properties.setProperty("hibernate.connection.driver_class", EmbedMariaDBDriver.class.getName());

@@ -13,9 +13,11 @@ import org.swdc.mariadb.embed.jdbc.MyThreadHolder;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.function.Function;
 
 public class EmbeddedMariaDB {
@@ -275,6 +277,10 @@ public class EmbeddedMariaDB {
 
         MariaDB.mysql_set_character_set(mysql, "utf8");
 
+        if (timeZoneId == null) {
+            ZonedDateTime zonedDateTime = ZonedDateTime.now();
+            timeZoneId = zonedDateTime.getOffset().toString();
+        }
         MySQLDBConnection connection = new MySQLDBConnection(mysql,timeZoneId);
         activeConnections.add(connection);
         connection.setCloseListener(activeConnections::remove);
