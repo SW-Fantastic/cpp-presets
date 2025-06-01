@@ -1,6 +1,7 @@
 # PdfiumCore
 
 Pdfium的核心功能，基于JavaCPP提供的JNIWrapper，构建方法：
+使用的PDFium版本目前为138.0.7202.0
 
 Windows：
 
@@ -15,3 +16,8 @@ Windows：
 安装到本地的Maven仓库。
 
 如果想要使用Pdfium4j，需要首先构建并安装本项目。
+
+MacOS & Linux:
+
+本模块提供了预构建的Linux x64模块，但是 由于作者没有合适的MacOS系统，
+所以暂时不提供预构建的MacOS模块，需要的请自行构建。
