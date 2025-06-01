@@ -48,10 +48,10 @@ use Live2d。
    - Build with Live2D Native SDK version 1.5-r1
    - Has pre-built binary with (windows-x64, linux-x64, macos-x64)
      本库提供了预构建的Windows，linux，macos的64位二进制文件。
-2. Pdfium Core & Pdfium4J（new library）
+2. Pdfium Core & Pdfium4J
    - Build with pdfium version 122.0.6248
-   - Has pre-built binary with (window-x64, linux-x64, macos-x64)
-     本库提供了预构建的Windows，linux和macos的64位二进制文件。
+   - Has pre-built binary with (window-x64, linux-x64, ~~macos-x64~~)
+     本库提供了预构建的Windows，linux和~~macos~~的64位二进制文件。
 3. MariaDB Embedded & MariaDB Embedded JDBC（Embedded Mariadb java version）
    - Build with Mariadb version 11.6
    - Has pre-built binary with (windows-x64, linux-x64)

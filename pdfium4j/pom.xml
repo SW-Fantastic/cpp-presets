@@ -22,7 +22,7 @@
         <dependency>
             <groupId>org.swdc</groupId>
             <artifactId>pdfium</artifactId>
-            <version>1.1</version>
+            <version>1.1.1</version>
         </dependency>
         <dependency>
             <groupId>org.bytedeco</groupId>

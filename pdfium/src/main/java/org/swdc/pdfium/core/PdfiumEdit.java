@@ -1874,6 +1874,20 @@ public static native @Cast("FPDF_BOOL") int FPDFFont_GetGlyphWidth(fpdf_font_t__
 // Returns the handle to the page object, or NULL on error.
  public static native fpdf_pageobject_t__ FPDFFormObj_GetObject(fpdf_pageobject_t__ form_object, @Cast("unsigned long") long index);
 
+// Experimental API.
+//
+// Remove |page_object| from |form_object|.
+//
+//   form_object - handle to a form object.
+//   page_object - handle to a page object to be removed from the form.
+//
+// Returns TRUE on success.
+//
+// Ownership of the removed |page_object| is transferred to the caller.
+// Call FPDFPageObj_Destroy() on the removed page_object to free it.
+ public static native @Cast("FPDF_BOOL") int FPDFFormObj_RemoveObject(fpdf_pageobject_t__ form_object,
+                         fpdf_pageobject_t__ page_object);
+
 // #ifdef __cplusplus  // extern "C"
 // #endif  // __cplusplus
 
