@@ -138,7 +138,7 @@ public class MyPreparedStatement extends MyStatement implements PreparedStatemen
             if (autoGenerateKey == Statement.RETURN_GENERATED_KEYS) {
                 MySQLResultSet rs = getStmt().getLastGeneratedId();
                 if (rs != null && rs.next()) {
-                    generateKeys.add(rs.getLong(0));
+                    generateKeys.add(rs.getLong(1));
                 }
             }
             return result;
