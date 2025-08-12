@@ -8,7 +8,6 @@ import org.swdc.mariadb.core.MariaDB;
 import org.swdc.mariadb.core.MyGlobal;
 import org.swdc.mariadb.core.mysql.MYSQL;
 import org.swdc.mariadb.core.mysql.MYSQL_RES;
-import org.swdc.mariadb.embed.jdbc.MyThreadHolder;
 
 import java.io.File;
 import java.io.InputStream;
@@ -17,7 +16,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.function.Function;
 
 public class EmbeddedMariaDB {

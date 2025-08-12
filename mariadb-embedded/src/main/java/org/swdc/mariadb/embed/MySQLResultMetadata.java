@@ -35,6 +35,7 @@ public class MySQLResultMetadata {
     }
 
     MYSQL_FIELD getField(int index) throws SQLException {
+        index = index - 1;
         if (!indexedFieldMap.containsKey(index)) {
             throw new SQLException("no such field :" + index);
         }

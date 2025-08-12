@@ -47,14 +47,14 @@ public class MariaDBEmbedTest {
                 MySQLStatement statement=customDB.createStatement();
                 MySQLResultSet result = statement.executeQuery("SELECT id,name,age,nextAim,source,createdOn,createdAt,state FROM entuser");
                 while (result.next()) {
-                    System.err.print("Id : " + result.getLong(0) + " | ");
-                    System.err.print("Name:" + result.getString(1) + " | ");
-                    System.err.print("Age: " + result.getInt(2) + " | ");
-                    System.err.print("NextAim: " + result.getFloat(3) + " | ");
-                    System.err.print("Source: " + result.getDouble(4) + " | ");
-                    System.err.print("Created : " + result.getDate(5) + " | ");
-                    System.err.print("Created at: " + result.getTimestamp(6) + " | ");
-                    System.err.print("State : " + result.getBoolean(7) + " | ");
+                    System.err.print("Id : " + result.getLong(1) + " | ");
+                    System.err.print("Name:" + result.getString(2) + " | ");
+                    System.err.print("Age: " + result.getInt(3) + " | ");
+                    System.err.print("NextAim: " + result.getFloat(4) + " | ");
+                    System.err.print("Source: " + result.getDouble(5) + " | ");
+                    System.err.print("Created : " + result.getDate(6) + " | ");
+                    System.err.print("Created at: " + result.getTimestamp(7) + " | ");
+                    System.err.print("State : " + result.getBoolean(8) + " | ");
                     System.err.println();
                 }
                 result.close();
@@ -75,14 +75,14 @@ public class MariaDBEmbedTest {
                     MySQLStatement statement=customDB.createStatement();
                     MySQLResultSet result = statement.executeQuery("SELECT id,name,age,nextAim,source,createdOn,createdAt,state FROM entuser");
                     while (result.next()) {
-                        System.err.print("Id : " + result.getLong(0) + " | ");
-                        System.err.print("Name:" + result.getString(1) + " | ");
-                        System.err.print("Age: " + result.getInt(2) + " | ");
-                        System.err.print("NextAim: " + result.getFloat(3) + " | ");
-                        System.err.print("Source: " + result.getDouble(4) + " | ");
-                        System.err.print("Created : " + result.getDate(5) + " | ");
-                        System.err.print("Created at: " + result.getTimestamp(6) + " | ");
-                        System.err.print("State : " + result.getBoolean(7) + " | ");
+                        System.err.print("Id : " + result.getLong(1) + " | ");
+                        System.err.print("Name:" + result.getString(2) + " | ");
+                        System.err.print("Age: " + result.getInt(3) + " | ");
+                        System.err.print("NextAim: " + result.getFloat(4) + " | ");
+                        System.err.print("Source: " + result.getDouble(5) + " | ");
+                        System.err.print("Created : " + result.getDate(6) + " | ");
+                        System.err.print("Created at: " + result.getTimestamp(7) + " | ");
+                        System.err.print("State : " + result.getBoolean(8) + " | ");
                         System.err.println();
                     }
                     result.close();

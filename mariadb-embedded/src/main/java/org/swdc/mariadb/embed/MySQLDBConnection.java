@@ -116,7 +116,7 @@ public class MySQLDBConnection implements CloseableSource {
         MySQLStatement statement = new MySQLStatement(mariaDB,getTimeZoneId());
         MySQLResultSet rs = statement.executeQuery("SELECT @@autocommit");
         if (rs != null && rs.next()) {
-            boolean result = rs.getLong(0) == '1';
+            boolean result = rs.getLong(1) == '1';
             rs.close();
             return result;
         }
@@ -157,7 +157,7 @@ public class MySQLDBConnection implements CloseableSource {
         MySQLStatement statement = new MySQLStatement(mariaDB,getTimeZoneId());
         MySQLResultSet rs = statement.executeQuery("SELECT @@tx_isolation");
         if (rs != null && rs.next()) {
-            String txType = rs.getString(0);
+            String txType = rs.getString(1);
             rs.close();
             if (txType == null) {
                 throw new SQLException("Can not read tx isolation type");

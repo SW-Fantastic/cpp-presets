@@ -231,7 +231,7 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
 
     @Override
     public boolean isNull(int col) {
-        return isNulls[col].get() == 1;
+        return isNulls[col - 1].get() == 1;
     }
 
     @Override
@@ -278,7 +278,7 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
 
     @Override
     public int findColumn(String label) throws SQLException {
-        return metadata.findField(label);
+        return metadata.findField(label) + 1;
     }
 
     @Override
@@ -293,6 +293,8 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_DATETIME,
                 MyCom.enum_field_types.MYSQL_TYPE_DATETIME2
         )) {
+
+            column = column - 1;
 
             if (lengths[column].get() <= 0) {
                 return null;
@@ -320,6 +322,8 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_TIME,
                 MyCom.enum_field_types.MYSQL_TYPE_TIME2
         )) {
+
+            column = column - 1;
             if (lengths[column].get() <= 0) {
                 return null;
             }
@@ -341,6 +345,9 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_TINY,
                 MyCom.enum_field_types.MYSQL_TYPE_BLOB
         )) {
+
+            column = column - 1;
+
             if (lengths[column].get() <= 0) {
                 return 0;
             }
@@ -355,10 +362,12 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
         if (isNull(column)) {
             return 0;
         }
+
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_SHORT
         )) {
+            column = column - 1;
             if (lengths[column].get() <= 0) {
                 return 0;
             }
@@ -368,6 +377,7 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_TINY
         )) {
+
             Byte val = getByte(column);
             return val != null ? Short.valueOf(val) : 0;
         }
@@ -376,14 +386,17 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
 
     @Override
     public Long getLong(int column) throws SQLException {
+
         MYSQL_FIELD field = metadata.getField(column);
         if (isNull(column)) {
             return 0L;
         }
+
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_LONGLONG
         )) {
+            column = column - 1;
             if (lengths[column].get() <= 0) {
                 return 0L;
             }
@@ -405,15 +418,19 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
 
     @Override
     public Integer getInt(int column) throws SQLException {
+
         MYSQL_FIELD field = metadata.getField(column);
         if (isNull(column)) {
             return 0;
         }
+
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_INT24,
                 MyCom.enum_field_types.MYSQL_TYPE_LONG
         )) {
+            column = column - 1;
+
             if (lengths[column].get() <= 0) {
                 return 0;
             }
@@ -431,14 +448,17 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
 
     @Override
     public Float getFloat(int column) throws SQLException {
+
         MYSQL_FIELD field = metadata.getField(column);
         if (isNull(column)) {
             return 0F;
         }
+
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_FLOAT
         )) {
+            column = column - 1;
             if (lengths[column].get() <= 0) {
                 return 0f;
             }
@@ -463,18 +483,21 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
 
     @Override
     public Double getDouble(int column) throws SQLException {
+
         MYSQL_FIELD field = metadata.getField(column);
         if (isNull(column)) {
             return 0d;
         }
+
+
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_DOUBLE
         )) {
+            column = column - 1;
             if (lengths[column].get() <= 0) {
                 return 0d;
             }
-
             return new DoublePointer(buf[column]).get();
         } else if (accept(field.type(),MyCom.enum_field_types.MYSQL_TYPE_FLOAT)) {
             Float val = getFloat(column);
@@ -497,11 +520,14 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
             return null;
         }
         MYSQL_FIELD field = metadata.getField(column);
+
+
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_DECIMAL,
                 MyCom.enum_field_types.MYSQL_TYPE_NEWDECIMAL
         )) {
+            column = column - 1;
             if (lengths[column].get() <= 0) {
                 return null;
             }
@@ -520,13 +546,16 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
         if (isNull(column)) {
             return null;
         }
+
         MYSQL_FIELD field = metadata.getField(column);
+
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_STRING,
                 MyCom.enum_field_types.MYSQL_TYPE_VAR_STRING,
                 MyCom.enum_field_types.MYSQL_TYPE_VARCHAR
         )) {
+            column = column - 1;
             if (lengths[column].get() <= 0) {
                 return null;
             }
@@ -552,7 +581,9 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
             return null;
         }
         MYSQL_FIELD field = metadata.getField(column);
+
         if (accept(field.type(), MyCom.enum_field_types.MYSQL_TYPE_BLOB)) {
+            column = column - 1;
             if (lengths[column].get() <= 0) {
                 return null;
             }
@@ -570,12 +601,14 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
         if (isNull(column)) {
             return null;
         }
+
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_TIMESTAMP,
                 MyCom.enum_field_types.MYSQL_TYPE_TIMESTAMP2
         )) {
 
+            column = column - 1;
             if (lengths[column].get() <= 0) {
                 return null;
             }
@@ -587,6 +620,7 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
                 MyCom.enum_field_types.MYSQL_TYPE_DATETIME2
         )) {
 
+            column = column - 1;
             if (lengths[column].get() <= 0) {
                 return null;
             }
@@ -605,11 +639,14 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
         if (isNull(column)) {
             return false;
         }
+
+
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_BIT,
                 MyCom.enum_field_types.MYSQL_TYPE_TINY
         )) {
+            column = column - 1;
 
             if (lengths[column].get() <= 0) {
                 return false;
@@ -626,6 +663,7 @@ public class MySQLPreparedResult  implements IMySQLResultSet {
     public Object getObject(int columnIndex) throws SQLException {
 
         MYSQL_FIELD field = metadata.getField(columnIndex);
+
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_TIME,

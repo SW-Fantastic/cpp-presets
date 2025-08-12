@@ -188,14 +188,16 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
     public Date getDate(int column) throws SQLException {
 
         validate();
-
         MYSQL_FIELD field = metadata.getField(column);
+
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_DATE,
                 MyCom.enum_field_types.MYSQL_TYPE_DATETIME,
                 MyCom.enum_field_types.MYSQL_TYPE_DATETIME2
         )) {
+
+            column = column - 1;
 
             BytePointer pointer = new BytePointer(currentRow.get(column));
             if (pointer.isNull()) {
@@ -227,9 +229,10 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
 
     @Override
     public Time getTime(int column) throws SQLException {
-        validate();
 
+        validate();
         MYSQL_FIELD field = metadata.getField(column);
+
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_DATE,
@@ -238,6 +241,8 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
                 MyCom.enum_field_types.MYSQL_TYPE_TIME,
                 MyCom.enum_field_types.MYSQL_TYPE_TIME2
         )) {
+
+            column = column - 1;
 
             BytePointer pointer = new BytePointer(currentRow.get(column));
             if (pointer.isNull()) {
@@ -270,6 +275,7 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
     public Byte getByte(int column) throws SQLException {
 
         validate();
+        column = column - 1;
 
         MYSQL_FIELD field = metadata.getField(column);
         if (accept(
@@ -296,6 +302,9 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_SHORT
         )) {
+
+            column = column - 1;
+
             BytePointer pointer = new BytePointer(currentRow.get(column));
             byte[] data = new byte[(int) currentRowLength.getPointer(column).get()];
             pointer.get(data);
@@ -323,6 +332,7 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_LONGLONG
         )) {
+            column = column - 1;
             BytePointer pointer = new BytePointer(currentRow.get(column));
             byte[] data = new byte[(int) currentRowLength.getPointer(column).get()];
             pointer.get(data);
@@ -350,6 +360,7 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
         validate();
 
         MYSQL_FIELD field = metadata.getField(column);
+
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_INT24,
@@ -357,6 +368,7 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
                 MyCom.enum_field_types.MYSQL_TYPE_NEWDECIMAL,
                 MyCom.enum_field_types.MYSQL_TYPE_LONGLONG
         )) {
+            column = column - 1;
             if (currentRow.get(column) == null) {
                 return 0;
             }
@@ -379,14 +391,16 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
     @Override
     public Float getFloat(int column) throws SQLException {
 
-
         validate();
 
         MYSQL_FIELD field = metadata.getField(column);
+
+
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_FLOAT
         )) {
+            column = column - 1;
             BytePointer pointer = new BytePointer(currentRow.get(column));
             byte[] data = new byte[(int) currentRowLength.getPointer(column).get()];
             pointer.get(data);
@@ -423,6 +437,7 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_DOUBLE
         )) {
+            column = column - 1;
             BytePointer pointer = new BytePointer(currentRow.get(column));
             byte[] data = new byte[(int) currentRowLength.getPointer(column).get()];
             pointer.get(data);
@@ -449,11 +464,13 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
         validate();
 
         MYSQL_FIELD field = metadata.getField(column);
+
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_DECIMAL,
                 MyCom.enum_field_types.MYSQL_TYPE_NEWDECIMAL
         )) {
+            column = column - 1;
             BytePointer pData = new BytePointer(currentRow.get(column));
             if (pData.isNull()) {
                 return null;
@@ -470,7 +487,9 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
         validate();
 
         MYSQL_FIELD field = metadata.getField(column);
+
         if (accept(field.type(),MyCom.enum_field_types.MYSQL_TYPE_VAR_STRING)) {
+            column = column - 1;
             byte[] data = new byte[(int)currentRowLength.get(column)];
             BytePointer pointer = new BytePointer(currentRow.get(column));
             pointer.get(data);
@@ -505,6 +524,7 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
         validate();
 
         MYSQL_FIELD field = metadata.getField(column);
+
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_BLOB,
@@ -512,6 +532,7 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
                 MyCom.enum_field_types.MYSQL_TYPE_LONG_BLOB,
                 MyCom.enum_field_types.MYSQL_TYPE_TINY_BLOB
         )) {
+            column = column - 1;
             byte[] data = new byte[(int)currentRowLength.get(column)];
             BytePointer pointer = new BytePointer(currentRow.get(column));
             pointer.get(data);
@@ -527,12 +548,14 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
         validate();
 
         MYSQL_FIELD field = metadata.getField(column);
+
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_TIMESTAMP,
                 MyCom.enum_field_types.MYSQL_TYPE_TIMESTAMP2
         )) {
 
+            column = column - 1;
             return new LongPointer(currentRow.get(column)).get();
 
         } else if (accept(
@@ -541,6 +564,7 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
                 MyCom.enum_field_types.MYSQL_TYPE_DATETIME2
         )) {
 
+            column = column - 1;
             byte[] data = new byte[(int)currentRowLength.get(column)];
             BytePointer pointer = new BytePointer(currentRow.get(column));
             pointer.get(data);
@@ -579,6 +603,7 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
                 MyCom.enum_field_types.MYSQL_TYPE_BIT,
                 MyCom.enum_field_types.MYSQL_TYPE_TINY
         )) {
+            column = column - 1;
             if (currentRow.get(column).isNull()) {
                 return false;
             }
@@ -595,6 +620,7 @@ public class MySQLResultSet implements IMySQLResultSet,CloseableSource {
         validate();
 
         MYSQL_FIELD field = metadata.getField(columnIndex);
+
         if (accept(
                 field.type(),
                 MyCom.enum_field_types.MYSQL_TYPE_TIME,

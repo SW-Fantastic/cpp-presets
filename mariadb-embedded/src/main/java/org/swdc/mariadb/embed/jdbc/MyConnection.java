@@ -1,15 +1,12 @@
 package org.swdc.mariadb.embed.jdbc;
 
-import org.swdc.mariadb.core.MariaDB;
 import org.swdc.mariadb.core.MyCom;
-import org.swdc.mariadb.core.mysql.MYSQL;
 import org.swdc.mariadb.embed.MySQLDBConnection;
 import org.swdc.mariadb.embed.MySQLStatement;
 
 import javax.sql.ConnectionEvent;
 import java.sql.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
@@ -119,6 +116,7 @@ public class MyConnection implements Connection {
             }
         } finally {
             releaseLock();
+            MyThreads.threadRelease(this);
         }
     }
 
@@ -212,7 +210,12 @@ public class MyConnection implements Connection {
 
     @Override
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
-        return prepareStatement(sql,resultSetType,resultSetConcurrency,ResultSet.HOLD_CURSORS_OVER_COMMIT);
+        try {
+            requireLock();
+            return prepareStatement(sql,resultSetType,resultSetConcurrency,ResultSet.HOLD_CURSORS_OVER_COMMIT);
+        } finally {
+            releaseLock();
+        }
     }
 
     @Override
@@ -498,12 +501,11 @@ public class MyConnection implements Connection {
     }
 
     public void requireLock() {
-        MyThreadHolder.threadVerify(this);
+        MyThreads.threadVerify(this);
         lock.lock();
     }
 
     public void releaseLock() {
-        MyThreadHolder.threadRelease(this);
         lock.unlock();
     }
 
