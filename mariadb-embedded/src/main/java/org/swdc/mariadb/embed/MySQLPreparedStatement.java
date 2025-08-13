@@ -181,7 +181,7 @@ public class MySQLPreparedStatement extends MySQLStatement {
             throw new SQLException("no such parameter : " + index);
         }
 
-        int leng = Pointer.sizeof(BoolPointer.class);
+        int leng = Pointer.sizeof(ShortPointer.class);
         BoolPointer p = new BoolPointer(
                 Pointer.malloc(leng)
         );
@@ -194,7 +194,7 @@ public class MySQLPreparedStatement extends MySQLStatement {
         buf[index] = p;
 
         MYSQL_BIND bind = binds.getPointer(index);
-        bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_BLOB);
+        bind.buffer_type(MyCom.enum_field_types.MYSQL_TYPE_TINY);
         bind.buffer_length(leng);
         bind.buffer(p);
 
