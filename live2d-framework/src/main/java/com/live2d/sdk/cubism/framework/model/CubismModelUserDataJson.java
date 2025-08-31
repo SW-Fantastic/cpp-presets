@@ -7,10 +7,10 @@
 
 package com.live2d.sdk.cubism.framework.model;
 
-import com.live2d.sdk.cubism.framework.utils.jsonparser.CubismJson;
 import com.live2d.sdk.cubism.framework.CubismFramework;
 import com.live2d.sdk.cubism.framework.exception.CubismJsonParseException;
 import com.live2d.sdk.cubism.framework.id.CubismId;
+import com.live2d.sdk.cubism.framework.utils.jsonparser.CubismJson;
 
 /**
  * This class deals with an userdata3.json data.

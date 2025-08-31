@@ -7,8 +7,8 @@
 
 package com.live2d.sdk.cubism.framework.effect;
 
-import com.live2d.sdk.cubism.framework.model.CubismModel;
 import com.live2d.sdk.cubism.framework.id.CubismId;
+import com.live2d.sdk.cubism.framework.model.CubismModel;
 
 import java.util.ArrayList;
 import java.util.Collections;

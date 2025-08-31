@@ -1,11 +1,4 @@
-this is Live2D native library README file
-We will not add dll and lib folder in this repository，
-Please download them from Live2D Cubism official site。
-
----
-
-这是Live2DCubism NativeSDK的readme文件，本项目不会包含
-Live2D的动态库和静态库，请自行在官网下载。
+[English](README.md) / [日本語](README.ja.md)
 
 ---
 
@@ -38,12 +31,12 @@ Core
 | Platform | Architecture | dll | lib | Path | Note |
 | --- | --- | --- | --- | --- | --- |
 | Android | ARM64 | ✓ | ✓ | android/arm64-v8a |   |
-| Android | ARMv7 | ✓ | ✓ | android/armeabi-v7a | This library is currently deprecated and will be removed in the near future. |
 | Android | x86 | ✓ | ✓ | android/x86 |   |
 | Android | x86_64 | ✓ | ✓ | android/x86_64 |   |
 | iOS | ARM64 |   | ✓ | ios/xxx-iphoneos | iOS Devices |
 | iOS | x86_64 |   | ✓ | ios/xxx-iphonesimulator | iOS Simulator |
 | Linux | x86_64 | ✓ | ✓ | linux/x86_64 |   |
+| Linux | ARM64 | ✓ | ✓ | experimental/linux/ARM64 |   |
 | macOS | ARM64 | ✓ | ✓ | macos/arm64 |   |
 | macOS | x86_64 | ✓ | ✓ | macos/x86_64 |   |
 | Mac Catalyst | ARM64 |   | ✓ | experimental/catalyst | Universal Binary |
@@ -68,7 +61,6 @@ Below is the Visual Studio version for the VC++ version.
 
 | VC++ version | Visual Studio version |
 | ---: | --- |
-| 120 | Visual Studio 2013 |
 | 140 | Visual Studio 2015 |
 | 141 | Visual Studio 2017 |
 | 142 | Visual Studio 2019 |

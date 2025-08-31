@@ -1,9 +1,6 @@
 package com.live2d.sdk.cubism.core;
 
-import org.bytedeco.javacpp.FloatPointer;
-import org.bytedeco.javacpp.IntPointer;
-import org.bytedeco.javacpp.Pointer;
-import org.bytedeco.javacpp.PointerPointer;
+import org.bytedeco.javacpp.*;
 import org.swdc.live2d.core.Live2dCore;
 
 public class CubismParameters {
@@ -23,6 +20,8 @@ public class CubismParameters {
     private int[] keyCounts;
 
     private float[][] keyValues;
+
+    private boolean[] repeats;
 
     private float[] values;
 
@@ -62,6 +61,7 @@ public class CubismParameters {
         this.values = new float[count];
         this.keyCounts = new int[count];
         this.keyValues = new float[count][];
+        this.repeats = new boolean[count];
         for (int i = 0; i < count; i++) {
             this.keyValues[i] = new float[0];
         }
@@ -84,6 +84,7 @@ public class CubismParameters {
             this.values = new float[count];
             this.keyCounts = new int[count];
             this.keyValues = new float[count][];
+            this.repeats = new boolean[count];
         }
         return this.count;
     }
@@ -120,6 +121,14 @@ public class CubismParameters {
         return this.keyValues;
     }
 
+    public boolean[] getParameterRepeats() {
+        return repeats;
+    }
+
+    public void getParameterRepeats(boolean[] repeats) {
+        this.repeats = repeats;
+    }
+
     public void update() {
 
         int count = getCount();
@@ -131,6 +140,7 @@ public class CubismParameters {
         IntPointer typeParam = Live2dCore.csmGetParameterTypes(model);
         IntPointer keyCount = Live2dCore.csmGetParameterKeyCounts(model);
         PointerPointer kvs = Live2dCore.csmGetParameterKeyValues(model);
+        IntPointer repeat = Live2dCore.csmGetParameterRepeats(model);
 
         for (int idx = 0; idx < count; idx ++) {
 
@@ -139,7 +149,7 @@ public class CubismParameters {
             maximumValue.put(idx,maximumValues[idx]);
             minimumValue.put(idx,minimumValues[idx]);
             typeParam.put(idx,types[idx].getNumber());
-
+            repeat.put(idx,repeats[idx] ? 1: 0);
             keyCount.put(idx,keyCounts[idx]);
             FloatPointer kv = new FloatPointer(kvs.get(idx));
             for (int kvi = 0; kvi < keyCounts[idx]; kvi ++) {
@@ -162,6 +172,7 @@ public class CubismParameters {
         IntPointer typeParam = Live2dCore.csmGetParameterTypes(model);
         IntPointer keyCount = Live2dCore.csmGetParameterKeyCounts(model);
         PointerPointer kvs = Live2dCore.csmGetParameterKeyValues(model);
+        IntPointer repeat = Live2dCore.csmGetParameterRepeats(model);
 
         for (int idx = 0; idx < count; idx ++) {
 
@@ -174,6 +185,7 @@ public class CubismParameters {
 
             keyCounts[idx] = keyCount.get(idx);
             keyValues[idx] = new float[keyCounts[idx]];
+            repeats[idx] = repeat.get(idx) > 0;
 
             FloatPointer kv = new FloatPointer(kvs.get(idx));
             for (int kvi = 0; kvi < keyCounts[idx]; kvi ++) {

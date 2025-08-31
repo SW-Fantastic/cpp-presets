@@ -7,10 +7,10 @@
 
 package com.live2d.sdk.cubism.framework.physics;
 
-import com.live2d.sdk.cubism.framework.utils.jsonparser.CubismJson;
 import com.live2d.sdk.cubism.framework.CubismFramework;
 import com.live2d.sdk.cubism.framework.id.CubismId;
 import com.live2d.sdk.cubism.framework.math.CubismVector2;
+import com.live2d.sdk.cubism.framework.utils.jsonparser.CubismJson;
 
 /**
  * A manager of physics3.json.

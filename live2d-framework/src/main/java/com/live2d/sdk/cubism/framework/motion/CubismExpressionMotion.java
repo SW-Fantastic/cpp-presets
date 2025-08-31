@@ -7,11 +7,11 @@
 
 package com.live2d.sdk.cubism.framework.motion;
 
+import com.live2d.sdk.cubism.framework.CubismFramework;
+import com.live2d.sdk.cubism.framework.id.CubismId;
 import com.live2d.sdk.cubism.framework.model.CubismModel;
 import com.live2d.sdk.cubism.framework.utils.jsonparser.ACubismJsonValue;
 import com.live2d.sdk.cubism.framework.utils.jsonparser.CubismJson;
-import com.live2d.sdk.cubism.framework.CubismFramework;
-import com.live2d.sdk.cubism.framework.id.CubismId;
 
 import java.util.ArrayList;
 import java.util.List;

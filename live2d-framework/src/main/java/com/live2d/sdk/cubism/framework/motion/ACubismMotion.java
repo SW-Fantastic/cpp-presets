@@ -7,9 +7,9 @@
 
 package com.live2d.sdk.cubism.framework.motion;
 
-import com.live2d.sdk.cubism.framework.model.CubismModel;
 import com.live2d.sdk.cubism.framework.id.CubismId;
 import com.live2d.sdk.cubism.framework.math.CubismMath;
+import com.live2d.sdk.cubism.framework.model.CubismModel;
 import com.live2d.sdk.cubism.framework.utils.CubismDebug;
 
 import java.util.ArrayList;
@@ -76,15 +76,9 @@ public abstract class ACubismMotion {
         // Record the start time of fade-in
         motionQueueEntry.setFadeInStartTime(userTimeSeconds);
 
-        final float duration = getDuration();
-
         // Deal with the case where the status is set "end" before it has started.
         if (motionQueueEntry.getEndTime() < 0) {
-            // If duration == -1, loop motion.
-            float endTime = (duration <= 0)
-                ? -1
-                : motionQueueEntry.getStartTime() + duration;
-            motionQueueEntry.setEndTime(endTime);
+            adjustEndTime(motionQueueEntry);
         }
     }
 
@@ -208,6 +202,42 @@ public abstract class ACubismMotion {
     }
 
     /**
+     * Sets whether the motion should loop.
+     *
+     * @param loop true to set the motion to loop
+     */
+    public void setLoop(boolean loop) {
+        isLoop = loop;
+    }
+
+    /**
+     * Checks whether the motion is set to loop.
+     *
+     * @return true if the motion is set to loop; otherwise false.
+     */
+    public boolean getLoop() {
+        return isLoop;
+    }
+
+    /**
+     * Sets whether to perform fade-in for looping motion.
+     *
+     * @param loopFadeIn true to perform fade-in for looping motion
+     */
+    public void setLoopFadeIn(boolean loopFadeIn) {
+        isLoopFadeIn = loopFadeIn;
+    }
+
+    /**
+     * Checks the setting for fade-in of looping motion.
+     *
+     * @return true if fade-in for looping motion is set; otherwise false.
+     */
+    public boolean getLoopFadeIn() {
+        return isLoopFadeIn;
+    }
+
+    /**
      * Check for event firing.
      * The input time reference is set to zero at the called motion timing.
      *
@@ -216,11 +246,28 @@ public abstract class ACubismMotion {
      * @return list of events that have fired
      */
     public List<String> getFiredEvent(float beforeCheckTimeSeconds, float motionTimeSeconds) {
-        if (areFiredEventValuesChanged) {
-            cachedImmutableFiredEventValues = Collections.unmodifiableList(firedEventValues);
-            areFiredEventValuesChanged = false;
-        }
-        return cachedImmutableFiredEventValues;
+        return Collections.unmodifiableList(firedEventValues);
+    }
+
+    /**
+     * Registers a motion playback start callback.
+     * It is not called in the following states:
+     * 1. when the currently playing motion is set as "loop"
+     * 2. when null is registered in the callback
+     *
+     * @param onBeganMotionHandler start-of-motion playback callback function
+     */
+    public void setBeganMotionHandler(IBeganMotionCallback onBeganMotionHandler) {
+        onBeganMotion = onBeganMotionHandler;
+    }
+
+    /**
+     * Get the start-of-motion playback callback function.
+     *
+     * @return registered start-of-motion playback callback function; if null, no function is registered
+     */
+    public IBeganMotionCallback getBeganMotionCallback() {
+        return onBeganMotion;
     }
 
     /**
@@ -288,6 +335,17 @@ public abstract class ACubismMotion {
         CubismMotionQueueEntry motionQueueEntry
     );
 
+    protected void adjustEndTime(CubismMotionQueueEntry motionQueueEntry) {
+        final float duration = getDuration();
+
+        // duration == -1 の場合はループする
+        final float endTime = (duration <= 0)
+            ? -1
+            : motionQueueEntry.getStartTime() + duration;
+
+        motionQueueEntry.setEndTime(endTime);
+    }
+
     /**
      * 指定時間の透明度の値を返す。
      * NOTE: 更新後の値を取るには`updateParameters()` の後に呼び出す。
@@ -314,14 +372,29 @@ public abstract class ACubismMotion {
      * Start time for motion playback[s]
      */
     protected float offsetSeconds;
+
+    /**
+     * Enable/Disable loop
+     */
+    protected boolean isLoop;
+    /**
+     * flag whether fade-in is enabled at looping. Default value is true.
+     */
+    protected boolean isLoopFadeIn = true;
+
+    /**
+     * The previous state of `_isLoop`.
+     */
+    protected boolean previousLoopState = isLoop;
     /**
      * List of events that have fired
      */
     protected List<String> firedEventValues = new ArrayList<String>();
 
-    protected boolean areFiredEventValuesChanged = true;
-
-    protected List<String> cachedImmutableFiredEventValues;
+    /**
+     * Start-of-motion playback callback function
+     */
+    protected IBeganMotionCallback onBeganMotion;
 
     /**
      * End-of-motion playback callback function

@@ -349,6 +349,15 @@ extern "C"
     csmApi float* csmCallingConvention csmGetParameterValues(csmModel* model);
 
     /**
+     * Gets Parameter Repeat informations.
+     *
+     * @param  model  Model to query.
+     *
+     * @return  Valid pointer on success; '0' otherwise.
+     */
+    csmApi const int* csmCallingConvention csmGetParameterRepeats(const csmModel* model);
+
+    /**
      * Gets number of key values of each parameter.
      *
      * @param  model  Model to query.

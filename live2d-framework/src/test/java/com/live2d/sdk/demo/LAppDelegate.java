@@ -72,7 +72,7 @@ public class LAppDelegate {
 
         // 透過設定
         gl2.glEnable(GL2.GL_BLEND);
-        gl2.glBlendFunc(GL2.GL_SRC_ALPHA, GL2.GL_ONE_MINUS_SRC_ALPHA);
+        gl2.glBlendFunc(GL2.GL_ONE, GL2.GL_ONE_MINUS_SRC_ALPHA);
 
         // Initialize Cubism SDK framework
         CubismFramework.initialize();

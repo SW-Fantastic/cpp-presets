@@ -19,8 +19,6 @@ import java.util.List;
  * サブクラスに環境依存のフィールドを保持する。
  */
 public abstract class ACubismClippingContext {
-
-
     /**
      * 渡されたレンダラーの種類に基づき、適切なクリッピングコンテキストを生成する。
      *

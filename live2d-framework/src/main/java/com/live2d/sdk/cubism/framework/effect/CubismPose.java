@@ -7,11 +7,11 @@
 
 package com.live2d.sdk.cubism.framework.effect;
 
+import com.live2d.sdk.cubism.framework.CubismFramework;
+import com.live2d.sdk.cubism.framework.id.CubismId;
 import com.live2d.sdk.cubism.framework.model.CubismModel;
 import com.live2d.sdk.cubism.framework.utils.jsonparser.ACubismJsonValue;
 import com.live2d.sdk.cubism.framework.utils.jsonparser.CubismJson;
-import com.live2d.sdk.cubism.framework.CubismFramework;
-import com.live2d.sdk.cubism.framework.id.CubismId;
 import com.live2d.sdk.cubism.framework.utils.jsonparser.CubismJsonString;
 
 import java.util.ArrayList;
@@ -273,6 +273,7 @@ public class CubismPose {
                 }
 
                 newOpacity = calculateOpacity(model, i, deltaTimeSeconds);
+
                 visiblePartIndex = i;
             }
         }
@@ -305,9 +306,13 @@ public class CubismPose {
      * @param model target model
      * @param index part index
      * @param deltaTime delta time[s]
-     * @return new calculated opacity
+     * @return new calculated opacity. If fade time is 0.0[s], return 1.0f.
      */
     private float calculateOpacity(CubismModel model, int index, float deltaTime) {
+        if (fadeTimeSeconds == 0) {
+            return 1.0f;
+        }
+
         final int partIndex = partGroups.get(index).partIndex;
         float opacity = model.getPartOpacity(partIndex);
 
@@ -334,7 +339,7 @@ public class CubismPose {
         float a1; // opacity to be calculated
         if (newOpacity < PHI) {
             // Linear equation passing through (0,1),(PHI,PHI)
-            a1 = newOpacity * (PHI - 1.0f) / (PHI + 1.0f);
+            a1 = newOpacity * (PHI - 1) / PHI + 1.0f;
         } else {
             a1 = (1 - newOpacity) * PHI / (1.0f - PHI);
         }

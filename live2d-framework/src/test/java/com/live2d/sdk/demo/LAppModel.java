@@ -12,10 +12,7 @@ import com.live2d.sdk.cubism.framework.id.CubismIdManager;
 import com.live2d.sdk.cubism.framework.math.CubismMatrix44;
 import com.live2d.sdk.cubism.framework.model.CubismMoc;
 import com.live2d.sdk.cubism.framework.model.CubismUserModel;
-import com.live2d.sdk.cubism.framework.motion.ACubismMotion;
-import com.live2d.sdk.cubism.framework.motion.CubismExpressionMotion;
-import com.live2d.sdk.cubism.framework.motion.CubismMotion;
-import com.live2d.sdk.cubism.framework.motion.IFinishedMotionCallback;
+import com.live2d.sdk.cubism.framework.motion.*;
 import com.live2d.sdk.cubism.framework.rendering.CubismRenderer;
 import com.live2d.sdk.cubism.framework.rendering.jogl.CubismOffscreenSurfaceOGL;
 import com.live2d.sdk.cubism.framework.rendering.jogl.CubismRendererOGL;
@@ -237,7 +234,7 @@ public class LAppModel extends CubismUserModel {
      * @return 開始したモーションの識別番号を返す。個別のモーションが終了したか否かを判別するisFinished()の引数で使用する。開始できない時は「-1」
      */
     public int startMotion(final String group, int number, int priority) {
-        return startMotion(group, number, priority, null);
+        return startMotion(group, number, priority, null, null);
     }
 
     /**
@@ -252,7 +249,8 @@ public class LAppModel extends CubismUserModel {
     public int startMotion(final String group,
                            int number,
                            int priority,
-                           IFinishedMotionCallback onFinishedMotionHandler
+                           IFinishedMotionCallback onFinishedMotionHandler,
+                           IBeganMotionCallback onBeganMotionHandler
     ) {
         if (priority == LAppDefine.Priority.FORCE.getPriority()) {
             motionManager.setReservationPriority(priority);
@@ -276,7 +274,7 @@ public class LAppModel extends CubismUserModel {
                 byte[] buffer;
                 buffer = createBuffer(path);
 
-                motion = loadMotion(buffer, onFinishedMotionHandler);
+                motion = loadMotion(buffer, onFinishedMotionHandler, onBeganMotionHandler, motionConsistency);
                 if (motion != null) {
                     final float fadeInTime = modelSetting.getMotionFadeInTimeValue(group, number);
 
@@ -290,9 +288,16 @@ public class LAppModel extends CubismUserModel {
                     }
 
                     motion.setEffectIds(eyeBlinkIds, lipSyncIds);
+                } else {
+                    CubismDebug.cubismLogError("Can't start motion %s", path);
+
+                    // ロードできなかったモーションのReservePriorityをリセットする。
+                    motionManager.setReservationPriority(LAppDefine.Priority.NONE.getPriority());
+                    return -1;
                 }
             }
         } else {
+            motion.setBeganMotionHandler(onBeganMotionHandler);
             motion.setFinishedMotionHandler(onFinishedMotionHandler);
         }
 
@@ -321,7 +326,7 @@ public class LAppModel extends CubismUserModel {
      * @return 開始したモーションの識別番号。個別のモーションが終了したか否かを判定するisFinished()の引数で使用する。開始できない時は「-1」
      */
     public int startRandomMotion(final String group, int priority) {
-        return startRandomMotion(group, priority, null);
+        return startRandomMotion(group, priority, null, null);
     }
 
     /**
@@ -332,7 +337,7 @@ public class LAppModel extends CubismUserModel {
      * @param onFinishedMotionHandler モーション再生終了時に呼び出されるコールバック関数。nullの場合は呼び出されない。
      * @return 開始したモーションの識別番号を返す。個別のモーションが終了したか否かを判定するisFinished()の引数で使用する。開始できない時は-1
      */
-    public int startRandomMotion(final String group, int priority, IFinishedMotionCallback onFinishedMotionHandler) {
+    public int startRandomMotion(final String group, int priority, IFinishedMotionCallback onFinishedMotionHandler, IBeganMotionCallback onBeganMotionHandler) {
         if (modelSetting.getMotionCount(group) == 0) {
             return -1;
         }
@@ -340,7 +345,7 @@ public class LAppModel extends CubismUserModel {
         Random random = new Random();
         int number = random.nextInt(Integer.MAX_VALUE) % modelSetting.getMotionCount(group);
 
-        return startMotion(group, number, priority, onFinishedMotionHandler);
+        return startMotion(group, number, priority, onFinishedMotionHandler, onBeganMotionHandler);
     }
 
     public void draw(CubismMatrix44 matrix) {
@@ -350,9 +355,9 @@ public class LAppModel extends CubismUserModel {
 
         // キャッシュ変数の定義を避けるために、multiplyByMatrix()ではなく、multiply()を使用する。
         CubismMatrix44.multiply(
-                modelMatrix.getArray(),
-                matrix.getArray(),
-                matrix.getArray()
+            modelMatrix.getArray(),
+            matrix.getArray(),
+            matrix.getArray()
         );
 
         this.<CubismRendererOGL>getRenderer().setMvpMatrix(matrix);
@@ -618,7 +623,7 @@ public class LAppModel extends CubismUserModel {
                 buffer = createBuffer(modelPath);
 
                 // If a motion cannot be loaded, a process is skipped.
-                CubismMotion tmp = loadMotion(buffer);
+                CubismMotion tmp = loadMotion(buffer, motionConsistency);
                 if (tmp == null) {
                     continue;
                 }
@@ -656,7 +661,7 @@ public class LAppModel extends CubismUserModel {
             texturePath = modelHomeDirectory + texturePath;
 
             LAppTextureManager.TextureInfo texture =
-                    LAppDelegate.getInstance()
+                LAppDelegate.getInstance()
                             .getTextureManager()
                             .createTextureFromPngFile(texturePath);
             final int glTextureNumber = texture.id;
@@ -670,6 +675,5 @@ public class LAppModel extends CubismUserModel {
             }
         }
     }
-
 
 }

@@ -43,7 +43,7 @@ public class CubismViewMatrix extends CubismMatrix44 {
             0.0f, 0.0f, 1.0f, 0.0f,
             x, y, 0.0f, 1.0f
         };
-        CubismMatrix44.multiply(tr, this.tr, this.tr);
+        multiply(tr, this.tr, this.tr);
     }
 
     /**
@@ -89,9 +89,9 @@ public class CubismViewMatrix extends CubismMatrix44 {
             -cx, -cy, 0.0f, 1.0f
         };
 
-        CubismMatrix44.multiply(tr3, tr, tr);
-        CubismMatrix44.multiply(tr2, tr, tr);
-        CubismMatrix44.multiply(tr1, tr, tr);
+        multiply(tr3, tr, tr);
+        multiply(tr2, tr, tr);
+        multiply(tr1, tr, tr);
     }
 
     /**

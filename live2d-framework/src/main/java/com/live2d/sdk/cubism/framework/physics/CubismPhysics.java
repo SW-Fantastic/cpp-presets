@@ -7,9 +7,11 @@
 
 package com.live2d.sdk.cubism.framework.physics;
 
-import com.live2d.sdk.cubism.framework.model.CubismModel;
 import com.live2d.sdk.cubism.framework.math.CubismMath;
 import com.live2d.sdk.cubism.framework.math.CubismVector2;
+import com.live2d.sdk.cubism.framework.model.CubismModel;
+import com.live2d.sdk.cubism.framework.physics.CubismPhysicsFunctions.*;
+import com.live2d.sdk.cubism.framework.physics.CubismPhysicsInternal.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -97,7 +99,7 @@ public class CubismPhysics {
         float outputValue;
         CubismVector2 totalTranslation = new CubismVector2();
         int i, settingIndex, particleIndex;
-        CubismPhysicsInternal.CubismPhysicsSubRig currentSetting;
+        CubismPhysicsSubRig currentSetting;
 
         float[] parameterValues = model.getModel().getParameters().getValues();
         float[] parameterMaximumValues = model.getModel().getParameters().getMaximumValues();
@@ -127,7 +129,7 @@ public class CubismPhysics {
 
             // Load input parameters.
             for (i = 0; i < currentSetting.inputCount; i++) {
-                CubismPhysicsInternal.CubismPhysicsInput currentInput = physicsRig.inputs.get(baseInputIndex + i);
+                CubismPhysicsInput currentInput = physicsRig.inputs.get(baseInputIndex + i);
 
                 weight = currentInput.weight / MAXIMUM_WEIGHT;
 
@@ -169,7 +171,7 @@ public class CubismPhysics {
 
             // Update output parameters.
             for (i = 0; i < currentSetting.outputCount; i++) {
-                CubismPhysicsInternal.CubismPhysicsOutput currentOutput = physicsRig.outputs.get(baseOutputIndex + i);
+                CubismPhysicsOutput currentOutput = physicsRig.outputs.get(baseOutputIndex + i);
 
                 particleIndex = currentOutput.vertexIndex;
 
@@ -257,8 +259,8 @@ public class CubismPhysics {
         float radAngle;
         float outputValue;
         int i, settingIndex, particleIndex;
-        List<CubismPhysicsInternal.CubismPhysicsInput> inputs = physicsRig.inputs;
-        List<CubismPhysicsInternal.CubismPhysicsOutput> outputs = physicsRig.outputs;
+        List<CubismPhysicsInput> inputs = physicsRig.inputs;
+        List<CubismPhysicsOutput> outputs = physicsRig.outputs;
 
         if (0.0f >= deltaTimeSeconds) {
             return;
@@ -291,10 +293,10 @@ public class CubismPhysics {
             physicsDeltaTime = deltaTimeSeconds;
         }
 
-        CubismPhysicsInternal.CubismPhysicsSubRig currentSetting;
-        CubismPhysicsInternal.CubismPhysicsInput currentInput;
-        CubismPhysicsInternal.CubismPhysicsOutput currentOutput;
-        CubismPhysicsInternal.CubismPhysicsParticle currentParticle;
+        CubismPhysicsSubRig currentSetting;
+        CubismPhysicsInput currentInput;
+        CubismPhysicsOutput currentOutput;
+        CubismPhysicsParticle currentParticle;
 
         while (currentRemainTime >= physicsDeltaTime) {
             // copy RigOutputs: _currentRigOutputs to _previousRigOutputs
@@ -321,7 +323,7 @@ public class CubismPhysics {
                 totalTranslation.setZero();
 
                 currentSetting = physicsRig.settings.get(settingIndex);
-                List<CubismPhysicsInternal.CubismPhysicsParticle> particles = physicsRig.particles;
+                List<CubismPhysicsParticle> particles = physicsRig.particles;
 
                 int baseInputIndex = currentSetting.baseInputIndex;
                 int baseOutputIndex = currentSetting.baseOutputIndex;
@@ -385,7 +387,7 @@ public class CubismPhysics {
                     }
 
                     currentParticle = particles.get(baseParticleIndex + particleIndex);
-                    CubismPhysicsInternal.CubismPhysicsParticle previousParticle = particles.get(baseParticleIndex + particleIndex - 1);
+                    CubismPhysicsParticle previousParticle = particles.get(baseParticleIndex + particleIndex - 1);
                     CubismVector2.subtract(currentParticle.position, previousParticle.position, translation);
 
                     outputValue = currentOutput.getValue.getValue(
@@ -461,7 +463,7 @@ public class CubismPhysics {
      * @param airResistance Air resistance
      */
     private static void updateParticles(
-        List<CubismPhysicsInternal.CubismPhysicsParticle> strand,
+        List<CubismPhysicsParticle> strand,
         int baseParticleIndex,
         int strandCount,
         CubismVector2 totalTranslation,
@@ -481,8 +483,8 @@ public class CubismPhysics {
         CubismMath.radianToDirection(totalRadian, currentGravity).normalize();
 
         for (int i = 1; i < strandCount; i++) {
-            final CubismPhysicsInternal.CubismPhysicsParticle currentParticle = strand.get(baseParticleIndex + i);
-            final CubismPhysicsInternal.CubismPhysicsParticle previousParticle = strand.get(baseParticleIndex + i - 1);
+            final CubismPhysicsParticle currentParticle = strand.get(baseParticleIndex + i);
+            final CubismPhysicsParticle previousParticle = strand.get(baseParticleIndex + i - 1);
 
             currentParticle.lastPosition.set(currentParticle.position.x, currentParticle.position.y);
 
@@ -540,7 +542,7 @@ public class CubismPhysics {
     private static final CubismVector2 currentGravity = new CubismVector2();
 
     private static void updateParticlesForStabilization(
-        List<CubismPhysicsInternal.CubismPhysicsParticle> strand,
+        List<CubismPhysicsParticle> strand,
         int baseParticleIndex,
         int strandCount,
         CubismVector2 totalTranslation,
@@ -557,7 +559,7 @@ public class CubismPhysics {
         CubismMath.radianToDirection(totalRadian, currentGravityForStablization).normalize();
 
         for (i = 1; i < strandCount; i++) {
-            CubismPhysicsInternal.CubismPhysicsParticle particle = strand.get(baseParticleIndex + i);
+            CubismPhysicsParticle particle = strand.get(baseParticleIndex + i);
             CubismVector2.multiply(currentGravityForStablization, particle.acceleration, particle.force).add(windDirection);
 
             particle.lastPosition.set(particle.position.x, particle.position.y);
@@ -588,7 +590,7 @@ public class CubismPhysics {
         float parameterValueMinimum,
         float parameterValueMaximum,
         float translation,
-        CubismPhysicsInternal.CubismPhysicsOutput output
+        CubismPhysicsOutput output
     ) {
         float outputScale;
         float value;
@@ -670,7 +672,7 @@ public class CubismPhysics {
      * @param physicsJson a buffer where physics3.json is loaded.
      */
     private void parse(final byte[] physicsJson) {
-        physicsRig = new CubismPhysicsInternal.CubismPhysicsRig();
+        physicsRig = new CubismPhysicsRig();
 
         CubismPhysicsJson json;
         json = new CubismPhysicsJson(physicsJson);
@@ -681,13 +683,13 @@ public class CubismPhysics {
 
         physicsRig.fps = json.getFps();
 
-        physicsRig.settings = new ArrayList<CubismPhysicsInternal.CubismPhysicsSubRig>(physicsRig.subRigCount);
+        physicsRig.settings = new ArrayList<CubismPhysicsSubRig>(physicsRig.subRigCount);
 
-        physicsRig.inputs = new ArrayList<CubismPhysicsInternal.CubismPhysicsInput>(json.getTotalInputCount());
+        physicsRig.inputs = new ArrayList<CubismPhysicsInput>(json.getTotalInputCount());
 
-        physicsRig.outputs = new ArrayList<CubismPhysicsInternal.CubismPhysicsOutput>(json.getTotalOutputCount());
+        physicsRig.outputs = new ArrayList<CubismPhysicsOutput>(json.getTotalOutputCount());
 
-        physicsRig.particles = new ArrayList<CubismPhysicsInternal.CubismPhysicsParticle>(json.getVertexCount());
+        physicsRig.particles = new ArrayList<CubismPhysicsParticle>(json.getVertexCount());
 
         currentRigOutputs.clear();
         previousRigOutputs.clear();
@@ -697,7 +699,7 @@ public class CubismPhysics {
         int particleIndex = 0;
 
         for (int i = 0; i < physicsRig.subRigCount; i++) {
-            final CubismPhysicsInternal.CubismPhysicsSubRig setting = new CubismPhysicsInternal.CubismPhysicsSubRig();
+            final CubismPhysicsSubRig setting = new CubismPhysicsSubRig();
 
             // Setting
             setting.baseInputIndex = inputIndex;
@@ -727,7 +729,7 @@ public class CubismPhysics {
      * @param setting current physics setting
      * @param settingIndex current setting index
      */
-    private void parseSetting(final CubismPhysicsJson json, final CubismPhysicsInternal.CubismPhysicsSubRig setting, final int settingIndex) {
+    private void parseSetting(final CubismPhysicsJson json, final CubismPhysicsSubRig setting, final int settingIndex) {
         setting.normalizationPosition.minimumValue = json.getNormalizationPositionMinimumValue(settingIndex);
         setting.normalizationPosition.maximumValue = json.getNormalizationPositionMaximumValue(settingIndex);
         setting.normalizationPosition.defaultValue = json.getNormalizationPositionDefaultValue(settingIndex);
@@ -753,7 +755,7 @@ public class CubismPhysics {
      */
     private void parseInputs(final CubismPhysicsJson json, final int settingIndex, final int inputCount) {
         for (int inputIndex = 0; inputIndex < inputCount; inputIndex++) {
-            final CubismPhysicsInternal.CubismPhysicsInput input = new CubismPhysicsInternal.CubismPhysicsInput();
+            final CubismPhysicsInput input = new CubismPhysicsInput();
 
             input.sourceParameterIndex = -1;
             input.weight = json.getInputWeight(settingIndex, inputIndex);
@@ -762,17 +764,17 @@ public class CubismPhysics {
             final String tag = json.getInputType(settingIndex, inputIndex);
 
             if (tag.equals(PhysicsTypeTag.X.tag)) {
-                input.type = CubismPhysicsInternal.CubismPhysicsSource.X;
-                input.getNormalizedParameterValue = new CubismPhysicsFunctions.GetInputTranslationXFromNormalizedParameterValue();
+                input.type = CubismPhysicsSource.X;
+                input.getNormalizedParameterValue = new GetInputTranslationXFromNormalizedParameterValue();
             } else if (tag.equals(PhysicsTypeTag.Y.tag)) {
-                input.type = CubismPhysicsInternal.CubismPhysicsSource.Y;
-                input.getNormalizedParameterValue = new CubismPhysicsFunctions.GetInputTranslationYFromNormalizedParameterValue();
+                input.type = CubismPhysicsSource.Y;
+                input.getNormalizedParameterValue = new GetInputTranslationYFromNormalizedParameterValue();
             } else if (tag.equals(PhysicsTypeTag.ANGLE.tag)) {
-                input.type = CubismPhysicsInternal.CubismPhysicsSource.ANGLE;
-                input.getNormalizedParameterValue = new CubismPhysicsFunctions.GetInputAngleFromNormalizedParameterValue();
+                input.type = CubismPhysicsSource.ANGLE;
+                input.getNormalizedParameterValue = new GetInputAngleFromNormalizedParameterValue();
             }
 
-            input.source.targetType = CubismPhysicsInternal.CubismPhysicsTargetType.PARAMETER;
+            input.source.targetType = CubismPhysicsTargetType.PARAMETER;
             input.source.Id = json.getInputSourceId(settingIndex, inputIndex);
 
             physicsRig.inputs.add(input);
@@ -799,29 +801,29 @@ public class CubismPhysics {
         previousRigOutputs.add(previousRigOutput);
 
         for (int outputIndex = 0; outputIndex < outputCount; outputIndex++) {
-            final CubismPhysicsInternal.CubismPhysicsOutput output = new CubismPhysicsInternal.CubismPhysicsOutput();
+            final CubismPhysicsOutput output = new CubismPhysicsOutput();
 
             output.destinationParameterIndex = -1;
             output.vertexIndex = json.getOutputVertexIndex(settingIndex, outputIndex);
             output.angleScale = json.getOutputAngleScale(settingIndex, outputIndex);
             output.weight = json.getOutputWeight(settingIndex, outputIndex);
-            output.destination.targetType = CubismPhysicsInternal.CubismPhysicsTargetType.PARAMETER;
+            output.destination.targetType = CubismPhysicsTargetType.PARAMETER;
 
             output.destination.Id = json.getOutputsDestinationId(settingIndex, outputIndex);
 
             final String tag = json.getOutputType(settingIndex, outputIndex);
             if (tag.equals(PhysicsTypeTag.X.tag)) {
-                output.type = CubismPhysicsInternal.CubismPhysicsSource.X;
-                output.getValue = new CubismPhysicsFunctions.GetOutputTranslationX();
-                output.getScale = new CubismPhysicsFunctions.GetOutputScaleTranslationX();
+                output.type = CubismPhysicsSource.X;
+                output.getValue = new GetOutputTranslationX();
+                output.getScale = new GetOutputScaleTranslationX();
             } else if (tag.equals(PhysicsTypeTag.Y.tag)) {
-                output.type = CubismPhysicsInternal.CubismPhysicsSource.Y;
-                output.getValue = new CubismPhysicsFunctions.GetOutputTranslationY();
-                output.getScale = new CubismPhysicsFunctions.GetOutputScaleTranslationY();
+                output.type = CubismPhysicsSource.Y;
+                output.getValue = new GetOutputTranslationY();
+                output.getScale = new GetOutputScaleTranslationY();
             } else if (tag.equals(PhysicsTypeTag.ANGLE.tag)) {
-                output.type = CubismPhysicsInternal.CubismPhysicsSource.ANGLE;
-                output.getValue = new CubismPhysicsFunctions.GetOutputAngle();
-                output.getScale = new CubismPhysicsFunctions.GetOutputScaleAngle();
+                output.type = CubismPhysicsSource.ANGLE;
+                output.getValue = new GetOutputAngle();
+                output.getScale = new GetOutputScaleAngle();
             }
 
             output.reflect = json.getOutputReflect(settingIndex, outputIndex);
@@ -840,7 +842,7 @@ public class CubismPhysics {
      */
     private void parseParticles(final CubismPhysicsJson json, final int settingIndex, final int particleCount) {
         for (int particleIndex = 0; particleIndex < particleCount; particleIndex++) {
-            final CubismPhysicsInternal.CubismPhysicsParticle particle = new CubismPhysicsInternal.CubismPhysicsParticle();
+            final CubismPhysicsParticle particle = new CubismPhysicsParticle();
 
             particle.mobility = json.getParticleMobility(settingIndex, particleIndex);
             particle.delay = json.getParticleDelay(settingIndex, particleIndex);
@@ -857,10 +859,10 @@ public class CubismPhysics {
      */
     private void initialize() {
         for (int settingIndex = 0; settingIndex < physicsRig.subRigCount; settingIndex++) {
-            final CubismPhysicsInternal.CubismPhysicsSubRig currentSetting = physicsRig.settings.get(settingIndex);
+            final CubismPhysicsSubRig currentSetting = physicsRig.settings.get(settingIndex);
 
             final int baseIndex = currentSetting.baseParticleIndex;
-            final CubismPhysicsInternal.CubismPhysicsParticle baseParticle = physicsRig.particles.get(baseIndex);
+            final CubismPhysicsParticle baseParticle = physicsRig.particles.get(baseIndex);
 
             // Initialize the top of particle
             baseParticle.initialPosition = new CubismVector2();
@@ -871,7 +873,7 @@ public class CubismPhysics {
 
             // Initialize particles
             for (int i = 1; i < currentSetting.particleCount; i++) {
-                final CubismPhysicsInternal.CubismPhysicsParticle currentParticle = physicsRig.particles.get(baseIndex + i);
+                final CubismPhysicsParticle currentParticle = physicsRig.particles.get(baseIndex + i);
 
                 final CubismVector2 radius = new CubismVector2(0.0f, currentParticle.radius);
 
@@ -896,8 +898,8 @@ public class CubismPhysics {
      */
     private void interpolate(CubismModel model, float weight) {
         for (int settingIndex = 0; settingIndex < physicsRig.subRigCount; settingIndex++) {
-            CubismPhysicsInternal.CubismPhysicsSubRig currentSetting = physicsRig.settings.get(settingIndex);
-            List<CubismPhysicsInternal.CubismPhysicsOutput> outputs = physicsRig.outputs;
+            CubismPhysicsSubRig currentSetting = physicsRig.settings.get(settingIndex);
+            List<CubismPhysicsOutput> outputs = physicsRig.outputs;
             int baseOutputIndex = currentSetting.baseOutputIndex;
 
             float[] parameterValues = model.getModel().getParameters().getValues();
@@ -907,7 +909,7 @@ public class CubismPhysics {
             tmpValue[0] = 0.0f;
 
             for (int i = 0; i < currentSetting.outputCount; i++) {
-                CubismPhysicsInternal.CubismPhysicsOutput currentOutput = outputs.get(baseOutputIndex + i);
+                CubismPhysicsOutput currentOutput = outputs.get(baseOutputIndex + i);
 
                 if (currentOutput.destinationParameterIndex == -1) {
                     continue;
@@ -942,12 +944,12 @@ public class CubismPhysics {
      * @return total amount of model's angle
      */
     private float loadInputParameters(final CubismModel model, final CubismVector2 transition, final int settingIndex) {
-        CubismPhysicsInternal.CubismPhysicsSubRig currentSetting = physicsRig.settings.get(settingIndex);
+        CubismPhysicsSubRig currentSetting = physicsRig.settings.get(settingIndex);
 
         final float[] totalAngle = new float[1];
 
         for (int i = 0; i < currentSetting.inputCount; i++) {
-            final CubismPhysicsInternal.CubismPhysicsInput currentInput = physicsRig.inputs.get(currentSetting.baseInputIndex + i);
+            final CubismPhysicsInput currentInput = physicsRig.inputs.get(currentSetting.baseInputIndex + i);
             final float weight = currentInput.weight / MAXIMUM_WEIGHT;
 
             if (currentInput.sourceParameterIndex == -1) {
@@ -979,7 +981,7 @@ public class CubismPhysics {
     /**
      * Physics operation data
      */
-    private CubismPhysicsInternal.CubismPhysicsRig physicsRig;
+    private CubismPhysicsRig physicsRig;
     /**
      * Options of physics operation
      */
