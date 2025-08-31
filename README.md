@@ -45,7 +45,7 @@ use Live2d。
 ## 子项目列表（sub-project list）
 
 1. Live2D Core & Live2D Java SDK（YES，**JAVA SDK，NOT ANDROID**）
-   - Build with Live2D Native SDK version 1.5-r1
+   - Build with Live2D Native SDK version 5-r4.1
    - Has pre-built binary with (windows-x64, linux-x64, macos-x64)
      本库提供了预构建的Windows，linux，macos的64位二进制文件。
 2. Pdfium Core & Pdfium4J
