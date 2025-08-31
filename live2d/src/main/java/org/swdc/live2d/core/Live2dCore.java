@@ -5,9 +5,8 @@ package org.swdc.live2d.core;
 import java.nio.*;
 import org.bytedeco.javacpp.*;
 import org.bytedeco.javacpp.annotation.*;
-import org.swdc.live2d.conf.Live2dCoreConfigure;
 
-public class Live2dCore extends Live2dCoreConfigure {
+public class Live2dCore extends org.swdc.live2d.conf.Live2dCoreConfigure {
     static { Loader.load(); }
 
 // Parsed from Live2DCubismCore.h
@@ -407,6 +406,15 @@ public class Live2dCore extends Live2dCoreConfigure {
     public static native FloatPointer csmGetParameterValues(csmModel model);
 
     /**
+     * Gets Parameter Repeat informations.
+     *
+     * @param  model  Model to query.
+     *
+     * @return  Valid pointer on success; '0' otherwise.
+     */
+    public static native @Const IntPointer csmGetParameterRepeats(@Const csmModel model);
+
+    /**
      * Gets number of key values of each parameter.
      *
      * @param  model  Model to query.
@@ -702,8 +710,6 @@ public class Live2dCore extends Live2dCoreConfigure {
 public static native Pointer csmAllocateAligned(@Cast("const csmSizeType") long size, @Cast("const csmUint32") int alignment);
 
 public static native void csmDeallocateAligned(Pointer alignedMemory);
-
-
 
 public static native csmMoc csmAllocMoc(@Cast("csmByte*") BytePointer mocBytes, @Cast("csmSizeType") long size,@Cast("csmBool") boolean shouldCheckMocConsistency);
 public static native csmMoc csmAllocMoc(@Cast("csmByte*") ByteBuffer mocBytes, @Cast("csmSizeType") long size,@Cast("csmBool") boolean shouldCheckMocConsistency);
