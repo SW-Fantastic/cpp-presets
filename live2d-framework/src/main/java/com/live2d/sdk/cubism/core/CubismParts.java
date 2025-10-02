@@ -37,12 +37,9 @@ public class CubismParts {
 
         FloatPointer opacityPointer = Live2dCore.csmGetPartOpacities(model);
         IntPointer parentPartIndPointer = Live2dCore.csmGetPartParentPartIndices(model);
-        for (int idx = 0; idx < counts; idx ++) {
+        opacityPointer.put(opacities,0,counts);
+        parentPartIndPointer.put(parentPartIndices,0,counts);
 
-            opacityPointer.put(idx,opacities[idx]);
-            parentPartIndPointer.put(idx,parentPartIndices[idx]);
-
-        }
     }
 
     void reloadFromModel() {
@@ -53,11 +50,12 @@ public class CubismParts {
         FloatPointer opacityPointer = Live2dCore.csmGetPartOpacities(model);
         IntPointer parentPartIndPointer = Live2dCore.csmGetPartParentPartIndices(model);
 
+        opacityPointer.get(opacities,0,counts);
+        parentPartIndPointer.get(parentPartIndices,0,counts);
+
         for (int idx = 0; idx < counts; idx ++) {
 
             ids[idx] = idsPointer.getString(idx, StandardCharsets.UTF_8);
-            opacities[idx] = opacityPointer.get(idx);
-            parentPartIndices[idx] = parentPartIndPointer.get(idx);
 
         }
 

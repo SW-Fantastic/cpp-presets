@@ -3,6 +3,8 @@ package com.live2d.sdk.cubism.core;
 import org.bytedeco.javacpp.*;
 import org.swdc.live2d.core.Live2dCore;
 
+import java.util.Arrays;
+
 public class CubismParameters {
 
     private int count = -1;
@@ -142,19 +144,22 @@ public class CubismParameters {
         PointerPointer kvs = Live2dCore.csmGetParameterKeyValues(model);
         IntPointer repeat = Live2dCore.csmGetParameterRepeats(model);
 
+        valueParam.put(values,0,count);
+        defaultValue.put(defaultValues,0,count);
+        maximumValue.put(maximumValues,0,count);
+        minimumValue.put(minimumValues,0,count);
+        typeParam.put(Arrays
+                .stream(types)
+                .mapToInt(ParameterType::getNumber)
+                .toArray(),0,count
+        );
+        keyCount.put(keyCounts,0,count);
+
         for (int idx = 0; idx < count; idx ++) {
 
-            valueParam.put(idx,values[idx]);
-            defaultValue.put(idx,defaultValues[idx]);
-            maximumValue.put(idx,maximumValues[idx]);
-            minimumValue.put(idx,minimumValues[idx]);
-            typeParam.put(idx,types[idx].getNumber());
             repeat.put(idx,repeats[idx] ? 1: 0);
-            keyCount.put(idx,keyCounts[idx]);
             FloatPointer kv = new FloatPointer(kvs.get(idx));
-            for (int kvi = 0; kvi < keyCounts[idx]; kvi ++) {
-                kv.put(kvi,keyValues[idx][kvi]);
-            }
+            kv.put(keyValues[idx],0,keyCounts[idx]);
 
         }
 
@@ -174,23 +179,22 @@ public class CubismParameters {
         PointerPointer kvs = Live2dCore.csmGetParameterKeyValues(model);
         IntPointer repeat = Live2dCore.csmGetParameterRepeats(model);
 
+        valueParam.get(values,0,count);
+        defaultValue.get(defaultValues,0,count);
+        maximumValue.get(maximumValues,0,count);
+        minimumValue.get(minimumValues,0,count);
+        keyCount.get(keyCounts,0,count);
+
         for (int idx = 0; idx < count; idx ++) {
 
             ids[idx] = pp.getString(idx);
-            values[idx] = valueParam.get(idx);
-            defaultValues[idx] = defaultValue.get(idx);
-            maximumValues[idx] = maximumValue.get(idx);
-            minimumValues[idx] = minimumValue.get(idx);
             types[idx] = ParameterType.toType(typeParam.get(idx));
 
-            keyCounts[idx] = keyCount.get(idx);
             keyValues[idx] = new float[keyCounts[idx]];
             repeats[idx] = repeat.get(idx) > 0;
 
             FloatPointer kv = new FloatPointer(kvs.get(idx));
-            for (int kvi = 0; kvi < keyCounts[idx]; kvi ++) {
-                keyValues[idx][kvi] = kv.get(kvi);
-            }
+            kv.get(keyValues[idx],0,keyCounts[idx]);
 
         }
 

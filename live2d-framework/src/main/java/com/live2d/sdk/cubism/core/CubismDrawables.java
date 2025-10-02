@@ -112,39 +112,33 @@ public class CubismDrawables {
         Live2dCore.csmVector4 screenColor = Live2dCore.csmGetDrawableScreenColors(model);
         Live2dCore.csmVector4 multiplyColor = Live2dCore.csmGetDrawableMultiplyColors(model);
 
-        for (int idx = 0; idx < counts; idx ++) {
+        constantFlagsPointer.put(constantFlags,0,counts);
+        dynamicFlagsPointer.put(dynamicFlags,0,counts);
+        textureIndPointer.put(textureIndices,0,counts);
+        orderPointer.put(drawOrders,0,counts);
+        renderPointer.put(renderOrders,0,counts);
+        opacityPointer.put(opacities,0,counts);
+        maskCountPointer.put(maskCounts,0,counts);
+        vertexCountsPointer.put(vertexCounts,0,counts);
+        indexCountPointer.put(indexCounts,0,counts);
+        parentPartIndicesPointer.put(parentPartIndices,0,counts);
 
-            constantFlagsPointer.put(idx,constantFlags[idx]);
-            dynamicFlagsPointer.put(idx,dynamicFlags[idx]);
-            textureIndPointer.put(idx,textureIndices[idx]);
-            orderPointer.put(idx,drawOrders[idx]);
-            renderPointer.put(idx,renderOrders[idx]);
-            opacityPointer.put(idx,opacities[idx]);
-            maskCountPointer.put(idx,maskCounts[idx]);
+        for (int idx = 0; idx < counts; idx ++) {
 
             IntPointer theMaskIdxPointer = new IntPointer(
                     masksPointer.get(idx)
             );
 
-            for (int mIdx = 0; mIdx < maskCounts[idx]; mIdx ++) {
-                theMaskIdxPointer.put(mIdx,masks[idx][mIdx]);
-            }
+            theMaskIdxPointer.put(masks[idx],0,maskCounts[idx]);
 
-            vertexCountsPointer.put(idx,vertexCounts[idx]);
             FloatPointer vertexPos = new FloatPointer(vertexPosPointer.get(idx));
             FloatPointer vertexUv = new FloatPointer(vertexUvPointer.get(idx));
-            for (int vertexIdx = 0; vertexIdx < vertexCounts[idx] * 2; vertexIdx ++) {
 
-                vertexPos.put(vertexIdx,vertexPositions[idx][vertexIdx]);
-                vertexUv.put(vertexIdx,vertexUvs[idx][vertexIdx]);
+            vertexPos.put(vertexPositions[idx],0,vertexCounts[idx] * 2);
+            vertexUv.put(vertexUvs[idx],0,vertexCounts[idx] * 2);
 
-            }
-
-            indexCountPointer.put(idx,indexCounts[idx]);
             ShortPointer indices = new ShortPointer(indicesPointer.get(idx));
-            for (int indicesIdx = 0; indicesIdx < indexCounts[idx]; indicesIdx ++) {
-                indices.put(indicesIdx,this.indices[idx][indicesIdx]);
-            }
+            indices.put(this.indices[idx],0,indexCounts[idx]);
 
             Live2dCore.csmVector4 currMultipleColor = multiplyColor.getPointer(idx);
             currMultipleColor.X(multiplyColors[idx][0]);
@@ -158,7 +152,6 @@ public class CubismDrawables {
             currScreenColor.Z(screenColors[idx][2]);
             currScreenColor.W(screenColors[idx][3]);
 
-            parentPartIndicesPointer.put(idx,parentPartIndices[idx]);
         }
     }
 
@@ -189,16 +182,20 @@ public class CubismDrawables {
         Live2dCore.csmVector4 screenColor = Live2dCore.csmGetDrawableScreenColors(model);
         Live2dCore.csmVector4 multiplyColor = Live2dCore.csmGetDrawableMultiplyColors(model);
 
+        constantFlagsPointer.get(constantFlags,0,counts);
+        dynamicFlagsPointer.get(dynamicFlags,0,counts);
+        textureIndPointer.get(textureIndices,0,counts);
+        orderPointer.get(drawOrders,0,counts);
+        renderPointer.get(renderOrders,0,counts);
+        opacityPointer.get(opacities,0,counts);
+        maskCountPointer.get(maskCounts,0,counts);
+        vertexCountsPointer.get(vertexCounts,0,counts);
+        indexCountPointer.get(indexCounts,0,counts);
+        parentPartIndicesPointer.get(parentPartIndices,0,counts);
+
         for (int idx = 0; idx < counts; idx ++) {
 
             ids[idx] = idsPointer.getString(idx, StandardCharsets.UTF_8);
-            constantFlags[idx] = constantFlagsPointer.get(idx);
-            dynamicFlags[idx] = dynamicFlagsPointer.get(idx);
-            textureIndices[idx] = textureIndPointer.get(idx);
-            drawOrders[idx] = orderPointer.get(idx);
-            renderOrders[idx] = renderPointer.get(idx);
-            opacities[idx] = opacityPointer.get(idx);
-            maskCounts[idx] = maskCountPointer.get(idx);
 
             if (masks[idx].length != maskCounts[idx]) {
                 masks[idx] = new int[maskCounts[idx]];
@@ -207,11 +204,7 @@ public class CubismDrawables {
             IntPointer theMaskIdxPointer = new IntPointer(
                     masksPointer.get(idx)
             );
-            for (int mIdx = 0; mIdx < maskCounts[idx]; mIdx ++) {
-                masks[idx][mIdx] = theMaskIdxPointer.get(mIdx);
-            }
-
-            vertexCounts[idx] = vertexCountsPointer.get(idx);
+            theMaskIdxPointer.get(masks[idx],0,maskCounts[idx]);
 
             FloatPointer vertexPos = new FloatPointer(vertexPosPointer.get(idx));
             if (vertexPositions[idx].length != vertexCounts[idx]) {
@@ -223,21 +216,14 @@ public class CubismDrawables {
                 vertexUvs[idx] = new float[vertexCounts[idx] * 2];
             }
 
-            for (int vertexIdx = 0; vertexIdx < vertexCounts[idx] * 2; vertexIdx ++) {
+            vertexPos.get(vertexPositions[idx],0,vertexCounts[idx] * 2);
+            vertexUv.get(vertexUvs[idx],0,vertexCounts[idx] * 2);
 
-                vertexPositions[idx][vertexIdx] = vertexPos.get(vertexIdx);
-                vertexUvs[idx][vertexIdx] = vertexUv.get(vertexIdx);
-
-            }
-
-            indexCounts[idx] = indexCountPointer.get(idx);
             if (indices[idx].length != indexCounts[idx]) {
                 this.indices[idx] = new short[indexCounts[idx]];
             }
             ShortPointer indices = new ShortPointer(indicesPointer.get(idx));
-            for (int indicesIdx = 0; indicesIdx < indexCounts[idx]; indicesIdx ++) {
-                this.indices[idx][indicesIdx] = indices.get(indicesIdx);
-            }
+            indices.get(this.indices[idx],0,indexCounts[idx]);
 
             Live2dCore.csmVector4 currMultipleColor = multiplyColor.getPointer(idx);
             multiplyColors[idx] = new float[]{
@@ -249,7 +235,6 @@ public class CubismDrawables {
                     currScreenColor.X(), currScreenColor.Y(),currScreenColor.Z(), currScreenColor.W()
             };
 
-            parentPartIndices[idx] = parentPartIndicesPointer.get(idx);
         }
 
     }

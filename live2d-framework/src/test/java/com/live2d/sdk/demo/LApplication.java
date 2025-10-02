@@ -1,6 +1,10 @@
 package com.live2d.sdk.demo;
 
-import com.jogamp.newt.awt.NewtCanvasAWT;
+import com.jogamp.nativewindow.WindowClosingProtocol;
+import com.jogamp.newt.event.MouseAdapter;
+import com.jogamp.newt.event.MouseEvent;
+import com.jogamp.newt.event.WindowAdapter;
+import com.jogamp.newt.event.WindowEvent;
 import com.jogamp.newt.opengl.GLWindow;
 import com.jogamp.opengl.*;
 import com.jogamp.opengl.awt.GLJPanel;
@@ -9,8 +13,6 @@ import org.bytedeco.javacpp.Loader;
 import org.swdc.live2d.core.Live2dCore;
 
 import javax.swing.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
 
 public class LApplication {
@@ -19,21 +21,18 @@ public class LApplication {
 
         private GLAutoDrawable drawable;
 
-        private FPSAnimator animator;
-
         public GLListener(GLAutoDrawable drawable) {
             this.drawable = drawable;
-            animator = new FPSAnimator(this.drawable,60);
         }
 
         @Override
         public void init(GLAutoDrawable drawable) {
+
             LAppDelegate delegate = LAppDelegate.getInstance(this.drawable);
             delegate.onStart();
             delegate.onSurfaceCreated();
             delegate.onSurfaceChanged();
             delegate.run();
-            animator.start();
 
         }
 
@@ -57,6 +56,18 @@ public class LApplication {
         public void mouseDown(float x, float y) {
             LAppDelegate delegate = LAppDelegate.getInstance(this.drawable);
             delegate.onTouchBegan(x,y);
+            drawable.invoke(false, new GLRunnable() {
+                @Override
+                public boolean run(GLAutoDrawable drawable) {
+                    // OpenGL的渲染操作务必在OpenGL的线程完成
+                    // 例如这种切换模型的处理，如果不在OpenGL线程中执行，它将会无法正确的载入贴图
+                    // 从而导致渲染的异常（但它不会报错）。
+                    LAppLive2DManager manager = LAppLive2DManager.getInstance();
+                    manager.nextScene();
+                    return true;
+                }
+            });
+
         }
 
         public void mouseMove(float x, float y) {
@@ -75,33 +86,73 @@ public class LApplication {
 
         Loader.load(Live2dCore.class);
 
-        JFrame frame = new JFrame();
+        /*JFrame frame = new JFrame();
         frame.setSize(600,1000);
 
         GLJPanel canvas = new GLJPanel();
         GLListener listener = new GLListener(canvas);
+
+        FPSAnimator animator = new FPSAnimator(canvas,30);
+        animator.start();
+
+        canvas.setAnimator(animator);
         canvas.addGLEventListener(listener);
-        canvas.addMouseListener(new MouseAdapter() {
+        canvas.setRequestedGLCapabilities(new GLCapabilities(GLProfile.getDefault()));
+        canvas.addMouseListener(new java.awt.event.MouseAdapter() {
+
             @Override
-            public void mousePressed(MouseEvent e) {
+            public void mousePressed(java.awt.event.MouseEvent e) {
                 listener.mouseDown(e.getX(), e.getY());
             }
 
             @Override
-            public void mouseReleased(MouseEvent e) {
+            public void mouseReleased(java.awt.event.MouseEvent e) {
                 listener.mouseUp(e.getX(), e.getY());
             }
 
             @Override
-            public void mouseMoved(MouseEvent e) {
+            public void mouseMoved(java.awt.event.MouseEvent e) {
                 listener.mouseMove(e.getX(), e.getY());
             }
         });
+
         frame.add(canvas);
-
         frame.setVisible(true);
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);*/
 
+        GLWindow window = GLWindow.create(new GLCapabilities(GLProfile.getDefault()));
+        GLListener listener = new GLListener(window);
+        FPSAnimator animator = new FPSAnimator(window,60);
+        window.setAnimator(animator);
+        window.addGLEventListener(listener);
+        window.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowDestroyed(WindowEvent e) {
+                System.exit(0);
+            }
+        });
+        window.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                window.invoke(false, new GLRunnable() {
+                    @Override
+                    public boolean run(GLAutoDrawable drawable) {
+                        // OpenGL的渲染操作务必在OpenGL的线程完成
+                        // 例如这种切换模型的处理，如果不在OpenGL线程中执行，它将会无法正确的载入贴图
+                        // 从而导致渲染的异常（但它不会报错）。
+                        animator.pause();
+                        LAppLive2DManager manager = LAppLive2DManager.getInstance();
+                        manager.nextScene();
+                        animator.resume();
+                        return true;
+                    }
+                });
+            }
+        });
+        window.setDefaultCloseOperation(WindowClosingProtocol.WindowClosingMode.DISPOSE_ON_CLOSE);
+        window.setSize(600,840);
+        animator.start();
+        window.setVisible(true);
     }
 
 }

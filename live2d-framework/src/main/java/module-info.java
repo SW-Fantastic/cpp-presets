@@ -21,4 +21,7 @@ module swdc.live2d.framework {
     exports com.live2d.sdk.cubism.framework.utils;
     exports com.live2d.sdk.cubism.framework.utils.jsonparser;
 
+    exports com.live2d.sdk.cubism.sdk;
+    exports com.live2d.sdk.cubism.sdk.jogl;
+
 }

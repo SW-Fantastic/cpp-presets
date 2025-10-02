@@ -14,7 +14,7 @@ public class LLMParameter {
 
     private int gpuLayers = 0;
 
-    private boolean memorySwap = true;
+    private boolean memorySwap = false;
 
     private Float minP;
 
@@ -48,6 +48,10 @@ public class LLMParameter {
 
     public Float getTopP() {
         return topP;
+    }
+
+    public void setTopP(Float topP) {
+        this.topP = topP;
     }
 
     public void setTopK(Integer topK) {

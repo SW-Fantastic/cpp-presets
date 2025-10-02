@@ -3,6 +3,7 @@ package org.swdc.llm.test;
 import org.swdc.llama.core.*;
 import org.swdc.llm.*;
 import org.swdc.llm.prompts.DeepSeekPrompts;
+import org.swdc.llm.prompts.LLamaPrompts;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,12 +22,6 @@ public class TestModelWithChat {
                 new File("D:\\SDK\\LLM-Models\\snowflake-arctic-embed-s-q8_0.gguf")
         ); */
 
-        // 初始化模型参数
-        llama_model_params params = LLamaCore.llama_model_default_params();
-        // 启用mmap内存交换
-        params.use_mmap(true);
-        // 设置GPU层数为0，即不使用GPU加速
-        params.n_gpu_layers(0);
 
         //File modelFile = new File("D:\\SDK\\LLM-Models\\ChatGLM.cpp\\glm-4-9b-chat-Q2_K.gguf");
         //File modelFile = new File("D:\\SDK\\LLM-Models\\RwKV\\rwkv-6-world-7b-Q4_0.gguf")；
@@ -40,11 +35,15 @@ public class TestModelWithChat {
         parameter.setMinP(0.05f);
         parameter.setMinKeepP(1L);
         parameter.setTemp(0.8f);
-        parameter.setPrompt(DeepSeekPrompts.DeepSeekV3);
+        parameter.setPrompt(DeepSeekPrompts.DeepSeekV2);
         parameter.setSeeds(LLamaCore.LLAMA_DEFAULT_SEED);
+        parameter.setMemorySwap(false);
+        parameter.setContextSize(1024 * 4);
 
         LLModal modal = new LLModal(parameter, modelFile);
         modal.load();
+
+        System.out.println("------------------------LLM is ready--------------------------------\r\n");
 
         while (true) {
 
