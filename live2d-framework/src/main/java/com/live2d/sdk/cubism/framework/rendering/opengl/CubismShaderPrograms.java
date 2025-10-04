@@ -5,13 +5,13 @@
  * that can be found at http://live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-package com.live2d.sdk.cubism.framework.rendering.jogl;
+package com.live2d.sdk.cubism.framework.rendering.opengl;
 
 /**
  * This class has raw GLSL codes.
  * Number of shaders = for generating mask + (normal + adding + premultiplication) * (without mask + with mask + with mask inverted + without mask for premultiplied alpha + with mask for premultiplied alpha + with mask inverted for premultiplied alpha)
  */
-class CubismShaderPrograms {
+public class CubismShaderPrograms {
     /**
      * The enum class that represents the precision of floating point numbers used in GLSL.
      */

@@ -11,6 +11,7 @@ import com.jogamp.opengl.GL2;
 import com.live2d.sdk.cubism.framework.math.CubismMatrix44;
 import com.live2d.sdk.cubism.framework.model.CubismModel;
 import com.live2d.sdk.cubism.framework.rendering.CubismRenderer;
+import com.live2d.sdk.cubism.framework.rendering.opengl.CubismDrawableInfoCachesHolder;
 import com.live2d.sdk.cubism.framework.type.csmRectF;
 
 import java.nio.FloatBuffer;
@@ -20,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.jogamp.opengl.GL2.*;
-import static com.live2d.sdk.cubism.framework.rendering.jogl.CubismShaderPrograms.*;
+import static com.live2d.sdk.cubism.framework.rendering.opengl.CubismShaderPrograms.*;
 import static com.live2d.sdk.cubism.framework.utils.CubismDebug.cubismLogError;
 
 /**
@@ -135,6 +136,12 @@ class CubismShaderOGL {
             index,
             model.getDrawableVertexUvs(index)
         );
+
+        if (vertexArrayBuffer.capacity() < 1 || uvArrayBuffer.capacity() < 1) {
+            // JOGL会检查数组的长度，空白的数组会导致JOGL抛出异常，
+            // 因此，如果vertexArray或者uvArray的容量小于1，则直接返回
+            return;
+        }
 
         // setting of vertex array
         GL2.glEnableVertexAttribArray(shaderSet.attributePositionLocation);

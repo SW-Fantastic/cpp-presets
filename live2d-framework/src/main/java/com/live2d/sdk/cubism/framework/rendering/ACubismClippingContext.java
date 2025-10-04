@@ -9,6 +9,7 @@ package com.live2d.sdk.cubism.framework.rendering;
 
 import com.live2d.sdk.cubism.framework.math.CubismMatrix44;
 import com.live2d.sdk.cubism.framework.rendering.jogl.CubismClippingContextOGL;
+import com.live2d.sdk.cubism.framework.rendering.lwjgl.CubismClippingContextLWGL;
 import com.live2d.sdk.cubism.framework.type.csmRectF;
 
 import java.util.ArrayList;
@@ -36,9 +37,10 @@ public abstract class ACubismClippingContext {
         int clipCount
     ) {
         switch (type) {
-            case ANDROID:
-            case OPENGL:
+            case OPENGL_JOGL:
                 return new CubismClippingContextOGL(manager,clippingDrawableIndices,clipCount);
+            case OPENGL_LWJGL:
+                return new CubismClippingContextLWGL(manager,clippingDrawableIndices,clipCount);
             case UNKNOWN:
             default:
                 throw new IllegalArgumentException("Failed to create a clipping context. The specified renderer type may be incorrect.");

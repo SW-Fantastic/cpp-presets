@@ -21,7 +21,8 @@ public abstract class CubismRenderer {
      */
     public enum RendererType {
         ANDROID,
-        OPENGL,
+        OPENGL_JOGL,
+        OPENGL_LWJGL,
         UNKNOWN     // 不明・未定義なレンダラー
     }
 

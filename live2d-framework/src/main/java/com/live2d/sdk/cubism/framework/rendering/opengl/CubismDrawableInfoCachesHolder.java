@@ -1,4 +1,4 @@
-package com.live2d.sdk.cubism.framework.rendering.jogl;
+package com.live2d.sdk.cubism.framework.rendering.opengl;
 
 import com.live2d.sdk.cubism.framework.model.CubismModel;
 
@@ -10,7 +10,7 @@ import java.nio.ShortBuffer;
 /**
  * Drawableの情報を格納するバッファをキャッシュし保持するクラス。
  */
-class CubismDrawableInfoCachesHolder {
+public class CubismDrawableInfoCachesHolder {
     public CubismDrawableInfoCachesHolder(CubismModel model) {
         final int drawableCount = model.getDrawableCount();
         final int[] renderOrder = model.getDrawableRenderOrders();

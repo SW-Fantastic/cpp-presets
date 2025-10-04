@@ -1,29 +1,26 @@
-package com.live2d.sdk.cubism.sdk.jogl;
+package com.live2d.sdk.cubism.sdk.lwjgl;
 
-import com.jogamp.opengl.GL2;
 import com.live2d.sdk.cubism.framework.math.CubismMatrix44;
 import com.live2d.sdk.cubism.framework.math.CubismViewMatrix;
-import com.live2d.sdk.cubism.framework.rendering.jogl.CubismOffscreenSurfaceOGL;
+import com.live2d.sdk.cubism.framework.rendering.lwjgl.CubismOffscreenSurfaceLWGL;
 import com.live2d.sdk.cubism.sdk.*;
 
-public class Live2dJOGLView implements AutoCloseable {
+public class Live2dLWGLView implements AutoCloseable {
 
-    private GL2 gles2;
 
-    private Live2dJOGLDelegate delegate;
+    private Live2dLWGLDelegate delegate;
 
-    private Live2dJOGLSprite renderingSprite;
+    private Live2dLWGLSprite renderingSprite;
 
-    private Live2dSpriteShader spriteShader;
+    private Live2dLWGLSpriteShader spriteShader;
 
-    public Live2dJOGLView(Live2dJOGLDelegate delegate) {
+    public Live2dLWGLView(Live2dLWGLDelegate delegate) {
         clearColor[0] = 1.0f;
         clearColor[1] = 1.0f;
         clearColor[2] = 1.0f;
         clearColor[3] = 0.0f;
         this.delegate = delegate;
-        this.gles2 = delegate.getGl2();
-        renderingBuffer = new CubismOffscreenSurfaceOGL(gles2);
+        renderingBuffer = new CubismOffscreenSurfaceLWGL();
         this.initialize();
     }
 
@@ -54,7 +51,7 @@ public class Live2dJOGLView implements AutoCloseable {
             float screenW = Math.abs(right - left);
             deviceToScreen.scaleRelative(screenW / width, -screenW / width);
         } else {
-            float screenH = Math.abs(top - bottom);
+            float screenH = Math.abs(bottom - top);
             deviceToScreen.scaleRelative(screenH / height, -screenH / height);
         }
         deviceToScreen.translateRelative(-width * 0.5f, -height * 0.5f);
@@ -71,7 +68,7 @@ public class Live2dJOGLView implements AutoCloseable {
                 MaxLogicalView.TOP.getValue()
         );
 
-        spriteShader = new Live2dSpriteShader(this.delegate);
+        spriteShader = new Live2dLWGLSpriteShader(this.delegate);
 
     }
 
@@ -87,7 +84,7 @@ public class Live2dJOGLView implements AutoCloseable {
         int programId = spriteShader.getShaderId();
 
         if (renderingSprite == null) {
-            renderingSprite = new Live2dJOGLSprite(x, y, windowWidth, windowHeight, 0, programId,gles2);
+            renderingSprite = new Live2dLWGLSprite(x, y, windowWidth, windowHeight, 0, programId);
         } else {
             renderingSprite.resize(x, y, windowWidth, windowHeight);
         }
@@ -101,7 +98,7 @@ public class Live2dJOGLView implements AutoCloseable {
         int maxHeight = delegate.getViewHeight();
 
         // モデルの描画
-        Live2dJOGLManager live2dManager = delegate.getManager();
+        Live2dLWGLManager live2dManager = delegate.getManager();
         live2dManager.onUpdate();
 
         // 各モデルが持つ描画ターゲットをテクスチャとする場合
@@ -114,7 +111,7 @@ public class Live2dJOGLView implements AutoCloseable {
             };
 
             for (int i = 0; i < live2dManager.getModelNum(); i++) {
-                Live2dJOGLModel model = live2dManager.getModel(i);
+                Live2dLWGLModel model = live2dManager.getModel(i);
                 float alpha = i < 1 ? 1.0f : model.getOpacity();    // 片方のみ不透明度を取得できるようにする。
 
                 renderingSprite.setColor(1.0f, 1.0f, 1.0f, alpha);
@@ -132,9 +129,9 @@ public class Live2dJOGLView implements AutoCloseable {
      *
      * @param refModel モデルデータ
      */
-    public void preModelDraw(Live2dJOGLModel refModel) {
+    public void preModelDraw(Live2dLWGLModel refModel) {
         // 別のレンダリングターゲットへ向けて描画する場合の使用するオフスクリーンサーフェス
-        CubismOffscreenSurfaceOGL useTarget;
+        CubismOffscreenSurfaceLWGL useTarget;
 
         // 別のレンダリングターゲットへ向けて描画する場合
         if (renderingTarget != RenderingTarget.NONE) {
@@ -163,8 +160,8 @@ public class Live2dJOGLView implements AutoCloseable {
      *
      * @param refModel モデルデータ
      */
-    public void postModelDraw(Live2dJOGLModel refModel) {
-        CubismOffscreenSurfaceOGL useTarget = null;
+    public void postModelDraw(Live2dLWGLModel refModel) {
+        CubismOffscreenSurfaceLWGL useTarget = null;
 
         // 別のレンダリングターゲットへ向けて描画する場合
         if (renderingTarget != RenderingTarget.NONE) {
@@ -227,7 +224,7 @@ public class Live2dJOGLView implements AutoCloseable {
 
         touchManager.touchesMoved(pointX, pointY);
 
-        Live2dJOGLManager manager = delegate.getManager();
+        Live2dLWGLManager manager = delegate.getManager();
         manager.onDrag(viewX, viewY);
     }
 
@@ -240,7 +237,7 @@ public class Live2dJOGLView implements AutoCloseable {
     public void onTouchesEnded(float pointX, float pointY) {
         // タッチ終了
         Live2dConfigure configure = delegate.getConfigure();
-        Live2dJOGLManager live2DManager = delegate.getManager();
+        Live2dLWGLManager live2DManager = delegate.getManager();
         live2DManager.onDrag(0.0f, 0.0f);
 
         // シングルタップ
@@ -370,7 +367,7 @@ public class Live2dJOGLView implements AutoCloseable {
      */
     private final float[] clearColor = new float[4];
 
-    private CubismOffscreenSurfaceOGL renderingBuffer ;
+    private CubismOffscreenSurfaceLWGL renderingBuffer ;
 
 
     /**

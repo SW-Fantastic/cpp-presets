@@ -11,11 +11,13 @@ import com.jogamp.opengl.util.FPSAnimator;
 import com.live2d.sdk.cubism.framework.CubismFramework;
 import com.live2d.sdk.cubism.sdk.Live2dConfigure;
 import com.live2d.sdk.cubism.sdk.jogl.Live2dJOGLDelegate;
+import com.live2d.sdk.cubism.sdk.jogl.Live2dJOGLModel;
 import com.live2d.sdk.demo.LAppDelegate;
 import com.live2d.sdk.demo.LAppLive2DManager;
 import org.bytedeco.javacpp.Loader;
 import org.swdc.live2d.core.Live2dCore;
 
+import java.awt.*;
 import java.io.File;
 
 public class Live2dJOGLDemo {
@@ -31,6 +33,7 @@ public class Live2dJOGLDemo {
         @Override
         public void init(GLAutoDrawable drawable) {
             delegate.initialize(drawable);
+            delegate.setRenderingTargetClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         }
 
         @Override
@@ -63,9 +66,11 @@ public class Live2dJOGLDemo {
         );
 
 
-        GLWindow window = GLWindow.create(new GLCapabilities(GLProfile.getDefault()));
+        GLCapabilities caps = new GLCapabilities(GLProfile.getDefault());
+        caps.setBackgroundOpaque(false);
+        GLWindow window = GLWindow.create(caps);
 
-        FPSAnimator animator = new FPSAnimator(window,60);
+        FPSAnimator animator = new FPSAnimator(window,30);
         window.setAnimator(animator);
         window.addGLEventListener(new GLListener(delegate));
         window.addWindowListener(new WindowAdapter() {
@@ -78,17 +83,28 @@ public class Live2dJOGLDemo {
             @Override
             public void mouseClicked(MouseEvent e) {
                 delegate.invoke(drawable -> {
-                    animator.pause();
-                    delegate.getManager().nextScene();
-                    animator.resume();
+                    if (e.getButton() == MouseEvent.BUTTON3) {
+                        animator.pause();
+                        delegate.getManager().nextScene();
+                        animator.resume();
+                    }
                     return true;
                 });
             }
         });
+
+        GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsConfiguration configuration = environment.getDefaultScreenDevice().getDefaultConfiguration();
+        Rectangle rectangle = configuration.getBounds();
+
+        window.setUndecorated(true);
+        window.setPosition((int)rectangle.getMaxX() , (int)rectangle.getMaxY() - 600);
         window.setDefaultCloseOperation(WindowClosingProtocol.WindowClosingMode.DISPOSE_ON_CLOSE);
-        window.setSize(600,840);
-        animator.start();
+        window.setSize(580,840);
+        window.setAlwaysOnTop(true);
         window.setVisible(true);
+
+        animator.start();
 
 
     }

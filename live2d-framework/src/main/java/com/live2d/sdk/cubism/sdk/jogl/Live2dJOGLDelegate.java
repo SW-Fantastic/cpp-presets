@@ -90,6 +90,14 @@ public class Live2dJOGLDelegate extends Live2dDelegate {
 
     }
 
+    public void setRenderingTargetClearColor(float r, float g, float b, float a) {
+        view.setRenderingTargetClearColor(r, g, b, a);
+    }
+
+    public void setRenderingTargetClearColor(float r, float g, float b) {
+        view.setRenderingTargetClearColor(r, g, b, 1.0f);
+    }
+
     public void updateView() {
 
         if (disposed) {
@@ -100,7 +108,8 @@ public class Live2dJOGLDelegate extends Live2dDelegate {
         Live2dUtils.updateTime();
         GL2 gl2 = getGl2();
         // 画面初期化
-        gl2.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        float[] clearColor = view.getClearColor();
+        gl2.glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
         gl2.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
         gl2.glClearDepthf(1.0f);
 

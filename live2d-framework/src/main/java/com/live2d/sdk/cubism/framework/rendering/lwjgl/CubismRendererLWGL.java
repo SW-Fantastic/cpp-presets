@@ -5,33 +5,34 @@
  * that can be found at http://live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-package com.live2d.sdk.cubism.framework.rendering.jogl;
+package com.live2d.sdk.cubism.framework.rendering.lwjgl;
 
 
-import com.jogamp.opengl.GL2;
 import com.live2d.sdk.cubism.framework.math.CubismVector2;
 import com.live2d.sdk.cubism.framework.model.CubismModel;
 import com.live2d.sdk.cubism.framework.rendering.CubismRenderer;
 import com.live2d.sdk.cubism.framework.rendering.opengl.CubismDrawableInfoCachesHolder;
 import com.live2d.sdk.cubism.framework.utils.CubismDebug;
+import org.lwjgl.opengl.GL30;
+
+import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT;
+import static org.lwjgl.opengl.GL30.*;
 
 import java.nio.ShortBuffer;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.jogamp.opengl.GL2.*;
 import static com.live2d.sdk.cubism.framework.CubismFrameworkConfig.CSM_DEBUG;
+
 
 /**
  * The class that implements drawing instructions for Android.
  */
-public class CubismRendererOGL extends CubismRenderer {
+public class CubismRendererLWGL extends CubismRenderer {
 
-    private GL2 GL2;
 
-    public CubismRendererOGL(GL2 gl2) {
-        this.GL2 = gl2;
+    public CubismRendererLWGL() {
     }
 
     /**
@@ -39,15 +40,15 @@ public class CubismRendererOGL extends CubismRenderer {
      *
      * @return renderer instance
      */
-    public static CubismRenderer create(GL2 gl2) {
-        return new CubismRendererOGL(gl2);
+    public static CubismRenderer create() {
+        return new CubismRendererLWGL();
     }
 
     /**
      * Release static resources that this renderer keeps.
      */
     public static void staticRelease() {
-        CubismRendererOGL.doStaticRelease();
+        CubismRendererLWGL.doStaticRelease();
     }
 
     /**
@@ -58,15 +59,15 @@ public class CubismRendererOGL extends CubismRenderer {
      * @param extPAMode Whether to enable the PA setting for the extended method
      */
     public static void setExtShaderMode(boolean extMode, boolean extPAMode) {
-        CubismShaderOGL.setExtShaderMode(extMode, extPAMode);
-        CubismShaderOGL.deleteInstance();
+        CubismShaderLWGL.setExtShaderMode(extMode, extPAMode);
+        CubismShaderLWGL.deleteInstance();
     }
 
     /**
      * Android-Tegra support. Reload shader programs.
      */
     public static void reloadShader() {
-        CubismShaderOGL.deleteInstance();
+        CubismShaderLWGL.deleteInstance();
     }
 
     @Override
@@ -77,7 +78,7 @@ public class CubismRendererOGL extends CubismRenderer {
     @Override
     public void initialize(CubismModel model, int maskBufferCount) {
         if (rendererProfile == null) {
-            rendererProfile = new CubismRendererProfileOGL(GL2);
+            rendererProfile = new CubismRendererProfileLWGL();
         }
         // 頂点情報をキャッシュする。
         drawableInfoCachesHolder = new CubismDrawableInfoCachesHolder(model);
@@ -91,17 +92,17 @@ public class CubismRendererOGL extends CubismRenderer {
             }
 
             // Initialize clipping mask and buffer preprocessing method
-            clippingManager = new CubismClippingManagerOGL(GL2);
+            clippingManager = new CubismClippingManagerLWGL();
             clippingManager.initialize(
-                RendererType.OPENGL_JOGL,
+                RendererType.OPENGL_LWJGL,
                 model,
                 maskBufferCount
             );
 
-            offscreenSurfaces = new CubismOffscreenSurfaceOGL[maskBufferCount];
+            offscreenSurfaces = new CubismOffscreenSurfaceLWGL[maskBufferCount];
 
             for (int i = 0; i < maskBufferCount; i++) {
-                CubismOffscreenSurfaceOGL offscreenSurface = new CubismOffscreenSurfaceOGL(GL2);
+                CubismOffscreenSurfaceLWGL offscreenSurface = new CubismOffscreenSurfaceLWGL();
                 offscreenSurface.createOffscreenSurface(clippingManager.getClippingMaskBufferSize(), null);
 
                 offscreenSurfaces[i] = offscreenSurface;
@@ -180,12 +181,12 @@ public class CubismRendererOGL extends CubismRenderer {
         final int renderTextureCount = this.clippingManager.getRenderTextureCount();
 
         // Destroy and recreate instances to change the size of MaskBuffer
-        clippingManager = new CubismClippingManagerOGL(GL2);
+        clippingManager = new CubismClippingManagerLWGL();
         clippingManager.setClippingMaskBufferSize(width, height);
 
         CubismModel model = getModel();
         clippingManager.initialize(
-            RendererType.OPENGL_JOGL,
+            RendererType.OPENGL_LWJGL,
             model,
             renderTextureCount
         );
@@ -220,36 +221,33 @@ public class CubismRendererOGL extends CubismRenderer {
 
         // Enabling/disabling culling
         if (isCulling()) {
-            GL2.glEnable(GL_CULL_FACE);
+            GL30.glEnable(GL_CULL_FACE);
         } else {
-            GL2.glDisable(GL_CULL_FACE);
+            GL30.glDisable(GL_CULL_FACE);
         }
 
         // In Cubism3 OpenGL, CCW becomes surface for both masks and art meshes.
-        GL2.glFrontFace(GL_CCW);
+        GL30.glFrontFace(GL_CCW);
 
         // マスク生成時
         if (isGeneratingMask()) {
-            CubismShaderOGL.getInstance(GL2).setupShaderProgramForMask(this, model, index);
+            CubismShaderLWGL.getInstance().setupShaderProgramForMask(this, model, index);
         } else {
-            CubismShaderOGL.getInstance(GL2).setupShaderProgramForDraw(this, model, index);
+            CubismShaderLWGL.getInstance().setupShaderProgramForDraw(this, model, index);
         }
 
         // Draw the prygon mesh
-        final int indexCount = model.getDrawableVertexIndexCount(index);
         final ShortBuffer indexArrayBuffer = drawableInfoCachesHolder.setUpIndexArray(
             index,
             model.getDrawableVertexIndices(index)
         );
-        GL2.glDrawElements(
+        GL30.glDrawElements(
             GL_TRIANGLES,
-            indexCount,
-            GL_UNSIGNED_SHORT,
             indexArrayBuffer
         );
 
         // post-processing
-        GL2.glUseProgram(0);
+        GL30.glUseProgram(0);
         setClippingContextBufferForDraw(null);
         setClippingContextBufferForMask(null);
     }
@@ -268,7 +266,7 @@ public class CubismRendererOGL extends CubismRenderer {
 
             // If offscreen frame buffer size is different from clipping mask buffer size, recreate it.
             for (int i = 0; i < clippingManager.getRenderTextureCount(); i++) {
-                CubismOffscreenSurfaceOGL offscreenSurface = offscreenSurfaces[i];
+                CubismOffscreenSurfaceLWGL offscreenSurface = offscreenSurfaces[i];
 
                 if (!offscreenSurface.isSameSize(clippingManager.getClippingMaskBufferSize())) {
                     offscreenSurface.createOffscreenSurface(clippingManager.getClippingMaskBufferSize(), null);
@@ -309,7 +307,7 @@ public class CubismRendererOGL extends CubismRenderer {
             }
 
             // Set clipping mask
-            CubismClippingContextOGL clipContext = (clippingManager != null)
+            CubismClippingContextLWGL clipContext = (clippingManager != null)
                 ? clippingManager.getClippingContextListForDraw().get(drawableIndex)
                 : null;
 
@@ -318,7 +316,7 @@ public class CubismRendererOGL extends CubismRenderer {
                 // 描くことになっていた
                 if (clipContext.isUsing) {
                     // 生成したOffscreenSurfaceと同じサイズでビューポートを設定
-                    GL2.glViewport(0, 0, (int) clippingManager.getClippingMaskBufferSize().x, (int) clippingManager.getClippingMaskBufferSize().y);
+                    GL30.glViewport(0, 0, (int) clippingManager.getClippingMaskBufferSize().x, (int) clippingManager.getClippingMaskBufferSize().y);
 
                     // バッファをクリアする
                     preDraw();
@@ -329,8 +327,8 @@ public class CubismRendererOGL extends CubismRenderer {
 
                     // マスクをクリアする。
                     // 1が無効（描かれない領域）、0が有効（描かれる）領域。（シェーダーでCd*Csで0に近い値をかけてマスクを作る。1をかけると何も起こらない。）
-                    GL2.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-                    GL2.glClear(GL_COLOR_BUFFER_BIT);
+                    GL30.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+                    GL30.glClear(GL_COLOR_BUFFER_BIT);
                 }
 
                 final int clipDrawCount = clipContext.clippingIdCount;
@@ -354,7 +352,7 @@ public class CubismRendererOGL extends CubismRenderer {
                 for (int j = 0; j < clippingManager.getRenderTextureCount(); j++) {
                     offscreenSurfaces[j].endDraw();
                     setClippingContextBufferForMask(null);
-                    GL2.glViewport(
+                    GL30.glViewport(
                         rendererProfile.lastViewport[0],
                         rendererProfile.lastViewport[1],
                         rendererProfile.lastViewport[2],
@@ -386,7 +384,7 @@ public class CubismRendererOGL extends CubismRenderer {
      * Release OpenGLES2 static shader programs.
      */
     static void doStaticRelease() {
-        CubismShaderOGL.deleteInstance();
+        CubismShaderLWGL.deleteInstance();
     }
 
     /**
@@ -394,7 +392,7 @@ public class CubismRendererOGL extends CubismRenderer {
      *
      * @return the clipping context to draw to the mask texture
      */
-    CubismClippingContextOGL getClippingContextBufferForMask() {
+    CubismClippingContextLWGL getClippingContextBufferForMask() {
         return clippingContextBufferForMask;
     }
 
@@ -403,7 +401,7 @@ public class CubismRendererOGL extends CubismRenderer {
      *
      * @param clip clipping context to draw to the mask texture
      */
-    void setClippingContextBufferForMask(CubismClippingContextOGL clip) {
+    void setClippingContextBufferForMask(CubismClippingContextLWGL clip) {
         clippingContextBufferForMask = clip;
     }
 
@@ -412,7 +410,7 @@ public class CubismRendererOGL extends CubismRenderer {
      *
      * @return the clipping context to draw on display
      */
-    CubismClippingContextOGL getClippingContextBufferForDraw() {
+    CubismClippingContextLWGL getClippingContextBufferForDraw() {
         return clippingContextBufferForDraw;
     }
 
@@ -421,7 +419,7 @@ public class CubismRendererOGL extends CubismRenderer {
      *
      * @param clip the clipping context to draw on display
      */
-    void setClippingContextBufferForDraw(CubismClippingContextOGL clip) {
+    void setClippingContextBufferForDraw(CubismClippingContextLWGL clip) {
         clippingContextBufferForDraw = clip;
     }
 
@@ -430,7 +428,7 @@ public class CubismRendererOGL extends CubismRenderer {
      *
      * @return the offscreen frame buffer
      */
-    CubismOffscreenSurfaceOGL getMaskBuffer(int index) {
+    CubismOffscreenSurfaceLWGL getMaskBuffer(int index) {
         return offscreenSurfaces[index];
     }
 
@@ -443,22 +441,22 @@ public class CubismRendererOGL extends CubismRenderer {
      * This method implements the necessary processing for the clipping mask before drawing the model
      */
     void preDraw() {
-        GL2.glDisable(GL_SCISSOR_TEST);
-        GL2.glDisable(GL_STENCIL_TEST);
-        GL2.glDisable(GL_DEPTH_TEST);
+        GL30.glDisable(GL_SCISSOR_TEST);
+        GL30.glDisable(GL_STENCIL_TEST);
+        GL30.glDisable(GL_DEPTH_TEST);
 
-        GL2.glEnable(GL_BLEND);
-        GL2.glColorMask(true, true, true, true);
+        GL30.glEnable(GL_BLEND);
+        GL30.glColorMask(true, true, true, true);
 
-        GL2.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        GL30.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         // If the buffer has been bound before, it needs to be destroyed
-        GL2.glBindBuffer(GL_ARRAY_BUFFER, 0);
+        GL30.glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         // Anisotropic filtering. If it is not supported, do not set it
         if (getAnisotropy() > 0.0f) {
             for (Map.Entry<Integer, Integer> entry : textures.entrySet()) {
-                GL2.glBindTexture(GL_TEXTURE_2D, entry.getValue());
-                GL2.glTexParameterf(GL_TEXTURE_2D, GL2.GL_TEXTURE_MAX_ANISOTROPY_EXT, getAnisotropy());
+                GL30.glBindTexture(GL_TEXTURE_2D, entry.getValue());
+                GL30.glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, getAnisotropy());
             }
         }
     }
@@ -484,7 +482,7 @@ public class CubismRendererOGL extends CubismRenderer {
     /**
      * Frame buffer for drawing mask
      */
-    CubismOffscreenSurfaceOGL[] offscreenSurfaces;
+    CubismOffscreenSurfaceLWGL[] offscreenSurfaces;
 
     /**
      * マスク生成時かどうかを判定する。
@@ -510,19 +508,19 @@ public class CubismRendererOGL extends CubismRenderer {
     /**
      * the object which keeps the OpenGL state
      */
-    private  CubismRendererProfileOGL rendererProfile;
+    private CubismRendererProfileLWGL rendererProfile;
     /**
      * Clipping mask management object
      */
-    private CubismClippingManagerOGL clippingManager;
+    private CubismClippingManagerLWGL clippingManager;
     /**
      * Clippping context for drawing on mask texture
      */
-    private CubismClippingContextOGL clippingContextBufferForMask;
+    private CubismClippingContextLWGL clippingContextBufferForMask;
     /**
      * Clipping context for drawing on the screen
      */
-    private CubismClippingContextOGL clippingContextBufferForDraw;
+    private CubismClippingContextLWGL clippingContextBufferForDraw;
 
     /**
      * Drawable情報のキャッシュ変数
