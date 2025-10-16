@@ -28,19 +28,22 @@ public class TestModelWithChat {
         //File modelFile = new File(("D:\\SDK\\LLM-Models\\Phi\\Phi-3-mini-4k-instruct-q4.gguf"));
         //File modelFile = new File("D:\\SDK\\LLM-Models\\LLAMA.cpp\\ggml-model-q2_k.gguf");
 
-        File modelFile = new File("D:\\SDK\\LLM-Models\\Deepseek\\DeepSeek-R1-Distill-Llama-8B-Q2_K.gguf");
+        //File modelFile = new File("D:\\SDK\\LLM-Models\\LLAMA3\\Llama3-8B-Chinese-Chat.Q4_K_S.gguf");
+        //File modelFile = new File("D:\\SDK\\LLM-Models\\Deepseek\\DeepSeek-R1-Distill-Llama-8B-Q4_K_S.gguf");
+        //File modelFile = new File("D:\\SDK\\LLM-Models\\Deepseek\\DeepSeek-R1-Distill-Llama-8B-Q2_K.gguf");
+        File modelFile = new File("D:\\SDK\\LLM-Models\\Deepseek\\DeepSeek-R1-0528-Qwen3-8B-Q4_K_S.gguf");
 
         LLMParameter parameter = new LLMParameter();
         parameter.setGpuLayers(0);
         parameter.setMinP(0.05f);
         parameter.setMinKeepP(1L);
         parameter.setTemp(0.8f);
-        parameter.setPrompt(DeepSeekPrompts.DeepSeekV2);
+        //parameter.setPrompt(DeepSeekPrompts.DeepSeekV3);
         parameter.setSeeds(LLamaCore.LLAMA_DEFAULT_SEED);
         parameter.setMemorySwap(false);
         parameter.setContextSize(1024 * 4);
 
-        LLModal modal = new LLModal(parameter, modelFile);
+        LLModel modal = new LLModel(parameter, modelFile);
         modal.load();
 
         System.out.println("------------------------LLM is ready--------------------------------\r\n");

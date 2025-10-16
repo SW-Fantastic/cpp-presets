@@ -29,12 +29,18 @@ public class Live2dJOGLManager {
 
     private Live2dJOGLDelegate delegate;
 
-    public Live2dJOGLManager(Live2dJOGLDelegate delegate) {
+    private Live2dModelPostProcessor<Live2dJOGLModel> modelPostProcessor;
+
+    public Live2dJOGLManager(Live2dJOGLDelegate delegate,Live2dModelPostProcessor<Live2dJOGLModel> modelPostProcessor) {
         this.delegate = delegate;
+        this.modelPostProcessor = modelPostProcessor;
         setUpModel();
         changeScene(0);
     }
 
+    public Live2dJOGLManager(Live2dJOGLDelegate delegate) {
+        this(delegate,null);
+    }
 
     /**
      * 現在のシーンで保持している全てのモデルを解放する
@@ -44,6 +50,7 @@ public class Live2dJOGLManager {
             model.deleteModel();
         }
         models.clear();
+        delegate.getTextureManager().clearTextures();
     }
 
     /**
@@ -165,6 +172,15 @@ public class Live2dJOGLManager {
         changeScene(number);
     }
 
+
+    public void changeScene(String modelDirName){
+        int index = modelDir.indexOf(modelDirName);
+        if (index < 0) {
+            return;
+        }
+        changeScene(index);
+    }
+
     /**
      * シーンを切り替える
      *
@@ -185,7 +201,12 @@ public class Live2dJOGLManager {
 
         releaseAllModel();
 
-        models.add(new Live2dJOGLModel(delegate));
+        Live2dJOGLModel model = new Live2dJOGLModel(delegate);
+        if (modelPostProcessor != null) {
+            modelPostProcessor.process(model);
+        }
+
+        models.add(model);
         models.get(0).loadAssets(modelPath, modelJsonName);
 
         /*
@@ -207,7 +228,11 @@ public class Live2dJOGLManager {
 
         if (configure.isUseRenderTarget()|| configure.isUserModelRenderTarget()) {
             // モデル個別にαを付けるサンプルとして、もう1体モデルを作成し少し位置をずらす。
-            models.add(new Live2dJOGLModel(delegate));
+            Live2dJOGLModel theModel = new Live2dJOGLModel(delegate);
+            if (modelPostProcessor != null) {
+                modelPostProcessor.process(theModel);
+            }
+            models.add(theModel);
             models.get(1).loadAssets(modelPath, modelJsonName);
             models.get(1).getModelMatrix().translateX(0.2f);
         }
@@ -226,7 +251,7 @@ public class Live2dJOGLManager {
      * @param number モデルリストのインデックス値
      * @return モデルのインスタンスを返す。インデックス値が範囲外の場合はnullを返す
      */
-    public Live2dJOGLModel getModel(int number) {
+    Live2dJOGLModel getModel(int number) {
         if (number < models.size()) {
             return models.get(number);
         }

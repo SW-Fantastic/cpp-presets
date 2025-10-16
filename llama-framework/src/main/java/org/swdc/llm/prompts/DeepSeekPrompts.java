@@ -65,7 +65,7 @@ public interface DeepSeekPrompts {
 
             } else if(role.equals(PromptRole.USER)) {
 
-                text = String.format("<｜User｜>%s", text) + (addAss ? "<｜Assistant｜>" : "");
+                text = String.format("<｜User｜>%s", text);
 
             } else if (role.equals(PromptRole.ASSISTANT)) {
 
@@ -73,6 +73,9 @@ public interface DeepSeekPrompts {
 
             }
             result.append(text);
+        }
+        if (addAss) {
+            result.append("<｜Assistant｜>");
         }
         return result.toString();
     };

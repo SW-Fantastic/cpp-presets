@@ -31,10 +31,17 @@ public class Live2dLWGLManager {
 
     private Live2dLWGLDelegate delegate;
 
-    public Live2dLWGLManager(Live2dLWGLDelegate delegate) {
+    private Live2dModelPostProcessor<Live2dLWGLModel> modelPostProcessor;
+
+    public Live2dLWGLManager(Live2dLWGLDelegate delegate,Live2dModelPostProcessor<Live2dLWGLModel> processor) {
         this.delegate = delegate;
+        this.modelPostProcessor = processor;
         setUpModel();
         changeScene(0);
+    }
+
+    public Live2dLWGLManager(Live2dLWGLDelegate delegate) {
+        this(delegate,null);
     }
 
 
@@ -46,6 +53,7 @@ public class Live2dLWGLManager {
             model.deleteModel();
         }
         models.clear();
+        delegate.getTextureManager().clearTextures();
     }
 
     /**
@@ -167,6 +175,14 @@ public class Live2dLWGLManager {
         changeScene(number);
     }
 
+    public void changeScene(String modelDirName){
+        int index = modelDir.indexOf(modelDirName);
+        if (index < 0) {
+            return;
+        }
+        changeScene(index);
+    }
+
     /**
      * シーンを切り替える
      *
@@ -187,7 +203,11 @@ public class Live2dLWGLManager {
 
         releaseAllModel();
 
-        models.add(new Live2dLWGLModel(delegate));
+        Live2dLWGLModel model = new Live2dLWGLModel(delegate);
+        if (modelPostProcessor != null) {
+            modelPostProcessor.process(model);
+        }
+        models.add(model);
         models.get(0).loadAssets(modelPath, modelJsonName);
 
         /*
@@ -209,7 +229,11 @@ public class Live2dLWGLManager {
 
         if (configure.isUseRenderTarget()|| configure.isUserModelRenderTarget()) {
             // モデル個別にαを付けるサンプルとして、もう1体モデルを作成し少し位置をずらす。
-            models.add(new Live2dLWGLModel(delegate));
+            Live2dLWGLModel theModel = new Live2dLWGLModel(delegate);
+            if (modelPostProcessor != null) {
+                modelPostProcessor.process(theModel);
+            }
+            models.add(model);
             models.get(1).loadAssets(modelPath, modelJsonName);
             models.get(1).getModelMatrix().translateX(0.2f);
         }
@@ -228,7 +252,7 @@ public class Live2dLWGLManager {
      * @param number モデルリストのインデックス値
      * @return モデルのインスタンスを返す。インデックス値が範囲外の場合はnullを返す
      */
-    public Live2dLWGLModel getModel(int number) {
+    Live2dLWGLModel getModel(int number) {
         if (number < models.size()) {
             return models.get(number);
         }

@@ -54,12 +54,12 @@ public interface ChatMLPrompts {
             PromptRole role = message.getRole();
             String text = message.getContent();
             if (role.equals(PromptRole.USER)) {
-                text = String.format("<|user|>%s<|end|>\n", text);
+                text = String.format("<|user|>\n%s<|end|>\n", text);
                 if (addAss) {
                     text += "<|assistant|>\n";
                 }
             } else if (role.equals(PromptRole.ASSISTANT)) {
-                text = String.format("<|assistant|>%s<|end|>\n", text);
+                text = String.format("<|assistant|>\n%s<|end|>\n", text);
             } else if (role.equals(PromptRole.SYSTEM)) {
                 text = String.format("<|system|>%s<|end|>\n", text);
             }

@@ -12,8 +12,10 @@ module swdc.live2d.framework {
     requires static org.lwjgl.opengl.natives;
 
     requires swdc.presets.live2d;
+    requires org.bytedeco.javacpp;
 
     exports com.live2d.sdk.cubism.core;
+    exports com.live2d.sdk.cubism.framework;
     exports com.live2d.sdk.cubism.framework.type;
     exports com.live2d.sdk.cubism.framework.model;
     exports com.live2d.sdk.cubism.framework.id;

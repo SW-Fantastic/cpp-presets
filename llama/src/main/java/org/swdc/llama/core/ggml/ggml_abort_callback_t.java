@@ -8,12 +8,15 @@ import org.bytedeco.javacpp.annotation.*;
 
 import static org.swdc.llama.core.ggml.GGML.*;
 
+// #endif
+
+    // Function type used in fatal error callbacks
     @Properties(inherit = org.swdc.llama.config.GGMLConfigure.class)
-public class ggml_custom3_op_f32_t extends FunctionPointer {
+public class ggml_abort_callback_t extends FunctionPointer {
         static { Loader.load(); }
         /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */
-        public    ggml_custom3_op_f32_t(Pointer p) { super(p); }
-        protected ggml_custom3_op_f32_t() { allocate(); }
+        public    ggml_abort_callback_t(Pointer p) { super(p); }
+        protected ggml_abort_callback_t() { allocate(); }
         private native void allocate();
-        public native void call(ggml_tensor arg0, @Const ggml_tensor arg1, @Const ggml_tensor arg2, @Const ggml_tensor arg3);
+        public native void call(@Cast("const char*") BytePointer error_message);
     }

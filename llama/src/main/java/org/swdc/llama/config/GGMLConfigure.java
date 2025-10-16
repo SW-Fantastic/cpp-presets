@@ -27,6 +27,8 @@ public class GGMLConfigure implements InfoMapper {
                 "GGML_TENSOR_UNARY_OP_LOCALS",
                 "GGML_TENSOR_BINARY_OP_LOCALS",
                 "GGML_TENSOR_BINARY_OP_LOCALS01",
+                "GGML_TENSOR_TERNARY_OP_LOCALS",
+                "",
                 "ggml_backend_graph_copy",
                 "ggml_backend_dev_type",
                 "ggml_backend_dev_caps",
@@ -51,6 +53,7 @@ public class GGMLConfigure implements InfoMapper {
         infoMap.put(new Info("ggml_backend_dev_t").cppTypes("ggml_backend_device*"));
         infoMap.put(new Info("ggml_backend_event_t").cppTypes("ggml_backend_event*"));
         infoMap.put(new Info("ggml_threadpool_t").cppTypes("ggml_threadpool*"));
+        infoMap.put(new Info("ggml_status").enumerate());
 
 
     }

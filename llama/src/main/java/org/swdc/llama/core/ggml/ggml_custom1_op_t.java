@@ -9,7 +9,7 @@ import org.bytedeco.javacpp.annotation.*;
 import static org.swdc.llama.core.ggml.GGML.*;
 
 
-    // custom operators v2
+    // custom operators
 
     @Properties(inherit = org.swdc.llama.config.GGMLConfigure.class)
 public class ggml_custom1_op_t extends FunctionPointer {

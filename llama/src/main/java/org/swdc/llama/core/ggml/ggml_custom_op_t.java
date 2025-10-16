@@ -10,11 +10,11 @@ import static org.swdc.llama.core.ggml.GGML.*;
 
 
     @Properties(inherit = org.swdc.llama.config.GGMLConfigure.class)
-public class ggml_custom1_op_f32_t extends FunctionPointer {
+public class ggml_custom_op_t extends FunctionPointer {
         static { Loader.load(); }
         /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */
-        public    ggml_custom1_op_f32_t(Pointer p) { super(p); }
-        protected ggml_custom1_op_f32_t() { allocate(); }
+        public    ggml_custom_op_t(Pointer p) { super(p); }
+        protected ggml_custom_op_t() { allocate(); }
         private native void allocate();
-        public native void call(ggml_tensor arg0, @Const ggml_tensor arg1);
+        public native void call(ggml_tensor dst, int ith, int nth, Pointer userdata);
     }

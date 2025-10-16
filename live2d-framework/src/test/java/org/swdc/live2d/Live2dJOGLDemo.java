@@ -11,13 +11,10 @@ import com.jogamp.opengl.util.FPSAnimator;
 import com.live2d.sdk.cubism.framework.CubismFramework;
 import com.live2d.sdk.cubism.sdk.Live2dConfigure;
 import com.live2d.sdk.cubism.sdk.jogl.Live2dJOGLDelegate;
-import com.live2d.sdk.cubism.sdk.jogl.Live2dJOGLModel;
-import com.live2d.sdk.demo.LAppDelegate;
-import com.live2d.sdk.demo.LAppLive2DManager;
-import org.bytedeco.javacpp.Loader;
-import org.swdc.live2d.core.Live2dCore;
+import com.live2d.sdk.cubism.sdk.jogl.Live2dJOGLManager;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.io.File;
 
 public class Live2dJOGLDemo {
@@ -55,7 +52,6 @@ public class Live2dJOGLDemo {
 
     public static void main(String[] args) {
 
-        Loader.load(Live2dCore.class);
         CubismFramework.cleanUp();
         CubismFramework.startUp(new CubismFramework.Option());
 
@@ -80,6 +76,18 @@ public class Live2dJOGLDemo {
             }
         });
         window.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                delegate.invoke(drawable -> {
+                    float x = (e.getX() - window.getWidth() / 2f) / window.getWidth() / 2f;
+                    float y = (e.getY() - window.getHeight() / 2f) / window.getHeight() / 2f;
+                    Live2dJOGLManager dJOGLManager = delegate.getManager();
+                    dJOGLManager.onDrag(x, -y);
+                    return true;
+                });
+            }
+
             @Override
             public void mouseClicked(MouseEvent e) {
                 delegate.invoke(drawable -> {
@@ -96,16 +104,22 @@ public class Live2dJOGLDemo {
         GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsConfiguration configuration = environment.getDefaultScreenDevice().getDefaultConfiguration();
         Rectangle rectangle = configuration.getBounds();
+        AffineTransform transform = configuration.getDefaultTransform();
+
+        int screenWidth = (int)(rectangle.width * transform.getScaleX());
+        int screenHeight = (int)(rectangle.height * transform.getScaleY());
 
         window.setUndecorated(true);
-        window.setPosition((int)rectangle.getMaxX() , (int)rectangle.getMaxY() - 600);
+        window.setPosition(
+                screenWidth - (int)(transform.getScaleX() * 400),
+                screenHeight - (int)(transform.getScaleY() * 600)
+        );
         window.setDefaultCloseOperation(WindowClosingProtocol.WindowClosingMode.DISPOSE_ON_CLOSE);
-        window.setSize(580,840);
+        window.setSize(400,600);
         window.setAlwaysOnTop(true);
         window.setVisible(true);
 
         animator.start();
-
 
     }
 

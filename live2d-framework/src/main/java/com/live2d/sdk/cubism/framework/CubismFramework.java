@@ -14,6 +14,7 @@ import com.live2d.sdk.cubism.core.Live2DCubismCore;
 import com.live2d.sdk.cubism.framework.CubismFrameworkConfig.LogLevel;
 import com.live2d.sdk.cubism.framework.id.CubismIdManager;
 import org.bytedeco.javacpp.BytePointer;
+import org.bytedeco.javacpp.Loader;
 import org.swdc.live2d.core.Live2dCore;
 
 import java.util.Locale;
@@ -91,6 +92,8 @@ public class CubismFramework {
 
         CubismDebug.cubismLogInfo("CubismFramework.startUp() is complete.");
 
+        // 初始化Live2D Core
+        Loader.load(Live2dCore.class);
         return s_isStarted;
     }
 

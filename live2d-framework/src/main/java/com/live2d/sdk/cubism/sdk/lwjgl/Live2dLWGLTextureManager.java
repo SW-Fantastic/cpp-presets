@@ -116,5 +116,11 @@ public class Live2dLWGLTextureManager {
         return buffer;
     }
 
+    public void clearTextures() {
+        for (TextureInfo texture : textures) {
+            GL30.glDeleteTextures(texture.id);
+        }
+        textures.clear();
+    }
 
 }

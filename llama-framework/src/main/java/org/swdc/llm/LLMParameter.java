@@ -10,6 +10,8 @@ public class LLMParameter {
 
     private int contextSize = 1024 * 2;
 
+    private int tokensPerBatch = 128;
+
     private int seeds = LLamaCore.LLAMA_DEFAULT_SEED;
 
     private int gpuLayers = 0;
@@ -132,5 +134,13 @@ public class LLMParameter {
 
     public void setThreads(int threads) {
         this.threads = threads;
+    }
+
+    public int getTokensPerBatch() {
+        return tokensPerBatch;
+    }
+
+    public void setTokensPerBatch(int tokensPerBatch) {
+        this.tokensPerBatch = tokensPerBatch;
     }
 }

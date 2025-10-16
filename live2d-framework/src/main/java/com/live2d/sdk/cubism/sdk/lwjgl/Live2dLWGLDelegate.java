@@ -3,8 +3,8 @@ package com.live2d.sdk.cubism.sdk.lwjgl;
 import com.live2d.sdk.cubism.framework.CubismFramework;
 import com.live2d.sdk.cubism.sdk.Live2dConfigure;
 import com.live2d.sdk.cubism.sdk.Live2dDelegate;
+import com.live2d.sdk.cubism.sdk.Live2dModelPostProcessor;
 import com.live2d.sdk.cubism.sdk.Live2dUtils;
-import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL30;
 
 import java.io.File;
@@ -22,6 +22,8 @@ public class Live2dLWGLDelegate extends Live2dDelegate {
 
     private Live2dLWGLView view;
 
+    private Live2dModelPostProcessor<Live2dLWGLModel> modelPostProcessor;
+
     private boolean disposed = true;
 
     private int viewWidth = 600;
@@ -34,6 +36,9 @@ public class Live2dLWGLDelegate extends Live2dDelegate {
 
     }
 
+    public void setModelPostProcessor(Live2dModelPostProcessor<Live2dLWGLModel> modelPostProcessor) {
+        this.modelPostProcessor = modelPostProcessor;
+    }
 
     public Live2dLWGLTextureManager getTextureManager() {
         return textureManager;
@@ -89,7 +94,7 @@ public class Live2dLWGLDelegate extends Live2dDelegate {
                 getConfigure(), getAssets()
         );
         this.view = new Live2dLWGLView(this);
-        this.manager = new Live2dLWGLManager(this);
+        this.manager = new Live2dLWGLManager(this, modelPostProcessor);
 
         // AppViewの初期化
         view.initialize();
@@ -136,6 +141,7 @@ public class Live2dLWGLDelegate extends Live2dDelegate {
             view.close();
         }
         manager = null;
+        textureManager.clearTextures();
         textureManager = null;
     }
 

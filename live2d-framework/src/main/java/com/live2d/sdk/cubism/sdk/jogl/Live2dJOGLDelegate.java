@@ -6,6 +6,7 @@ import com.jogamp.opengl.GLRunnable;
 import com.live2d.sdk.cubism.framework.CubismFramework;
 import com.live2d.sdk.cubism.sdk.Live2dConfigure;
 import com.live2d.sdk.cubism.sdk.Live2dDelegate;
+import com.live2d.sdk.cubism.sdk.Live2dModelPostProcessor;
 import com.live2d.sdk.cubism.sdk.Live2dUtils;
 
 import java.io.File;
@@ -24,12 +25,18 @@ public class Live2dJOGLDelegate extends Live2dDelegate {
 
     private Live2dJOGLView view;
 
+    private Live2dModelPostProcessor<Live2dJOGLModel> modelPostProcessor;
+
     private boolean disposed = true;
 
     public Live2dJOGLDelegate(Live2dConfigure configure, File modelRootDir) {
 
         super(configure, modelRootDir);
 
+    }
+
+    public void setModelPostProcessor(Live2dModelPostProcessor<Live2dJOGLModel> modelPostProcessor) {
+        this.modelPostProcessor = modelPostProcessor;
     }
 
     public GL2 getGl2() {
@@ -82,7 +89,7 @@ public class Live2dJOGLDelegate extends Live2dDelegate {
                 getConfigure(), getAssets(), gl2.getGL().getGL2()
         );
         this.view = new Live2dJOGLView(this);
-        this.manager = new Live2dJOGLManager(this);
+        this.manager = new Live2dJOGLManager(this, modelPostProcessor);
 
         // AppViewの初期化
         view.initialize();
@@ -130,6 +137,7 @@ public class Live2dJOGLDelegate extends Live2dDelegate {
             view.close();
         }
         manager = null;
+        textureManager.clearTextures();
         textureManager = null;
         gl2 = null;
     }

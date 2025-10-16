@@ -2,7 +2,7 @@
 #define _H_LLAMA_STD_
 
 #include "../include/llama.h"
-
+#include <vector>
 
 #define LLAMA_POOLING_TYPE_NONE 0;
 #define LLAMA_POOLING_TYPE_MEAN 1;

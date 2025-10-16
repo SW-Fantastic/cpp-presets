@@ -2,12 +2,25 @@
 
 package org.swdc.llama.core;
 
+import org.swdc.llama.core.ext.*;
+
 import java.nio.*;
 import org.bytedeco.javacpp.*;
 import org.bytedeco.javacpp.annotation.*;
 
+import org.swdc.llama.core.ggml.*;
+import static org.swdc.llama.core.ggml.GGML.*;
+import org.swdc.llama.core.*;
+import static org.swdc.llama.core.LLamaCore.*;
+
 public class LLamaExt extends org.swdc.llama.config.LLamaExtConfigure {
     static { Loader.load(); }
+
+// Targeting ext\ChatMessageVec.java
+
+
+// Targeting ext\CharVec.java
+
 
 // Parsed from llama_std_support.h
 
@@ -15,12 +28,12 @@ public class LLamaExt extends org.swdc.llama.config.LLamaExtConfigure {
 // #define _H_LLAMA_STD_
 
 // #include "../include/llama.h"
+// #include <vector>
 
-
-public static final int LLAMA_POOLING_TYPE_NONE = 0;;
-public static final int LLAMA_POOLING_TYPE_MEAN = 1;;
-public static final int LLAMA_POOLING_TYPE_CLS =  2;;
-public static final int LLAMA_POOLING_TYPE_LAST = 3;;
+// #define LLAMA_POOLING_TYPE_NONE 0;
+// #define LLAMA_POOLING_TYPE_MEAN 1;
+// #define LLAMA_POOLING_TYPE_CLS  2;
+// #define LLAMA_POOLING_TYPE_LAST 3;
 
 public static native int ext_llama_pooling_type(llama_context context);
 

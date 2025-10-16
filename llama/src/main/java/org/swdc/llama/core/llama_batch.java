@@ -12,18 +12,21 @@ import static org.swdc.llama.core.ggml.GGML.*;
 import static org.swdc.llama.core.LLamaCore.*;
 
 
-    // Input data for llama_decode
+    // Input data for llama_encode/llama_decode
     // A llama_batch object can contain input about one or many sequences
     // The provided arrays (i.e. token, embd, pos, etc.) must have size of n_tokens
     //
     // - token  : the token ids of the input (used when embd is NULL)
     // - embd   : token embeddings (i.e. float vector of size n_embd) (used when token is NULL)
     // - pos    : the positions of the respective token in the sequence
-    //            (if set to NULL, the token position will be tracked automatically by llama_decode)
+    //            (if set to NULL, the token position will be tracked automatically by llama_encode/llama_decode)
     // - seq_id : the sequence to which the respective token belongs
     //            (if set to NULL, the sequence ID will be assumed to be 0)
     // - logits : if zero, the logits (and/or the embeddings) for the respective token will not be output
-    //            (if set to NULL, only the logits for last token will be returned)
+    //            (if set to NULL:
+    //               - if embeddings: all tokens are output
+    //               - if not:        only the last token is output
+    //            )
     //
     @Properties(inherit = org.swdc.llama.config.LLamaConfigure.class)
 public class llama_batch extends Pointer {
@@ -51,5 +54,5 @@ public class llama_batch extends Pointer {
         public native IntPointer n_seq_id(); public native llama_batch n_seq_id(IntPointer setter);
         public native @Cast("llama_seq_id*") IntPointer seq_id(int i); public native llama_batch seq_id(int i, IntPointer setter);
         public native @Cast("llama_seq_id**") PointerPointer seq_id(); public native llama_batch seq_id(PointerPointer setter);
-        public native BytePointer logits(); public native llama_batch logits(BytePointer setter); // TODO: rename this to "output"
+        public native BytePointer logits(); public native llama_batch logits(BytePointer setter);   // TODO: rename this to "output"
     }

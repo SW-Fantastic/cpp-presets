@@ -30,7 +30,7 @@ public class llama_perf_sampler_data extends Pointer {
             return new llama_perf_sampler_data((Pointer)this).offsetAddress(i);
         }
     
-        public native double t_sample_ms(); public native llama_perf_sampler_data t_sample_ms(double setter);
+        public native double t_sample_ms(); public native llama_perf_sampler_data t_sample_ms(double setter); // time needed for sampling in ms
 
-        public native int n_sample(); public native llama_perf_sampler_data n_sample(int setter);
+        public native int n_sample(); public native llama_perf_sampler_data n_sample(int setter);   // number of sampled tokens
     }

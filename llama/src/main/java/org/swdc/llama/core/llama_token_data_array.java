@@ -35,5 +35,5 @@ public class llama_token_data_array extends Pointer {
         public native llama_token_data data(); public native llama_token_data_array data(llama_token_data setter);
         public native @Cast("size_t") long size(); public native llama_token_data_array size(long setter);
         public native @Cast("int64_t") long selected(); public native llama_token_data_array selected(long setter); // this is the index in the data array (i.e. not the token id)
-        public native @Cast("bool") boolean sorted(); public native llama_token_data_array sorted(boolean setter);
+        public native @Cast("bool") boolean sorted(); public native llama_token_data_array sorted(boolean setter);      // note: do not assume the data is sorted - always check this flag
     }

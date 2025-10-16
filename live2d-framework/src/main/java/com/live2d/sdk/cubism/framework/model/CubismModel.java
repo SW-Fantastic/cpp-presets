@@ -15,10 +15,7 @@ import com.live2d.sdk.cubism.framework.rendering.CubismRenderer;
 import com.live2d.sdk.cubism.framework.rendering.CubismRenderer.CubismBlendMode;
 import com.live2d.sdk.cubism.framework.utils.CubismDebug;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.live2d.sdk.cubism.core.CubismDrawableFlag.ConstantFlag.*;
 import static com.live2d.sdk.cubism.core.CubismDrawableFlag.DynamicFlag.*;
@@ -865,6 +862,13 @@ public class CubismModel {
      * @return the number of vertex indices in Drawable
      */
     public int getDrawableVertexIndexCount(int drawableIndex) {
+        // 拓展功能，过滤掉不需要绘制的部件，此处为空部件
+        if (filteredIndices != null) {
+            if(Arrays.binarySearch(filteredIndices, drawableIndex) >=0) {
+                return 0;
+            }
+        }
+        // 拓展功能结束
         return model.getDrawableViews()[drawableIndex].getIndices().length;
     }
 
@@ -875,6 +879,13 @@ public class CubismModel {
      * @return the number of vertex in Drawable
      */
     public int getDrawableVertexCount(int drawableIndex) {
+        // 拓展功能，过滤掉不需要绘制的部件。
+        if (filteredIndices != null) {
+            if(Arrays.binarySearch(filteredIndices, drawableIndex) >=0) {
+                return 0;
+            }
+        }
+        // 拓展功能结束
         return model.getDrawableViews()[drawableIndex].getVertexCount();
     }
 
@@ -885,6 +896,13 @@ public class CubismModel {
      * @return the vertex list of Drawable
      */
     public float[] getDrawableVertices(int drawableIndex) {
+        // 拓展功能，过滤掉不需要绘制的部件。
+        if (filteredIndices != null) {
+            if(Arrays.binarySearch(filteredIndices, drawableIndex) >=0) {
+                return new float[0];
+            }
+        }
+        // 拓展功能结束
         return getDrawableVertexPositions(drawableIndex);
     }
 
@@ -1933,6 +1951,15 @@ public class CubismModel {
         }
     }
 
+    public void setFilteredIndices(int[] filteredIndices) {
+        this.filteredIndices = filteredIndices;
+    }
+
+
+    public int[] getFilteredIndices() {
+        return filteredIndices;
+    }
+
     /**
      * List of opacities for non-existent parts
      */
@@ -2022,4 +2049,11 @@ public class CubismModel {
      * モデルのカリング設定をすべて上書きするか？
      */
     private boolean isOverriddenCullings;
+
+    /**
+     * 拓展功能，过滤掉不需要绘制的网格，默认为null。
+     */
+    private int[] filteredIndices;
+
+
 }

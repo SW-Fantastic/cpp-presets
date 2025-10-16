@@ -20,6 +20,7 @@ public class LLamaCore extends org.swdc.llama.config.LLamaConfigure {
 // #include "ggml.h"
 // #include "ggml-cpu.h"
 // #include "ggml-backend.h"
+// #include "ggml-opt.h"
 
 // #include <stddef.h>
 // #include <stdint.h>
@@ -72,10 +73,10 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
 // Targeting llama_context.java
 
 
+// Targeting llama_memory_i.java
 
-    
 
-    // pre-tokenization types
+
     
 
     
@@ -92,6 +93,14 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
     
 
     
+
+    /** enum llama_flash_attn_type */
+    public static final int
+        LLAMA_FLASH_ATTN_TYPE_AUTO     = -1,
+        LLAMA_FLASH_ATTN_TYPE_DISABLED = 0,
+        LLAMA_FLASH_ATTN_TYPE_ENABLED  = 1;
+
+    public static native @Cast("const char*") BytePointer llama_flash_attn_type_name(@Cast("llama_flash_attn_type") int flash_attn_type);
 
     
 // Targeting llama_token_data.java
@@ -114,6 +123,9 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
         LLAMA_KV_OVERRIDE_TYPE_BOOL = 2,
         LLAMA_KV_OVERRIDE_TYPE_STR = 3;
 // Targeting llama_model_kv_override.java
+
+
+// Targeting llama_model_tensor_buft_override.java
 
 
 // Targeting llama_model_params.java
@@ -200,6 +212,13 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
                                      @Cast("size_t") long n_paths,
                   @ByVal llama_model_params params);
 
+    public static native void llama_model_save_to_file(
+                @Const llama_model model,
+                            @Cast("const char*") BytePointer path_model);
+    public static native void llama_model_save_to_file(
+                @Const llama_model model,
+                            String path_model);
+
     public static native void llama_free_model(llama_model model);
 
     public static native void llama_model_free(llama_model model);
@@ -218,6 +237,7 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
     public static native @Cast("int64_t") long llama_time_us();
 
     public static native @Cast("size_t") long llama_max_devices();
+    public static native @Cast("size_t") long llama_max_parallel_sequences();
 
     public static native @Cast("bool") boolean llama_supports_mmap();
     public static native @Cast("bool") boolean llama_supports_mlock();
@@ -237,7 +257,8 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
     public static native int llama_n_vocab(@Const llama_vocab vocab);
 
     public static native @Const llama_model llama_get_model(@Const llama_context ctx);
-    
+    public static native llama_memory_i llama_get_memory(@Const llama_context ctx);
+     // TODO: rename to llama_get_pooling_type
 
     public static native @Const llama_vocab llama_model_get_vocab(@Const llama_model model);
 
@@ -245,9 +266,18 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
     public static native int llama_model_n_embd(@Const llama_model model);
     public static native int llama_model_n_layer(@Const llama_model model);
     public static native int llama_model_n_head(@Const llama_model model);
+    public static native int llama_model_n_head_kv(@Const llama_model model);
+    public static native int llama_model_n_swa(@Const llama_model model);
 
     // Get the model's RoPE frequency scaling factor
     public static native float llama_model_rope_freq_scale_train(@Const llama_model model);
+
+    // Returns the number of classifier outputs (only valid for classifier models)
+    // Undefined behavior for non-classifier models
+    public static native @Cast("uint32_t") int llama_model_n_cls_out(@Const llama_model model);
+
+    // Returns label of classifier output by index (<n_cls_out). Returns nullptr if no label provided
+    public static native @Cast("const char*") BytePointer llama_model_cls_label(@Const llama_model model, @Cast("uint32_t") int i);
 
     
 
@@ -309,6 +339,9 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
     // Returns true if the model is recurrent (like Mamba, RWKV, etc.)
     public static native @Cast("bool") boolean llama_model_is_recurrent(@Const llama_model model);
 
+    // Returns true if the model is diffusion-based (like LLaDA, Dream, etc.)
+    public static native @Cast("bool") boolean llama_model_is_diffusion(@Const llama_model model);
+
     // Returns 0 on success
     public static native @Cast("uint32_t") int llama_model_quantize(
                 @Cast("const char*") BytePointer fname_inp,
@@ -331,9 +364,40 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
                 llama_model model,
                 String path_lora);
 
+    // Functions to access the adapter's GGUF metadata scalar values
+    // - The functions return the length of the string on success, or -1 on failure
+    // - The output string is always null-terminated and cleared on failure
+    // - When retrieving a string, an extra byte must be allocated to account for the null terminator
+    // - GGUF array values are not supported by these functions
+
+    // Get metadata value as a string by key name
+    public static native int llama_adapter_meta_val_str(@Const llama_adapter_lora adapter, @Cast("const char*") BytePointer key, @Cast("char*") BytePointer buf, @Cast("size_t") long buf_size);
+    public static native int llama_adapter_meta_val_str(@Const llama_adapter_lora adapter, String key, @Cast("char*") ByteBuffer buf, @Cast("size_t") long buf_size);
+    public static native int llama_adapter_meta_val_str(@Const llama_adapter_lora adapter, @Cast("const char*") BytePointer key, @Cast("char*") byte[] buf, @Cast("size_t") long buf_size);
+    public static native int llama_adapter_meta_val_str(@Const llama_adapter_lora adapter, String key, @Cast("char*") BytePointer buf, @Cast("size_t") long buf_size);
+    public static native int llama_adapter_meta_val_str(@Const llama_adapter_lora adapter, @Cast("const char*") BytePointer key, @Cast("char*") ByteBuffer buf, @Cast("size_t") long buf_size);
+    public static native int llama_adapter_meta_val_str(@Const llama_adapter_lora adapter, String key, @Cast("char*") byte[] buf, @Cast("size_t") long buf_size);
+
+    // Get the number of metadata key/value pairs
+    public static native int llama_adapter_meta_count(@Const llama_adapter_lora adapter);
+
+    // Get metadata key name by index
+    public static native int llama_adapter_meta_key_by_index(@Const llama_adapter_lora adapter, int i, @Cast("char*") BytePointer buf, @Cast("size_t") long buf_size);
+    public static native int llama_adapter_meta_key_by_index(@Const llama_adapter_lora adapter, int i, @Cast("char*") ByteBuffer buf, @Cast("size_t") long buf_size);
+    public static native int llama_adapter_meta_key_by_index(@Const llama_adapter_lora adapter, int i, @Cast("char*") byte[] buf, @Cast("size_t") long buf_size);
+
+    // Get metadata value as a string by index
+    public static native int llama_adapter_meta_val_str_by_index(@Const llama_adapter_lora adapter, int i, @Cast("char*") BytePointer buf, @Cast("size_t") long buf_size);
+    public static native int llama_adapter_meta_val_str_by_index(@Const llama_adapter_lora adapter, int i, @Cast("char*") ByteBuffer buf, @Cast("size_t") long buf_size);
+    public static native int llama_adapter_meta_val_str_by_index(@Const llama_adapter_lora adapter, int i, @Cast("char*") byte[] buf, @Cast("size_t") long buf_size);
+
     // Manually free a LoRA adapter
     // Note: loaded adapters will be free when the associated model is deleted
     public static native void llama_adapter_lora_free(llama_adapter_lora adapter);
+
+    // Get the invocation tokens if the current lora is an alora
+    public static native @Cast("uint64_t") long llama_adapter_get_alora_n_invocation_tokens(@Const llama_adapter_lora adapter);
+    public static native @Cast("const llama_token*") IntPointer llama_adapter_get_alora_invocation_tokens(@Const llama_adapter_lora adapter);
 
     // The following functions operate on a llama_context, hence the naming: llama_verb_...
 
@@ -380,118 +444,87 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
                              int n_embd,
                              int il_start,
                              int il_end);
-// Targeting llama_kv_cache_view_cell.java
 
+    //
+    // Memory
+    //
 
-// Targeting llama_kv_cache_view.java
-
-
-
-    // Create an empty KV cache view. (use only for debugging purposes)
-    public static native @ByVal llama_kv_cache_view llama_kv_cache_view_init(@Const llama_context ctx, int n_seq_max);
-
-    // Free a KV cache view. (use only for debugging purposes)
-    public static native void llama_kv_cache_view_free(llama_kv_cache_view view);
-
-    // Update the KV cache view structure with the current state of the KV cache. (use only for debugging purposes)
-    // TODO: change signature to llama_kv_cache_view_update(struct llama_kv_cache_view * view, const struct llama_context * ctx)
-    
-    
-    ///
-    public static native void llama_kv_cache_view_update(@Const llama_context ctx, llama_kv_cache_view view);
-
-    /** */
-
-    // Returns the number of tokens in the KV cache (slow, use only for debug)
-    // If a KV cell has multiple sequences assigned to it, it will be counted multiple times
-    public static native int llama_get_kv_cache_token_count(@Const llama_context ctx);
-
-    // Returns the number of used KV cells (i.e. have at least one sequence assigned to them)
-    public static native int llama_get_kv_cache_used_cells(@Const llama_context ctx);
-
-    // Clear the KV cache - both cell info is erased and KV data is zeroed
-    public static native void llama_kv_cache_clear(
-                llama_context ctx);
+    // Clear the memory contents
+    // If data == true, the data buffers will also be cleared together with the metadata
+    public static native void llama_memory_clear(
+                llama_memory_i mem,
+                          @Cast("bool") boolean data);
 
     // Removes all tokens that belong to the specified sequence and have positions in [p0, p1)
     // Returns false if a partial sequence cannot be removed. Removing a whole sequence never fails
     // seq_id < 0 : match any sequence
     // p0 < 0     : [0,  p1]
     // p1 < 0     : [p0, inf)
-    public static native @Cast("bool") boolean llama_kv_cache_seq_rm(
-                llama_context ctx,
-                        @Cast("llama_seq_id") int seq_id,
-                           @Cast("llama_pos") int p0,
-                           @Cast("llama_pos") int p1);
+    public static native @Cast("bool") boolean llama_memory_seq_rm(
+                llama_memory_i mem,
+                  @Cast("llama_seq_id") int seq_id,
+                     @Cast("llama_pos") int p0,
+                     @Cast("llama_pos") int p1);
 
     // Copy all tokens that belong to the specified sequence to another sequence
-    // Note that this does not allocate extra KV cache memory - it simply assigns the tokens to the new sequence
     // p0 < 0 : [0,  p1]
     // p1 < 0 : [p0, inf)
-    public static native void llama_kv_cache_seq_cp(
-                llama_context ctx,
-                        @Cast("llama_seq_id") int seq_id_src,
-                        @Cast("llama_seq_id") int seq_id_dst,
-                           @Cast("llama_pos") int p0,
-                           @Cast("llama_pos") int p1);
+    public static native void llama_memory_seq_cp(
+                llama_memory_i mem,
+                  @Cast("llama_seq_id") int seq_id_src,
+                  @Cast("llama_seq_id") int seq_id_dst,
+                     @Cast("llama_pos") int p0,
+                     @Cast("llama_pos") int p1);
 
     // Removes all tokens that do not belong to the specified sequence
-    public static native void llama_kv_cache_seq_keep(
-                llama_context ctx,
-                        @Cast("llama_seq_id") int seq_id);
+    public static native void llama_memory_seq_keep(
+                llama_memory_i mem,
+                  @Cast("llama_seq_id") int seq_id);
 
     // Adds relative position "delta" to all tokens that belong to the specified sequence and have positions in [p0, p1)
-    // If the KV cache is RoPEd, the KV data is updated accordingly:
-    //   - lazily on next llama_decode()
-    //   - explicitly with llama_kv_cache_update()
     // p0 < 0 : [0,  p1]
     // p1 < 0 : [p0, inf)
-    public static native void llama_kv_cache_seq_add(
-                llama_context ctx,
-                        @Cast("llama_seq_id") int seq_id,
-                           @Cast("llama_pos") int p0,
-                           @Cast("llama_pos") int p1,
-                           @Cast("llama_pos") int delta);
+    public static native void llama_memory_seq_add(
+                llama_memory_i mem,
+                  @Cast("llama_seq_id") int seq_id,
+                     @Cast("llama_pos") int p0,
+                     @Cast("llama_pos") int p1,
+                     @Cast("llama_pos") int delta);
 
     // Integer division of the positions by factor of `d > 1`
-    // If the KV cache is RoPEd, the KV data is updated accordingly:
-    //   - lazily on next llama_decode()
-    //   - explicitly with llama_kv_cache_update()
     // p0 < 0 : [0,  p1]
     // p1 < 0 : [p0, inf)
-    public static native void llama_kv_cache_seq_div(
-                llama_context ctx,
-                        @Cast("llama_seq_id") int seq_id,
-                           @Cast("llama_pos") int p0,
-                           @Cast("llama_pos") int p1,
-                                 int d);
+    public static native void llama_memory_seq_div(
+                llama_memory_i mem,
+                  @Cast("llama_seq_id") int seq_id,
+                     @Cast("llama_pos") int p0,
+                     @Cast("llama_pos") int p1,
+                           int d);
 
-    // Returns the largest position present in the KV cache for the specified sequence
-    public static native @Cast("llama_pos") int llama_kv_cache_seq_pos_max(
-                llama_context ctx,
-                        @Cast("llama_seq_id") int seq_id);
+    // Returns the smallest position present in the memory for the specified sequence
+    // This is typically non-zero only for SWA caches
+    // Note that all positions in the range [pos_min, pos_max] are guaranteed to be present in the memory
+    // Return -1 if the sequence is empty
+    public static native @Cast("llama_pos") int llama_memory_seq_pos_min(
+                llama_memory_i mem,
+                  @Cast("llama_seq_id") int seq_id);
 
-    // TODO: the llama_kv_cache_defrag and llama_kv_cache_update API tightly couples llama_context with llama_kv_cache
-    //       how to avoid this?
+    // Returns the largest position present in the memory for the specified sequence
+    // Note that all positions in the range [pos_min, pos_max] are guaranteed to be present in the memory
+    // Return -1 if the sequence is empty
+    public static native @Cast("llama_pos") int llama_memory_seq_pos_max(
+                llama_memory_i mem,
+                  @Cast("llama_seq_id") int seq_id);
 
-    // Defragment the KV cache
-    // This will be applied:
-    //   - lazily on next llama_decode()
-    //   - explicitly with llama_kv_cache_update()
-    public static native void llama_kv_cache_defrag(llama_context ctx);
-
-    // Apply the KV cache updates (such as K-shifts, defragmentation, etc.)
-    public static native void llama_kv_cache_update(llama_context ctx);
-
-    // Check if the context supports KV cache shifting
-    public static native @Cast("bool") boolean llama_kv_cache_can_shift(llama_context ctx);
+    // Check if the memory supports shifting
+    public static native @Cast("bool") boolean llama_memory_can_shift(llama_memory_i mem);
 
     //
     // State / sessions
     //
 
     // Returns the *actual* size in bytes of the state
-    // (logits, embedding and kv_cache)
+    // (logits, embedding and memory)
     // Only use when saving the state, not when restoring it, otherwise the size may be too small.
     public static native @Cast("size_t") long llama_state_get_size(llama_context ctx);
     public static native @Cast("size_t") long llama_get_state_size(llama_context ctx);
@@ -680,12 +713,12 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
                    @Cast("const llama_token*") int[] tokens,
                               @Cast("size_t") long n_token_count);
 
-    // Get the exact size needed to copy the KV cache of a single sequence
+    // Get the exact size needed to copy the state of a single sequence
     public static native @Cast("size_t") long llama_state_seq_get_size(
                 llama_context ctx,
                         @Cast("llama_seq_id") int seq_id);
 
-    // Copy the KV cache of a single sequence into the specified buffer
+    // Copy the state of a single sequence into the specified buffer
     public static native @Cast("size_t") long llama_state_seq_get_data(
                 llama_context ctx,
                              @Cast("uint8_t*") BytePointer dst,
@@ -802,6 +835,51 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
                               @Cast("size_t") long n_token_capacity,
                               @Cast("size_t*") SizeTPointer n_token_count_out);
 
+public static final int LLAMA_STATE_SEQ_FLAGS_SWA_ONLY = 1;
+
+    public static native @Cast("size_t") long llama_state_seq_get_size_ext(
+                llama_context ctx,
+                        @Cast("llama_seq_id") int seq_id,
+               @Cast("llama_state_seq_flags") int flags);
+
+    public static native @Cast("size_t") long llama_state_seq_get_data_ext(
+                llama_context ctx,
+                             @Cast("uint8_t*") BytePointer dst,
+                              @Cast("size_t") long size,
+                        @Cast("llama_seq_id") int seq_id,
+               @Cast("llama_state_seq_flags") int flags);
+    public static native @Cast("size_t") long llama_state_seq_get_data_ext(
+                llama_context ctx,
+                             @Cast("uint8_t*") ByteBuffer dst,
+                              @Cast("size_t") long size,
+                        @Cast("llama_seq_id") int seq_id,
+               @Cast("llama_state_seq_flags") int flags);
+    public static native @Cast("size_t") long llama_state_seq_get_data_ext(
+                llama_context ctx,
+                             @Cast("uint8_t*") byte[] dst,
+                              @Cast("size_t") long size,
+                        @Cast("llama_seq_id") int seq_id,
+               @Cast("llama_state_seq_flags") int flags);
+
+    public static native @Cast("size_t") long llama_state_seq_set_data_ext(
+                llama_context ctx,
+                       @Cast("const uint8_t*") BytePointer src,
+                              @Cast("size_t") long size,
+                        @Cast("llama_seq_id") int dest_seq_id,
+               @Cast("llama_state_seq_flags") int flags);
+    public static native @Cast("size_t") long llama_state_seq_set_data_ext(
+                llama_context ctx,
+                       @Cast("const uint8_t*") ByteBuffer src,
+                              @Cast("size_t") long size,
+                        @Cast("llama_seq_id") int dest_seq_id,
+               @Cast("llama_state_seq_flags") int flags);
+    public static native @Cast("size_t") long llama_state_seq_set_data_ext(
+                llama_context ctx,
+                       @Cast("const uint8_t*") byte[] src,
+                              @Cast("size_t") long size,
+                        @Cast("llama_seq_id") int dest_seq_id,
+               @Cast("llama_state_seq_flags") int flags);
+
     //
     // Decoding
     //
@@ -837,18 +915,28 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
     // Frees a batch of tokens allocated with llama_batch_init()
     public static native void llama_batch_free(@ByVal llama_batch batch);
 
-    // Processes a batch of tokens with the ecoder part of the encoder-decoder model.
-    // Stores the encoder output internally for later use by the decoder cross-attention layers.
+    // Process a batch of tokens.
+    // In contrast to llama_decode() - this call does not use KV cache.
+    // For encode-decoder contexts, processes the batch using the encoder.
+    // Can store the encoder output internally for later use by the decoder's cross-attention layers.
     //   0 - success
-    // < 0 - error. the KV cache state is restored to the state before this call
+    // < 0 - error. the memory state is restored to the state before this call
     public static native int llama_encode(
                 llama_context ctx,
                   @ByVal llama_batch batch);
 
+    // Process a batch of tokens.
+    // Requires the context to have a memory.
+    // For encode-decoder contexts, processes the batch using the decoder.
     // Positive return values does not mean a fatal error, but rather a warning.
-    //   0 - success
-    //   1 - could not find a KV slot for the batch (try reducing the size of the batch or increase the context)
-    // < 0 - error. the KV cache state is restored to the state before this call
+    // Upon fatal-error or abort, the ubatches that managed to be been processed will remain in the memory state of the context
+    //   To handle this correctly, query the memory state using llama_memory_seq_pos_min() and llama_memory_seq_pos_max()
+    // Upon other return values, the memory state is restored to the state before this call
+    //    0 - success
+    //    1 - could not find a KV slot for the batch (try reducing the size of the batch or increase the context)
+    //    2 - aborted     (processed ubatches will remain in the context's memory)
+    //   -1 - invalid input batch
+    // < -1 - fatal error (processed ubatches will remain in the context's memory)
     public static native int llama_decode(
                 llama_context ctx,
                   @ByVal llama_batch batch);
@@ -864,13 +952,17 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
     // Get the number of threads used for prompt and batch processing (multiple token).
     public static native int llama_n_threads_batch(llama_context ctx);
 
-    // Set whether the model is in embeddings mode or not
-    // If true, embeddings will be returned but logits will not
+    // Set whether the context outputs embeddings or not
+    // TODO: rename to avoid confusion with llama_get_embeddings()
     public static native void llama_set_embeddings(llama_context ctx, @Cast("bool") boolean embeddings);
 
     // Set whether to use causal attention or not
     // If set to true, the model will only attend to the past tokens
     public static native void llama_set_causal_attn(llama_context ctx, @Cast("bool") boolean causal_attn);
+
+    // Set whether the model is in warmup mode or not
+    // If true, all model tensors are activated during llama_decode() to load and cache their weights.
+    public static native void llama_set_warmup(llama_context ctx, @Cast("bool") boolean warmup);
 
     // Set abort callback
     public static native void llama_set_abort_callback(llama_context ctx, ggml_abort_callback abort_callback, Pointer abort_callback_data);
@@ -885,6 +977,7 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
     // in the order they have appeared in the batch.
     // Rows: number of tokens for which llama_batch.logits[i] != 0
     // Cols: n_vocab
+    // TODO: deprecate in favor of llama_get_logits_ith() (ref: https://github.com/ggml-org/llama.cpp/pull/14853#issuecomment-3113143522)
     public static native FloatPointer llama_get_logits(llama_context ctx);
 
     // Logits for the ith token. For positive indices, Equivalent to:
@@ -899,6 +992,7 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
     // in the order they have appeared in the batch.
     // shape: [n_outputs*n_embd]
     // Otherwise, returns NULL.
+    // TODO: deprecate in favor of llama_get_embeddings_ith() (ref: https://github.com/ggml-org/llama.cpp/pull/14853#issuecomment-3113143522)
     public static native FloatPointer llama_get_embeddings(llama_context ctx);
 
     // Get the embeddings for the ith token. For positive indices, Equivalent to:
@@ -910,7 +1004,7 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
 
     // Get the embeddings for a sequence id
     // Returns NULL if pooling_type is LLAMA_POOLING_TYPE_NONE
-    // when pooling_type == LLAMA_POOLING_TYPE_RANK, returns float[1] with the rank of the sequence
+    // when pooling_type == LLAMA_POOLING_TYPE_RANK, returns float[n_cls_out] with the rank(s) of the sequence
     // otherwise: float[n_embd] (1-dimensional)
     public static native FloatPointer llama_get_embeddings_seq(llama_context ctx, @Cast("llama_seq_id") int seq_id);
 
@@ -935,9 +1029,11 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
     public static native @Cast("llama_token") int llama_vocab_sep(@Const llama_vocab vocab); // sentence separator
     public static native @Cast("llama_token") int llama_vocab_nl(@Const llama_vocab vocab); // next-line
     public static native @Cast("llama_token") int llama_vocab_pad(@Const llama_vocab vocab); // padding
+    public static native @Cast("llama_token") int llama_vocab_mask(@Const llama_vocab vocab); // mask
 
     public static native @Cast("bool") boolean llama_vocab_get_add_bos(@Const llama_vocab vocab);
     public static native @Cast("bool") boolean llama_vocab_get_add_eos(@Const llama_vocab vocab);
+    public static native @Cast("bool") boolean llama_vocab_get_add_sep(@Const llama_vocab vocab);
 
     public static native @Cast("llama_token") int llama_vocab_fim_pre(@Const llama_vocab vocab);
     public static native @Cast("llama_token") int llama_vocab_fim_suf(@Const llama_vocab vocab);
@@ -979,6 +1075,7 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
      *  @param tokens The tokens pointer must be large enough to hold the resulting tokens.
      *  @return Returns the number of tokens on success, no more than n_tokens_max
      *  @return Returns a negative number on failure - the number of tokens that would have been returned
+     *  @return Returns INT32_MIN on overflow (e.g., tokenization result size exceeds int32_t limit)
      *  @param add_special Allow to add BOS and EOS tokens if model is configured to do so.
      *  @param parse_special Allow tokenizing special and/or control tokens which otherwise are not exposed and treated
      *                       as plaintext. Does not insert a leading space. */
@@ -1189,11 +1286,8 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
     public static native llama_sampler llama_sampler_init_greedy();
     public static native llama_sampler llama_sampler_init_dist(@Cast("uint32_t") int seed);
 
-    /** \details Sorts candidate tokens by their logits in descending order and calculate probabilities based on logits.
-     *  NOTE: Avoid using on the full vocabulary as the sorting can become slow. For example, apply top-k or top-p sampling first. */
-    public static native llama_sampler llama_sampler_init_softmax();
-
-    /** \details Top-K sampling described in academic paper "The Curious Case of Neural Text Degeneration" https://arxiv.org/abs/1904.09751 */
+    /** \details Top-K sampling described in academic paper "The Curious Case of Neural Text Degeneration" https://arxiv.org/abs/1904.09751
+     *  Setting k <= 0 makes this a noop */
     public static native llama_sampler llama_sampler_init_top_k(int k);
 
     /** \details Nucleus sampling described in academic paper "The Curious Case of Neural Text Degeneration" https://arxiv.org/abs/1904.09751 */
@@ -1240,6 +1334,10 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
                                    float tau,
                                    float eta);
 
+    /** \details Intializes a GBNF grammar, see grammars/README.md for details.
+     *  @param vocab The vocabulary that this grammar will be used with.
+     *  @param grammar_str The production rules for the grammar, encoded as a string. Returns an empty grammar if empty. Returns NULL if parsing of grammar_str fails.
+     *  @param grammar_root The name of the start symbol for the grammar. */
     public static native llama_sampler llama_sampler_init_grammar(
                 @Const llama_vocab vocab,
                               @Cast("const char*") BytePointer grammar_str,
@@ -1249,9 +1347,6 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
                               String grammar_str,
                               String grammar_root);
 
-    /** \details Lazy grammar sampler, introduced in https://github.com/ggml-org/llama.cpp/pull/9639
-     *  @param trigger_words A list of words that will trigger the grammar sampler. This may be updated to a loose regex syntax (w/ ^) in a near future.
-     *  @param trigger_tokens A list of tokens that will trigger the grammar sampler. */
     public static native llama_sampler llama_sampler_init_grammar_lazy(
                 @Const llama_vocab vocab,
                               @Cast("const char*") BytePointer grammar_str,
@@ -1308,6 +1403,68 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
                                     @Cast("size_t") long num_trigger_words,
                        @Cast("const llama_token*") int[] trigger_tokens,
                                     @Cast("size_t") long num_trigger_tokens);
+
+
+    /** \details Lazy grammar sampler, introduced in https://github.com/ggml-org/llama.cpp/pull/9639
+     *  @param trigger_patterns A list of patterns that will trigger the grammar sampler. Pattern will be matched from the start of the generation output, and grammar sampler will be fed content starting from its first match group.
+     *  @param trigger_tokens A list of tokens that will trigger the grammar sampler. Grammar sampler will be fed content starting from the trigger token included. */
+    public static native llama_sampler llama_sampler_init_grammar_lazy_patterns(
+            @Const llama_vocab vocab,
+                          @Cast("const char*") BytePointer grammar_str,
+                          @Cast("const char*") BytePointer grammar_root,
+                         @Cast("const char**") PointerPointer trigger_patterns,
+                                @Cast("size_t") long num_trigger_patterns,
+                   @Cast("const llama_token*") IntPointer trigger_tokens,
+                                @Cast("size_t") long num_trigger_tokens);
+    public static native llama_sampler llama_sampler_init_grammar_lazy_patterns(
+            @Const llama_vocab vocab,
+                          @Cast("const char*") BytePointer grammar_str,
+                          @Cast("const char*") BytePointer grammar_root,
+                         @Cast("const char**") @ByPtrPtr BytePointer trigger_patterns,
+                                @Cast("size_t") long num_trigger_patterns,
+                   @Cast("const llama_token*") IntPointer trigger_tokens,
+                                @Cast("size_t") long num_trigger_tokens);
+    public static native llama_sampler llama_sampler_init_grammar_lazy_patterns(
+            @Const llama_vocab vocab,
+                          String grammar_str,
+                          String grammar_root,
+                         @Cast("const char**") @ByPtrPtr ByteBuffer trigger_patterns,
+                                @Cast("size_t") long num_trigger_patterns,
+                   @Cast("const llama_token*") IntBuffer trigger_tokens,
+                                @Cast("size_t") long num_trigger_tokens);
+    public static native llama_sampler llama_sampler_init_grammar_lazy_patterns(
+            @Const llama_vocab vocab,
+                          @Cast("const char*") BytePointer grammar_str,
+                          @Cast("const char*") BytePointer grammar_root,
+                         @Cast("const char**") @ByPtrPtr byte[] trigger_patterns,
+                                @Cast("size_t") long num_trigger_patterns,
+                   @Cast("const llama_token*") int[] trigger_tokens,
+                                @Cast("size_t") long num_trigger_tokens);
+    public static native llama_sampler llama_sampler_init_grammar_lazy_patterns(
+            @Const llama_vocab vocab,
+                          String grammar_str,
+                          String grammar_root,
+                         @Cast("const char**") @ByPtrPtr BytePointer trigger_patterns,
+                                @Cast("size_t") long num_trigger_patterns,
+                   @Cast("const llama_token*") IntPointer trigger_tokens,
+                                @Cast("size_t") long num_trigger_tokens);
+    public static native llama_sampler llama_sampler_init_grammar_lazy_patterns(
+            @Const llama_vocab vocab,
+                          @Cast("const char*") BytePointer grammar_str,
+                          @Cast("const char*") BytePointer grammar_root,
+                         @Cast("const char**") @ByPtrPtr ByteBuffer trigger_patterns,
+                                @Cast("size_t") long num_trigger_patterns,
+                   @Cast("const llama_token*") IntBuffer trigger_tokens,
+                                @Cast("size_t") long num_trigger_tokens);
+    public static native llama_sampler llama_sampler_init_grammar_lazy_patterns(
+            @Const llama_vocab vocab,
+                          String grammar_str,
+                          String grammar_root,
+                         @Cast("const char**") @ByPtrPtr byte[] trigger_patterns,
+                                @Cast("size_t") long num_trigger_patterns,
+                   @Cast("const llama_token*") int[] trigger_tokens,
+                                @Cast("size_t") long num_trigger_tokens);
+
 
     /** NOTE: Avoid using on the full vocabulary as searching for repeated tokens can become slow. For example, apply top-k or top-p sampling first. */
     public static native llama_sampler llama_sampler_init_penalties(
@@ -1445,6 +1602,22 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
     public static native @ByVal llama_perf_sampler_data llama_perf_sampler(@Const llama_sampler chain);
     public static native void llama_perf_sampler_print(@Const llama_sampler chain);
     public static native void llama_perf_sampler_reset(      llama_sampler chain);
+
+    // print a breakdown of per-device memory use via LLAMA_LOG:
+    public static native void llama_memory_breakdown_print(@Const llama_context ctx);
+// Targeting llama_opt_param_filter.java
+
+
+
+    // always returns true
+    public static native @Cast("bool") boolean llama_opt_param_filter_all(@Const ggml_tensor tensor, Pointer userdata);
+// Targeting llama_opt_params.java
+
+
+
+    public static native void llama_opt_init(llama_context lctx, llama_model model, @ByVal llama_opt_params lopt_params);
+
+    
 
 // #ifdef __cplusplus
 // #endif

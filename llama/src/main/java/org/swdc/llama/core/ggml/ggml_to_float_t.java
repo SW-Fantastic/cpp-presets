@@ -8,6 +8,7 @@ import org.bytedeco.javacpp.annotation.*;
 
 import static org.swdc.llama.core.ggml.GGML.*;
 
+// #    endif
 // #endif
     @Properties(inherit = org.swdc.llama.config.GGMLConfigure.class)
 public class ggml_to_float_t extends FunctionPointer {

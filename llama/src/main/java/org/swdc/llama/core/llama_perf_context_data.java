@@ -15,7 +15,7 @@ import static org.swdc.llama.core.LLamaCore.*;
     //
     // Performance utils
     //
-    // NOTE: Used by llama.cpp examples, avoid using in third-party apps. Instead, do your own performance measurements.
+    // NOTE: Used by llama.cpp examples/tools, avoid using in third-party apps. Instead, do your own performance measurements.
     //
 
     @Properties(inherit = org.swdc.llama.config.LLamaConfigure.class)
@@ -36,11 +36,13 @@ public class llama_perf_context_data extends Pointer {
             return new llama_perf_context_data((Pointer)this).offsetAddress(i);
         }
     
-        public native double t_start_ms(); public native llama_perf_context_data t_start_ms(double setter);
-        public native double t_load_ms(); public native llama_perf_context_data t_load_ms(double setter);
-        public native double t_p_eval_ms(); public native llama_perf_context_data t_p_eval_ms(double setter);
-        public native double t_eval_ms(); public native llama_perf_context_data t_eval_ms(double setter);
+        // ms == milliseconds
+        public native double t_start_ms(); public native llama_perf_context_data t_start_ms(double setter);  // absolute start time
+        public native double t_load_ms(); public native llama_perf_context_data t_load_ms(double setter);   // time needed for loading the model
+        public native double t_p_eval_ms(); public native llama_perf_context_data t_p_eval_ms(double setter); // time needed for processing the prompt
+        public native double t_eval_ms(); public native llama_perf_context_data t_eval_ms(double setter);   // time needed for generating tokens
 
-        public native int n_p_eval(); public native llama_perf_context_data n_p_eval(int setter);
-        public native int n_eval(); public native llama_perf_context_data n_eval(int setter);
+        public native int n_p_eval(); public native llama_perf_context_data n_p_eval(int setter);   // number of prompt tokens
+        public native int n_eval(); public native llama_perf_context_data n_eval(int setter);     // number of generated tokens
+        public native int n_reused(); public native llama_perf_context_data n_reused(int setter);   // number of times a ggml compute graph had been reused
     }

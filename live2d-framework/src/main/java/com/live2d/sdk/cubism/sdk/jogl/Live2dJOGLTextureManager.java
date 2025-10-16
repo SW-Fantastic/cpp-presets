@@ -120,4 +120,11 @@ public class Live2dJOGLTextureManager {
     }
 
 
+    public void clearTextures() {
+        for (TextureInfo texture : textures) {
+            gles2.glDeleteTextures(1, new int[]{texture.id}, 0);
+        }
+        textures.clear();
+    }
+
 }

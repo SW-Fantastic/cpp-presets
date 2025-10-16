@@ -283,6 +283,12 @@ class CubismShaderOGL {
             model.getDrawableVertexUvs(index)
         );
 
+        if (vertexArrayBuffer.capacity() < 1 || uvArrayBuffer.capacity() < 1) {
+            // JOGL会检查数组的长度，空白的数组会导致JOGL抛出异常，
+            // 因此，如果vertexArray或者uvArray的容量小于1，则直接返回
+            return;
+        }
+
         // setting of vertex array
         GL2.glEnableVertexAttribArray(shaderSet.attributePositionLocation);
         GL2.glVertexAttribPointer(

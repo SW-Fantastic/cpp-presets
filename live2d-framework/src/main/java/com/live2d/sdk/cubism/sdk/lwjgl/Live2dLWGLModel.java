@@ -53,27 +53,27 @@ public class Live2dLWGLModel extends CubismUserModel {
     /**
      * パラメーターID: ParamAngleX
      */
-    private final CubismId idParamAngleX;
+    private CubismId idParamAngleX;
     /**
      * パラメーターID: ParamAngleY
      */
-    private final CubismId idParamAngleY;
+    private CubismId idParamAngleY;
     /**
      * パラメーターID: ParamAngleZ
      */
-    private final CubismId idParamAngleZ;
+    private CubismId idParamAngleZ;
     /**
      * パラメーターID: ParamBodyAngleX
      */
-    private final CubismId idParamBodyAngleX;
+    private CubismId idParamBodyAngleX;
     /**
      * パラメーターID: ParamEyeBallX
      */
-    private final CubismId idParamEyeBallX;
+    private CubismId idParamEyeBallX;
     /**
      * パラメーターID: ParamEyeBallY
      */
-    private final CubismId idParamEyeBallY;
+    private CubismId idParamEyeBallY;
 
     /**
      * フレームバッファ以外の描画先
@@ -120,11 +120,14 @@ public class Live2dLWGLModel extends CubismUserModel {
 
         // json読み込み
         byte[] buffer = createBuffer(filePath);
-
         ICubismModelSetting setting = new CubismModelSettingJson(buffer);
-
         // Setup model
         setupModel(setting);
+
+        String filterPath = modelHomeDirectory + File.separator + "filter.json";
+        byte[] filterBuf = createBuffer(filterPath);
+        Live2dFilterJson filter = new Live2dFilterJson(filterBuf);
+        filter.setupModel(model);
 
         if (model == null) {
             Live2dUtils.printLog("Failed to loadAssets().");
@@ -679,6 +682,30 @@ public class Live2dLWGLModel extends CubismUserModel {
                 this.<CubismRendererLWGL>getRenderer().isPremultipliedAlpha(false);
             }
         }
+    }
+
+    public void setIdParamEyeBallX(CubismId idParamEyeBallX) {
+        this.idParamEyeBallX = idParamEyeBallX;
+    }
+
+    public void setIdParamEyeBallY(CubismId idParamEyeBallY) {
+        this.idParamEyeBallY = idParamEyeBallY;
+    }
+
+    public void setIdParamAngleZ(CubismId idParamAngleZ) {
+        this.idParamAngleZ = idParamAngleZ;
+    }
+
+    public void setIdParamAngleY(CubismId idParamAngleY) {
+        this.idParamAngleY = idParamAngleY;
+    }
+
+    public void setIdParamAngleX(CubismId idParamAngleX) {
+        this.idParamAngleX = idParamAngleX;
+    }
+
+    public void setIdParamBodyAngleX(CubismId idParamBodyAngleX) {
+        this.idParamBodyAngleX = idParamBodyAngleX;
     }
 
 }

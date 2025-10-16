@@ -3,6 +3,7 @@ package org.swdc.live2d;
 import com.live2d.sdk.cubism.framework.CubismFramework;
 import com.live2d.sdk.cubism.sdk.Live2dConfigure;
 import com.live2d.sdk.cubism.sdk.lwjgl.Live2dLWGLDelegate;
+import com.live2d.sdk.cubism.sdk.lwjgl.Live2dLWGLManager;
 import org.bytedeco.javacpp.Loader;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
@@ -14,8 +15,6 @@ public class Live2dLWJGLDemo {
 
     public static void main(String[] args) {
 
-        // 初始化Live2D Core
-        Loader.load(Live2dCore.class);
         // 初始化Live2D Framework
         CubismFramework.cleanUp();
         CubismFramework.startUp(new CubismFramework.Option());
@@ -42,6 +41,14 @@ public class Live2dLWJGLDemo {
         // 初始化Live2d渲染代理
         delegate.initialize(800,1000);
         delegate.setRenderingTargetClearColor(255,255,255);
+
+        GLFW.glfwSetMouseButtonCallback(pointer,(window, button, action, mods) -> {
+            if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && action == GLFW.GLFW_PRESS) {
+                delegate.setRenderingTargetClearColor(255,255,255);
+                Live2dLWGLManager manager = delegate.getManager();
+                manager.nextScene();
+            }
+        });
 
         long currentTime = System.currentTimeMillis();
         long lastTime = currentTime;

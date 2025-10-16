@@ -35,10 +35,13 @@ public class LLamaConfigure implements InfoMapper {
                 "llama_rope_scaling_type",
                 "llama_attention_type",
                 "llama_split_mode",
-                "llama_pooling_type"
+                "llama_pooling_type",
+                "llama_opt_epoch"
         ).skip());
 
+        infoMap.put(new Info("llama_memory_t").cppTypes("llama_memory_i*"));
         infoMap.put(new Info("llama_context_t").cppTypes("llama_context*"));
+        infoMap.put(new Info("ggml_opt_get_optimizer_params", "ggml_opt_optimizer_type").skip());
 
     }
 
