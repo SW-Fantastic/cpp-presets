@@ -6,13 +6,15 @@ public class LLMParameter {
 
     private int threads = Runtime.getRuntime().availableProcessors();
 
-    private int batchSize = 1024 * 2;
+    private int batchSize = 1024;
 
     private int contextSize = 1024 * 2;
 
     private int tokensPerBatch = 128;
 
     private int seeds = LLamaCore.LLAMA_DEFAULT_SEED;
+
+    private int discard = 128;
 
     private int gpuLayers = 0;
 
@@ -142,5 +144,13 @@ public class LLMParameter {
 
     public void setTokensPerBatch(int tokensPerBatch) {
         this.tokensPerBatch = tokensPerBatch;
+    }
+
+    public int getDiscard() {
+        return discard;
+    }
+
+    public void setDiscard(int discard) {
+        this.discard = discard;
     }
 }

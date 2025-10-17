@@ -18,7 +18,6 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -33,7 +32,7 @@ public class LLModel implements Closeable {
 
     private llama_sampler sampler;
 
-    private int systemPromptPos;
+    private int systemPromptPos = 0;
 
     private int llamaPosOffset = 0;
 
@@ -51,7 +50,7 @@ public class LLModel implements Closeable {
 
     private static BiConsumer<Integer, String> ggmlLogMonitor = null;
 
-    private static ggml_log_callback logCallback = new ggml_log_callback() {
+    private static final ggml_log_callback logCallback = new ggml_log_callback() {
 
         @Override
         public void call(int level, BytePointer text, Pointer user_data) {
@@ -63,7 +62,7 @@ public class LLModel implements Closeable {
 
     };
 
-    private llama_progress_callback progressCallback = new llama_progress_callback(){
+    private final llama_progress_callback progressCallback = new llama_progress_callback(){
         @Override
         public boolean call(float progress, Pointer user_data) {
             if(progressMonitor == null) {
@@ -187,8 +186,21 @@ public class LLModel implements Closeable {
     }
 
 
-    public String chat(String prompt) {
+    public synchronized String chat(String prompt) {
         return this.chat(prompt, System.out);
+    }
+
+
+    public synchronized void contextReset() {
+
+        llama_memory_i memoryI = LLamaCore.llama_get_memory(context);
+        LLamaCore.llama_memory_clear(memoryI, true);
+        llamaPosOffset = 0;
+        if (systemPrompt != null) {
+            generateText(context, vocab, sampler, systemPrompt, null);
+            systemPromptPos = LLamaCore.llama_memory_seq_pos_max(memoryI,0);
+        }
+
     }
 
     /**
@@ -199,7 +211,7 @@ public class LLModel implements Closeable {
      * @return 模型生成的回复内容
      * @throws ChatException 如果加载模型失败，或者生成出现问题会抛出 ChatException 异常
      */
-    public String chat(String prompt, PrintStream stream) {
+    public synchronized String chat(String prompt, PrintStream stream) {
 
         if(this.model == null || this.context == null) {
             if(!load()) {
@@ -211,6 +223,7 @@ public class LLModel implements Closeable {
         messages.add(chat);
 
         String promptText = this.prompt.prompt(List.of(chat), true);
+        //String promptText = template.compile(messages).trim();
         String result = generateText(context, vocab, sampler, promptText, stream);
 
         ChatMessage message = new ChatMessage(PromptRole.ASSISTANT, result);
@@ -220,7 +233,7 @@ public class LLModel implements Closeable {
 
     }
 
-    public void addSystemPrompt(String prompt) {
+    public synchronized void addSystemPrompt(String prompt) {
 
         ChatMessage chat = new ChatMessage(PromptRole.SYSTEM, prompt);
         String promptText = this.prompt.prompt(List.of(chat), true);
@@ -299,7 +312,18 @@ public class LLModel implements Closeable {
             int n_ctx = LLamaCore.llama_n_ctx(context);
             int n_ctx_used = LLamaCore.llama_memory_seq_pos_max(memoryI,0) + 1;
             if(n_ctx_used + llamaBatch.n_tokens() > n_ctx) {
-                throw new ChatException("Context overflow!");
+
+                int n_discard = parameter.getDiscard();
+                int posAfterRemove = systemPromptPos + n_discard;
+
+                LLamaCore.llama_memory_seq_rm(memoryI,0, systemPromptPos, posAfterRemove);
+                LLamaCore.llama_memory_seq_add(memoryI,0, posAfterRemove, llamaPosOffset, -n_discard);
+                llamaPosOffset = llamaPosOffset - n_discard;
+
+                IntPointer batchTokens = llamaBatch.token();
+                int nTokens = llamaBatch.n_tokens();
+                fillBatch(llamaBatch, batchTokens, nTokens, 0);
+
             }
 
             // 通过Batch解算token。
@@ -395,6 +419,10 @@ public class LLModel implements Closeable {
 
         }
 
+        // 此时最后一个token生成完毕，但是Offset的值应该比最后一个token的Offset相等，
+        // 所以需要将Offset加1，以表示下一个token的位置。
+        llamaPosOffset = llamaPosOffset + 1;
+
         tokens.close();
         promptBuf.close();
         newTokenId.close();
@@ -419,7 +447,7 @@ public class LLModel implements Closeable {
      */
     private llama_batch createBatch(IntPointer tokens, int n_tokens, int seq_id) {
 
-        llama_batch llamaBatch = LLamaCore.llama_batch_init(parameter.getTokensPerBatch(),0,1);
+        llama_batch llamaBatch = LLamaCore.llama_batch_init(parameter.getBatchSize(),0,1);
         return fillBatch(llamaBatch, tokens, n_tokens, seq_id);
 
     }
@@ -508,7 +536,7 @@ public class LLModel implements Closeable {
     }
 
     @Override
-    public void close(){
+    public synchronized void close(){
         unload();
     }
 

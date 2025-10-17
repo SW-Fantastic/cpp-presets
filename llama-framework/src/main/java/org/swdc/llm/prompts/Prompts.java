@@ -10,6 +10,10 @@ import org.swdc.llm.ChatPrompt;
  * 之所以使用java重新实现它，是因为C++层面经常出现奇怪乱码问题，转写后使用起来
  * 更加简洁，也更加稳定。
  *
+ * PS：作者试了一下通过JinJava库使用模型自带的Jinja模板，但是感觉不如这种
+ * 简单的字符串拼接，效果相当不理想，所以本框架以后基本上全都自己拼接prompt了，
+ * 不使用模板进行渲染。
+ *
  */
 public interface Prompts {
 
@@ -27,6 +31,38 @@ public interface Prompts {
             } else {
                 result.append(String.format("%s\n\n",text));
             }
+        }
+        return result.toString();
+    };
+
+
+    /**
+     * 参照Llamacpp的apply_template方法得到的GoogleGemma的Chat Template。
+     */
+    ChatPrompt GoogleGemma = (messages, addAss) -> {
+        StringBuilder result = new StringBuilder();
+        String systemPrompt = null;
+        for (ChatMessage message : messages) {
+            String role = "";
+            String text = message.getContent();
+            if (message.getRole() == PromptRole.SYSTEM) {
+                systemPrompt = text;
+                continue;
+            } else if (message.getRole() == PromptRole.USER) {
+                role = "user";
+            } else {
+                role = "model";
+            }
+            String template = "<start_of_turn>" + role + "\n";
+            if (systemPrompt != null && message.getRole() == PromptRole.USER) {
+                template = template + systemPrompt.trim() + "\n\n";
+                systemPrompt = null;
+            }
+            template = template + text.trim() + "<end_of_turn>\n";
+            result.append(template);
+        }
+        if (addAss) {
+            result.append("<start_of_turn>model\n");
         }
         return result.toString();
     };
@@ -102,6 +138,9 @@ public interface Prompts {
         }
         if (prompt.contains("<|start_header_id|>") && prompt.contains("<|end_header_id|>")) {
             return LLamaPrompts.LLAMA3;
+        }
+        if (prompt.contains("<start_of_turn>")) {
+            return GoogleGemma;
         }
         throw new IllegalArgumentException("Unknown prompt format: " + prompt);
     }

@@ -3,6 +3,7 @@ package org.swdc.llm.test;
 import org.swdc.llama.core.*;
 import org.swdc.llm.*;
 import org.swdc.llm.prompts.DeepSeekPrompts;
+import org.swdc.llm.prompts.GLMPrompts;
 import org.swdc.llm.prompts.LLamaPrompts;
 
 import java.io.File;
@@ -23,15 +24,14 @@ public class TestModelWithChat {
         ); */
 
 
-        //File modelFile = new File("D:\\SDK\\LLM-Models\\ChatGLM.cpp\\glm-4-9b-chat-Q2_K.gguf");
+        //File modelFile = new File("D:\\SDK\\LLM-Models\\ChatGLM\\ChatGLM3-6B-Chat-ChatMed.Q4_K_M.gguf");
         //File modelFile = new File("D:\\SDK\\LLM-Models\\RwKV\\rwkv-6-world-7b-Q4_0.gguf")；
         //File modelFile = new File(("D:\\SDK\\LLM-Models\\Phi\\Phi-3-mini-4k-instruct-q4.gguf"));
         //File modelFile = new File("D:\\SDK\\LLM-Models\\LLAMA.cpp\\ggml-model-q2_k.gguf");
 
         //File modelFile = new File("D:\\SDK\\LLM-Models\\LLAMA3\\Llama3-8B-Chinese-Chat.Q4_K_S.gguf");
-        //File modelFile = new File("D:\\SDK\\LLM-Models\\Deepseek\\DeepSeek-R1-Distill-Llama-8B-Q4_K_S.gguf");
-        //File modelFile = new File("D:\\SDK\\LLM-Models\\Deepseek\\DeepSeek-R1-Distill-Llama-8B-Q2_K.gguf");
         File modelFile = new File("D:\\SDK\\LLM-Models\\Deepseek\\DeepSeek-R1-0528-Qwen3-8B-Q4_K_S.gguf");
+        //File modelFile = new File("D:\\SDK\\LLM-Models\\GoogleGemma\\gemma-3-4b-it-Q8_0.gguf");
 
         LLMParameter parameter = new LLMParameter();
         parameter.setGpuLayers(0);
