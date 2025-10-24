@@ -22,6 +22,10 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+/**
+ * LLModel类是用于处理大型语言模型（LLM）类。
+ * 它封装了与大型语言模型交互所需的核心功能，包括加载模型、生成文本等。
+ */
 public class LLModel implements Closeable {
 
     private llama_model model;
@@ -243,7 +247,7 @@ public class LLModel implements Closeable {
 
         llama_memory_i memoryI = LLamaCore.llama_get_memory(context);
         systemPromptPos = LLamaCore.llama_memory_seq_pos_max(memoryI,0);
-        llamaPosOffset = systemPromptPos;
+        llamaPosOffset = systemPromptPos + 1;
 
     }
 
@@ -294,7 +298,13 @@ public class LLModel implements Closeable {
         }
 
         // 创建并且填充一个Batch对象，用于后续的解算和生成。
-        llama_batch llamaBatch = createBatch(tokens, n_tokens,0);
+        llama_batch llamaBatch = CommonUtils.createBatch(
+                tokens,
+                llamaPosOffset,
+                parameter.getBatchSize(),
+                n_tokens,
+                0
+        );
         // 累加context中的Offset，这个Offset必须是连续的，否则会导致异常。
         llamaPosOffset = llamaPosOffset + n_tokens - 1;
 
@@ -322,7 +332,14 @@ public class LLModel implements Closeable {
 
                 IntPointer batchTokens = llamaBatch.token();
                 int nTokens = llamaBatch.n_tokens();
-                fillBatch(llamaBatch, batchTokens, nTokens, 0);
+                CommonUtils.fillBatch(
+                        llamaBatch,
+                        batchTokens,
+                        llamaPosOffset,
+                        nTokens,
+                        0
+                );
+                // fillBatch(llamaBatch, batchTokens, nTokens, 0);
 
             }
 
@@ -414,8 +431,14 @@ public class LLModel implements Closeable {
 
             //释放资源，准备下一个token的生成。
             pieceBuf.close();
-            resetBatch(llamaBatch);
-            fillBatch(llamaBatch, newTokenId, 1,0);
+            CommonUtils.resetBatch(llamaBatch);
+            CommonUtils.fillBatch(
+                    llamaBatch,
+                    newTokenId,
+                    llamaPosOffset,
+                    1,
+                    0
+            );
 
         }
 
@@ -437,58 +460,6 @@ public class LLModel implements Closeable {
 
         return output.toString();
     }
-
-    /**
-     * 创建一个新的Batch，用于解码。
-     * @param tokens 一个包含TokenId的BytePointer对象。
-     * @param n_tokens Token的数量。
-     * @param seq_id 序列ID，用于区分不同的输入（默认为0）
-     * @return 一个初始化的Batch对象。
-     */
-    private llama_batch createBatch(IntPointer tokens, int n_tokens, int seq_id) {
-
-        llama_batch llamaBatch = LLamaCore.llama_batch_init(parameter.getBatchSize(),0,1);
-        return fillBatch(llamaBatch, tokens, n_tokens, seq_id);
-
-    }
-
-    /**
-     * 重置Batch，将所有TokenId设置为0。
-     * @param batch 要重置的Batch对象。
-     * @return 重置后的Batch对象。
-     */
-    private llama_batch resetBatch(llama_batch batch) {
-        batch.n_tokens(0);
-        return batch;
-    }
-
-    /**
-     * 填充Batch对象，用于解码。
-     * @param llamaBatch Batch对象
-     * @param tokens 一个包含TokenId的BytePointer对象。
-     * @param n_tokens Token的数量。
-     * @param seq_id 序列ID，用于区分不同的输入（默认为0）
-     * @return 填充后的Batch对象。
-     */
-    private llama_batch fillBatch(llama_batch llamaBatch, IntPointer tokens, int n_tokens, int seq_id) {
-        for (int i = 0; i < n_tokens; i++) {
-
-            // 在Batch中填入TokenId
-            llamaBatch.token().put(i,tokens.get(i));
-            // 在Batch中填入Token的位置
-            llamaBatch.pos().put(i,llamaPosOffset + i);
-            // 在Batch中填入序列ID
-            llamaBatch.seq_id(i).put(0,seq_id);
-            // 在Batch中填入是否为最后一个Token的标志位
-            llamaBatch.logits().put(i, i == n_tokens - 1 ? (byte) 1: (byte) 0);
-            // 在Batch填入该Token属于几个序列（默认为1）
-            llamaBatch.n_seq_id().put(i,1);
-
-        }
-        llamaBatch.n_tokens(n_tokens);
-        return llamaBatch;
-    }
-
 
 
     /**

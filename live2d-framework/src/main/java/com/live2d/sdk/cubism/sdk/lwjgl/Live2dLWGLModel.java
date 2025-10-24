@@ -76,6 +76,12 @@ public class Live2dLWGLModel extends CubismUserModel {
     private CubismId idParamEyeBallY;
 
     /**
+     * 拓展参数
+     */
+    private Map<CubismId, Float> extendParams = new HashMap<>();
+
+
+    /**
      * フレームバッファ以外の描画先
      */
     private final CubismOffscreenSurfaceLWGL renderingBuffer;
@@ -205,6 +211,10 @@ public class Live2dLWGLModel extends CubismUserModel {
         // ドラッグによる目の向きの調整
         model.addParameterValue(idParamEyeBallX, dragX);  // -1から1の値を加える
         model.addParameterValue(idParamEyeBallY, dragY);
+
+        for (Map.Entry<CubismId, Float> entry : extendParams.entrySet()) {
+            model.addParameterValue(entry.getKey(), entry.getValue());
+        }
 
         // Breath Function
         if (breath != null) {
@@ -706,6 +716,19 @@ public class Live2dLWGLModel extends CubismUserModel {
 
     public void setIdParamBodyAngleX(CubismId idParamBodyAngleX) {
         this.idParamBodyAngleX = idParamBodyAngleX;
+    }
+
+    public void updateParam(CubismId cubismId, float value) {
+        extendParams.put(cubismId, value);
+    }
+
+    public boolean loadExpression(String expName, byte[] data) {
+        if (expressions.containsKey(expName)) {
+            return true;
+        }
+        CubismExpressionMotion motion = CubismExpressionMotion.create(data);
+        expressions.put(expName, motion);
+        return true;
     }
 
 }

@@ -37,7 +37,8 @@ public class llama_context_params extends Pointer {
         public native @Cast("uint32_t") int n_ubatch(); public native llama_context_params n_ubatch(int setter);          // physical maximum batch size
         public native @Cast("uint32_t") int n_seq_max(); public native llama_context_params n_seq_max(int setter);         // max number of sequences (i.e. distinct states for recurrent models)
         public native int n_threads(); public native llama_context_params n_threads(int setter);         // number of threads to use for generation
-        public native int n_threads_batch(); public native llama_context_params n_threads_batch(int setter);   // number of threads to use for batch processing // RoPE scaling type, from `enum llama_rope_scaling_type`      // whether to pool (sum) embedding results by sequence id    // attention type to use for embeddings
+        public native int n_threads_batch(); public native llama_context_params n_threads_batch(int setter);   // number of threads to use for batch processing // RoPE scaling type, from `enum llama_rope_scaling_type`
+              // whether to pool (sum) embedding results by sequence id    // attention type to use for embeddings
         public native @Cast("llama_flash_attn_type") int flash_attn_type(); public native llama_context_params flash_attn_type(int setter);   // when to enable Flash Attention
 
         // ref: https://github.com/ggml-org/llama.cpp/pull/2054

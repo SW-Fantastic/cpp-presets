@@ -18,7 +18,7 @@ public class Live2dLWGLManager {
     /**
      * 表示するシーンのインデックス値
      */
-    private int currentModel;
+    private volatile int currentModel;
 
     /**
      * モデルディレクトリ名
@@ -37,7 +37,6 @@ public class Live2dLWGLManager {
         this.delegate = delegate;
         this.modelPostProcessor = processor;
         setUpModel();
-        changeScene(0);
     }
 
     public Live2dLWGLManager(Live2dLWGLDelegate delegate) {
@@ -252,7 +251,7 @@ public class Live2dLWGLManager {
      * @param number モデルリストのインデックス値
      * @return モデルのインスタンスを返す。インデックス値が範囲外の場合はnullを返す
      */
-    Live2dLWGLModel getModel(int number) {
+    public Live2dLWGLModel getModel(int number) {
         if (number < models.size()) {
             return models.get(number);
         }

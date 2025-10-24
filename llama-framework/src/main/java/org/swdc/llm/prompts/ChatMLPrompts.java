@@ -14,7 +14,7 @@ public interface ChatMLPrompts {
             String text = message.getContent();
 
             if (role.equals(PromptRole.USER)) {
-                text = String.format("<|im_start|>user\n%s<|im_end|>\n",text) + (addAss ? "<|im_start|>assistant\n<|im_end|>\n" : "");
+                text = String.format("<|im_start|>user\n%s<|im_end|>\n",text);
             } else if (role.equals(PromptRole.ASSISTANT)) {
                 text = String.format("<|im_start|>assistant\n%s<|im_end|>\n", text);
             } else if (role.equals(PromptRole.SYSTEM)) {
@@ -22,6 +22,9 @@ public interface ChatMLPrompts {
             }
 
             result.append(text);
+        }
+        if (addAss) {
+            result.append("<|im_start|>assistant\n");
         }
 
         return result.toString();

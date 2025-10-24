@@ -41,6 +41,7 @@ public class Live2dLWJGLDemo {
         // 初始化Live2d渲染代理
         delegate.initialize(800,1000);
         delegate.setRenderingTargetClearColor(255,255,255);
+        delegate.getManager().changeScene(0);
 
         GLFW.glfwSetMouseButtonCallback(pointer,(window, button, action, mods) -> {
             if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && action == GLFW.GLFW_PRESS) {

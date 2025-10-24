@@ -31,6 +31,7 @@ public class Live2dJOGLDemo {
         public void init(GLAutoDrawable drawable) {
             delegate.initialize(drawable);
             delegate.setRenderingTargetClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+            delegate.getManager().changeScene(0);
         }
 
         @Override

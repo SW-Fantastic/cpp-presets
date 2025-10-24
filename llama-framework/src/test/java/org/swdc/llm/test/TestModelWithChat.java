@@ -4,6 +4,7 @@ import org.swdc.llama.core.*;
 import org.swdc.llm.*;
 import org.swdc.llm.prompts.DeepSeekPrompts;
 import org.swdc.llm.prompts.GLMPrompts;
+import org.swdc.llm.prompts.GoogleGemmaPrompts;
 import org.swdc.llm.prompts.LLamaPrompts;
 
 import java.io.File;
@@ -30,15 +31,18 @@ public class TestModelWithChat {
         //File modelFile = new File("D:\\SDK\\LLM-Models\\LLAMA.cpp\\ggml-model-q2_k.gguf");
 
         //File modelFile = new File("D:\\SDK\\LLM-Models\\LLAMA3\\Llama3-8B-Chinese-Chat.Q4_K_S.gguf");
-        File modelFile = new File("D:\\SDK\\LLM-Models\\Deepseek\\DeepSeek-R1-0528-Qwen3-8B-Q4_K_S.gguf");
+        // File modelFile = new File("D:\\SDK\\LLM-Models\\Deepseek\\DeepSeek-R1-0528-Qwen3-8B-Q4_K_S.gguf");
+        //File modelFile = new File("D:\\SDK\\LLM-Models\\QWen\\Qwen3-4B-CatGirl.i1-Q4_K_M.gguf");
+        File modelFile = new File("D:\\SDK\\LLM-Models\\QWen\\Qwen1.5-4B-Chat.Q6_K.gguf");
         //File modelFile = new File("D:\\SDK\\LLM-Models\\GoogleGemma\\gemma-3-4b-it-Q8_0.gguf");
+        //File modelFile = new File("D:\\SDK\\LLM-Models\\GoogleGemma\\Gemma-2-2b-Chinese-it.Q6_K.gguf");
 
         LLMParameter parameter = new LLMParameter();
         parameter.setGpuLayers(0);
         parameter.setMinP(0.05f);
         parameter.setMinKeepP(1L);
         parameter.setTemp(0.8f);
-        //parameter.setPrompt(DeepSeekPrompts.DeepSeekV3);
+        //parameter.setPrompt(GoogleGemmaPrompts.GoogleGemma);
         parameter.setSeeds(LLamaCore.LLAMA_DEFAULT_SEED);
         parameter.setMemorySwap(false);
         parameter.setContextSize(1024 * 4);

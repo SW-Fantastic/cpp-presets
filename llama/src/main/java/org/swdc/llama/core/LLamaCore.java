@@ -90,7 +90,14 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
 
     
 
-    
+    /** enum llama_pooling_type */
+    public static final int
+        LLAMA_POOLING_TYPE_UNSPECIFIED = -1,
+        LLAMA_POOLING_TYPE_NONE = 0,
+        LLAMA_POOLING_TYPE_MEAN = 1,
+        LLAMA_POOLING_TYPE_CLS  = 2,
+        LLAMA_POOLING_TYPE_LAST = 3,
+        LLAMA_POOLING_TYPE_RANK = 4; // used by reranking models to attach the classification head to the graph
 
     
 
@@ -258,7 +265,7 @@ public static final int LLAMA_STATE_SEQ_VERSION = 2;
 
     public static native @Const llama_model llama_get_model(@Const llama_context ctx);
     public static native llama_memory_i llama_get_memory(@Const llama_context ctx);
-     // TODO: rename to llama_get_pooling_type
+    public static native int llama_pooling_type(@Const llama_context ctx); // TODO: rename to llama_get_pooling_type
 
     public static native @Const llama_vocab llama_model_get_vocab(@Const llama_model model);
 

@@ -6,6 +6,8 @@ import org.bytedeco.javacpp.tools.Info;
 import org.bytedeco.javacpp.tools.InfoMap;
 import org.bytedeco.javacpp.tools.InfoMapper;
 
+import java.util.Arrays;
+
 @Properties(value = {
         @Platform(
                 value = "windows-x86_64",
@@ -35,13 +37,14 @@ public class LLamaConfigure implements InfoMapper {
                 "llama_rope_scaling_type",
                 "llama_attention_type",
                 "llama_split_mode",
-                "llama_pooling_type",
                 "llama_opt_epoch"
         ).skip());
 
         infoMap.put(new Info("llama_memory_t").cppTypes("llama_memory_i*"));
         infoMap.put(new Info("llama_context_t").cppTypes("llama_context*"));
         infoMap.put(new Info("ggml_opt_get_optimizer_params", "ggml_opt_optimizer_type").skip());
+        infoMap.put(new Info("llama_pooling_type").cppTypes("int").cast());
+        infoMap.put(new Info("llama_context_params::pooling_type").skip());
 
     }
 
