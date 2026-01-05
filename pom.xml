@@ -10,15 +10,10 @@
     <packaging>pom</packaging>
     <modules>
         <module>live2d</module>
-        <module>live2d-framework</module>
         <module>pdfium</module>
-        <module>pdfium4j</module>
         <module>mariadb</module>
-        <module>mariadb-embedded</module>
         <module>dearImgui</module>
-        <module>imgui-framework</module>
         <module>llama</module>
-        <module>llama-framework</module>
     </modules>
 
     <properties>

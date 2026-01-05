@@ -38,6 +38,33 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <executions>
+                    <!-- 默认编译过程 -->
+                    <!-- 分两个编译过程可以隔离掉module-info，让Maven能够正常处理JavaCPP的Mapper -->
+                    <execution>
+                        <id>default-compile</id>
+                    </execution>
+                    <!-- 额外编译过程 -->
+                    <!-- 编译module-info.java -->
+                    <execution>
+                        <id>module-compile</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <release>11</release>
+                            <compileSourceRoots>
+                                <compileSourceRoot>${project.basedir}/src/main/meta</compileSourceRoot>
+                            </compileSourceRoots>
+                            <multiReleaseOutput>true</multiReleaseOutput>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.bytedeco</groupId>
                 <artifactId>javacpp</artifactId>
                 <version>${javacpp.version}</version>
