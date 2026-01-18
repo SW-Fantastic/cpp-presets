@@ -65,3 +65,4 @@ use Live2d。
 5. LLama.cpp (framework is developing, not release yet)
    - Build with llama.cpp version b4730.
    - Has pre-built binary with (windows-x64 cpu only)
+6. LibClang (framework is developing, not release yet)

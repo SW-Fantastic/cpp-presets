@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.swdc</groupId>
+        <artifactId>cpp-presets</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>libclang</artifactId>
+    <version>1.0</version>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <javacpp.version>1.5.10</javacpp.version>
+        <build.skip>true</build.skip>
+    </properties>
+
+    <dependencies>
+        <!-- https://mvnrepository.com/artifact/org.bytedeco/javacpp -->
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>javacpp</artifactId>
+            <version>${javacpp.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.bytedeco/javacpp -->
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>javacpp-platform</artifactId>
+            <version>${javacpp.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <executions>
+                    <!-- 默认编译过程 -->
+                    <!-- 分两个编译过程可以隔离掉module-info，让Maven能够正常处理JavaCPP的Mapper -->
+                    <execution>
+                        <id>default-compile</id>
+                    </execution>
+                    <!-- 额外编译过程 -->
+                    <!-- 编译module-info.java -->
+                    <execution>
+                        <id>module-compile</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <release>11</release>
+                            <compileSourceRoots>
+                                <compileSourceRoot>${project.basedir}/src/main/meta</compileSourceRoot>
+                            </compileSourceRoots>
+                            <multiReleaseOutput>true</multiReleaseOutput>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>javacpp</artifactId>
+                <version>${javacpp.version}</version>
+                <executions>
+                    <execution>
+                        <id>javacpp.parser</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${build.skip}</skip>
+                            <outputDirectory>${project.build.sourceDirectory}</outputDirectory>
+                            <classOrPackageName>org.swdc.libclang.**</classOrPackageName>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>javacpp.compiler</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${build.skip}</skip>
+                            <outputDirectory>${project.build.sourceDirectory}</outputDirectory>
+                            <classOrPackageName>org.swdc.libclang.**</classOrPackageName>
+                            <copyLibs>true</copyLibs>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

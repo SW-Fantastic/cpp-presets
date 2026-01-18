@@ -14,6 +14,7 @@
         <module>mariadb</module>
         <module>dearImgui</module>
         <module>llama</module>
+        <module>libclang</module>
     </modules>
 
     <properties>
