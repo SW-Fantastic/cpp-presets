@@ -15,6 +15,13 @@ import java.util.Arrays;
                 include = {"llama.h"},
                 linkpath = "platforms/llamaCpp/dll/windows/x86_64",
                 link = "llama"
+        ),
+        @Platform(
+                value = "linux-x86_64",
+                includepath = { "platforms/llamaCpp/include" },
+                include = {"llama.h"},
+                linkpath = "platforms/llamaCpp/dll/linux/x86_64",
+                link = "llama"
         )
 },
         inherit = GGMLConfigure.class,

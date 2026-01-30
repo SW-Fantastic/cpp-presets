@@ -63,6 +63,7 @@ use Live2d。
    - Build with DearImGUI Docking branch version 1.91.1
    - Has pre-built binary with (windows-x64)，目前只有Windows，macos没有更新。
 5. LLama.cpp (framework is developing, not release yet)
-   - Build with llama.cpp version b4730.
-   - Has pre-built binary with (windows-x64 cpu only)
+   - Build with llama.cpp version b6638.
+   - Has pre-built binary with (windows-x64 , linux-x64 with OpenBlas)
+   - 如果你在使用的过程中遇到了卡死或者死机的问题，可能是由于你的内存容量过低，请尝试关闭mmap（内存-文件映射）防止出现大量的页面置换。
 6. LibClang (framework is developing, not release yet)

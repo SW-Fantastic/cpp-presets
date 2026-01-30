@@ -13,6 +13,13 @@ import org.bytedeco.javacpp.tools.InfoMapper;
                 include = {"llama_std_support.h"},
                 linkpath = "platforms/llamaCpp/dll/windows/x86_64",
                 link = {"llama", "ggml-base"}
+        ),
+        @Platform(
+                value = "linux-x86_64",
+                includepath = { "platforms/llamaCpp/ext" },
+                include = {"llama_std_support.h"},
+                linkpath = "platforms/llamaCpp/dll/linux/x86_64",
+                link = {"llama", "ggml-base"}
         )
 },
         target = "org.swdc.llama.core.ext",

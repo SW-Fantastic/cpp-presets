@@ -723,8 +723,6 @@ public static final int GGML_MROPE_SECTIONS =   4;
 
     // GUID types
 
-    public static native @Cast("bool") boolean ggml_guid_matches(@Cast("ggml_guid_t") byte guid_a, @Cast("ggml_guid_t") byte guid_b);
-
     // misc
 
     public static native @Cast("const char*") BytePointer ggml_version();
@@ -2837,8 +2835,6 @@ public static final int GGML_N_TASKS_MAX = (-1);
     //
     // Backend (stream)
     //
-
-    public static native @Cast("ggml_guid_t") byte ggml_backend_guid(ggml_backend backend);
     public static native @Cast("const char*") BytePointer ggml_backend_name(ggml_backend backend);
     public static native void ggml_backend_free(ggml_backend backend);
 

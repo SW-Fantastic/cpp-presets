@@ -13,6 +13,13 @@ import org.bytedeco.javacpp.tools.InfoMapper;
                 include = {"ggml-alloc.h", "ggml.h", "ggml-backend.h","ggml-cpu.h"},
                 linkpath = "platforms/llamaCpp/dll/windows/x86_64",
                 link = {"ggml-base", "ggml-cpu","ggml"}
+        ),
+        @Platform(
+                value = "linux-x86_64",
+                includepath = { "platforms/llamaCpp/include" },
+                include = {"ggml-alloc.h", "ggml.h", "ggml-backend.h","ggml-cpu.h"},
+                linkpath = "platforms/llamaCpp/dll/linux/x86_64",
+                link = {"ggml-base", "ggml-cpu","ggml"}
         )
 },
         target = "org.swdc.llama.core.ggml",
