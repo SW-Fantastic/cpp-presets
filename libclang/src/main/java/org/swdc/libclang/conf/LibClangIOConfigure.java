@@ -13,6 +13,13 @@ import org.bytedeco.javacpp.tools.InfoMapper;
                 include = { "CXFile.h", "CXErrorCode.h", "CXString.h", "CXDiagnostic.h", "CXSourceLocation.h"},
                 linkpath = "platforms/libclang/dll/windows/x86_64",
                 link = "libclang"
+        ),
+        @Platform(
+                value = "linux-x86_64",
+                includepath = { "platforms/libclang/include" },
+                include = { "CXFile.h", "CXErrorCode.h", "CXString.h", "CXDiagnostic.h", "CXSourceLocation.h"},
+                linkpath = "platforms/libclang/dll/linux/x86_64",
+                link = "clang"
         )
 },
         target = "org.swdc.libclang.core.io",

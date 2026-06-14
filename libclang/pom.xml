@@ -55,7 +55,7 @@
                             <goal>compile</goal>
                         </goals>
                         <configuration>
-                            <release>11</release>
+                            <release>9</release>
                             <compileSourceRoots>
                                 <compileSourceRoot>${project.basedir}/src/main/meta</compileSourceRoot>
                             </compileSourceRoots>
